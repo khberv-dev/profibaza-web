@@ -11,32 +11,31 @@ import CompanyProfilePage from "../features/profile/pages/CompanyProfilePage";
 import LandingPage from "../pages/landing/LandingPage";
 import Page404 from "../pages/not-found/Page404";
 
-
 export const router = createBrowserRouter([
-    // Публичные страницы
-    { path: "/", element: <LandingPage /> },
-    { path: "/login", element: <LoginPage /> },
-    { path: "/otp", element: <OtpPage /> },
-  
-    // Приложение — только после входа
-    {
-      path: "/app",
-      element: <Protected />,
-      children: [
-        { index: true, element: <SearchPage /> },               // /app
-        { path: "profile", element: <ProfilePage /> },          // /app/profile
-        { path: "orders/new", element: <NewOrderPage /> },      // /app/orders/new
-        { path: "orders/my", element: <MyOrdersPage /> },       // /app/orders/my
-  
-        {
-          element: <RoleGuard allow={["client_company"]} />,
-          children: [
-            { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
-          ],
-        },
-      ],
-    },
-  
-    // 404 (по желанию)
-    { path: "*", element: <Page404 /> },
-  ]);
+  // Публичные страницы
+  { path: "/", element: <LandingPage /> },
+  { path: "/login", element: <LoginPage /> },
+  { path: "/register", element: <OtpPage /> },
+
+  // Приложение — только после входа
+  {
+    path: "/app",
+    element: <Protected />,
+    children: [
+      { index: true, element: <SearchPage /> }, // /app
+      { path: "profile", element: <ProfilePage /> }, // /app/profile
+      { path: "orders/new", element: <NewOrderPage /> }, // /app/orders/new
+      { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my
+
+      {
+        element: <RoleGuard allow={["client_company"]} />,
+        children: [
+          { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
+        ],
+      },
+    ],
+  },
+
+  // 404 (по желанию)
+  { path: "*", element: <Page404 /> },
+]);
