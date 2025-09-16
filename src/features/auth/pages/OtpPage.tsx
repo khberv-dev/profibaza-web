@@ -165,7 +165,7 @@ const RegisterPage = () => {
             placeholder={t("password")}
             rules={{
               required: t("passwordRequired") as string,
-              minLength: { value: 6, message: t("passwordHelper") as string },
+              minLength: { value: 8, message: t("passwordHelper") as string },
             }}
           />
 

@@ -21,7 +21,7 @@
   "phoneHelper": "Format: +998 (XX) XXX-XX-XX",
   "phoneRequired": "Telefon raqamingizni kiriting",
   "passwordRequired": "Parolni kiriting",
-  "passwordHelper": "Kamida 6 ta belgidan iborat",
+  "passwordHelper": "Kamida 8 ta belgidan iborat",
   "agreement": "«{{btn}}» tugmasini bosish orqali siz ChatPlace’ning {{tos}} va {{privacy}} shartlariga rozilik bildirasiz hamda {{pd}} qayta ishlanishiga rozilik berasiz.",
   "tos": "Foydalanuvchi kelishuvi",
   "privacy": "Maxfiylik siyosati",

@@ -113,7 +113,7 @@ const LoginPage = () => {
             rules={{
               required: t("passwordRequired") as string,
               minLength: {
-                value: 6,
+                value: 8,
                 message: t("passwordHelper"),
               },
             }}
