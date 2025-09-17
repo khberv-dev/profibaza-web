@@ -45,6 +45,11 @@
     "breadcrumbs": "Mening rezyumem",
     "title": "Profil",
     "edit": "Tahrirlash",
+    "shareProfile": "Profilni ulashish",
+    "member": "A'zo",
+    "visibility": {
+      "public": "Ochiq"
+    },
     "loadFailed": "Profilni yuklab bo‘lmadi",
     "contacts": "Kontaktlar",
     "phone": "Telefon",

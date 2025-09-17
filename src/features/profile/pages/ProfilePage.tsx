@@ -3,13 +3,21 @@ import { useMe } from "../../../shared/modules/user";
 import { useTranslation } from "react-i18next";
 import {
   Wrap,
-  Breadcrumbs,
+  TopBar,
+  Crumb,
   Card,
+  Cover,
+  CardBody,
+  AvatarWrap,
+  Avatar,
   Info,
   Name,
   Subline,
-  EditBtn,
-  Avatar,
+  MetaRow,
+  Badge,
+  Actions,
+  PrimaryBtn,
+  GhostBtn,
   SectionTitle,
   Grid2,
   ContactCard,
@@ -17,6 +25,8 @@ import {
   FieldTitle,
   FieldValue,
   AddLink,
+  Notice,
+  SkeletonLine,
 } from "../profile-style";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
 
@@ -40,29 +50,57 @@ export default function ProfilePage() {
 
   return (
     <Wrap>
-      <Breadcrumbs>
-        {t("profile.breadcrumbs")} / <span>{t("profile.title")}</span>
-      </Breadcrumbs>
+      <TopBar>
+        <Crumb>
+          {t("profile.breadcrumbs")} / <span>{t("profile.title")}</span>
+        </Crumb>
+        <LangSwitcher />
+      </TopBar>
 
       <Card>
-        <Info>
-          <Name>
-            {data?.name || "—"} {data?.surname || ""}
-          </Name>
-          <Subline>
-            {data ? new Date(data.createdAt).toLocaleDateString() : "—"}
-          </Subline>
-          <EditBtn type="button">{t("profile.edit")}</EditBtn>
-        </Info>
+        <Cover />
+        <CardBody>
+          <AvatarWrap>
+            <Avatar aria-label="avatar placeholder" />
+          </AvatarWrap>
 
-        <Avatar aria-label="avatar placeholder" />
+          <Info>
+            <Name>
+              {isLoading ? (
+                <SkeletonLine w={220} />
+              ) : (
+                <>
+                  {data?.name || "—"} {data?.surname || ""}
+                </>
+              )}
+            </Name>
+            <Subline>
+              {isLoading ? (
+                <SkeletonLine w={160} />
+              ) : data ? (
+                new Date(data.createdAt).toLocaleDateString()
+              ) : (
+                "—"
+              )}
+            </Subline>
+
+            <MetaRow>
+              <Badge>{t("profile.member")}</Badge>
+              <Badge tone="muted">{t("profile.visibility.public")}</Badge>
+            </MetaRow>
+
+            <Actions>
+              <PrimaryBtn type="button">{t("profile.edit")}</PrimaryBtn>
+              <GhostBtn type="button">{t("profile.shareProfile")}</GhostBtn>
+            </Actions>
+          </Info>
+        </CardBody>
       </Card>
 
-      {isLoading && <div style={{ padding: 12 }}>{t("loading")}</div>}
       {isError && (
-        <div style={{ padding: 12, color: "#ef4444" }}>
+        <Notice tone="error">
           {(error as any)?.message || t("profile.loadFailed")}
-        </div>
+        </Notice>
       )}
 
       <SectionTitle>{t("profile.contacts")}</SectionTitle>
@@ -72,7 +110,9 @@ export default function ProfilePage() {
           <ContactIcon src="/phone.svg" alt="" />
           <div>
             <FieldTitle>{t("profile.phone")}</FieldTitle>
-            <FieldValue>{phonePretty}</FieldValue>
+            <FieldValue>
+              {isLoading ? <SkeletonLine w={120} /> : phonePretty}
+            </FieldValue>
           </div>
         </ContactCard>
 
@@ -80,7 +120,9 @@ export default function ProfilePage() {
           <ContactIcon src="/mail.svg" alt="" />
           <div>
             <FieldTitle>{t("profile.email")}</FieldTitle>
-            <FieldValue>{data?.email || "—"}</FieldValue>
+            <FieldValue>
+              {isLoading ? <SkeletonLine w={200} /> : data?.email || "—"}
+            </FieldValue>
           </div>
         </ContactCard>
       </Grid2>
@@ -88,12 +130,9 @@ export default function ProfilePage() {
       <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
       <AddLink href="#">{t("profile.add")}</AddLink>
 
-      <SectionTitle style={{ marginTop: 24 }}>
+      <SectionTitle style={{ marginTop: 28 }}>
         {t("profile.searchSettings")}
       </SectionTitle>
-      <div style={{ position: "absolute", top: 16, right: 16 }}>
-        <LangSwitcher />
-      </div>
     </Wrap>
   );
 }
