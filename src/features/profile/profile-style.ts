@@ -152,10 +152,6 @@ export const Actions = styled.div`
   gap: 10px;
   margin-top: 6px;
   flex-wrap: wrap;
-
-  @media (max-width: 600px) {
-    justify-content: center;
-  }
 `;
 
 export const PrimaryBtn = styled.button`
@@ -208,7 +204,7 @@ export const Grid2 = styled.div`
   gap: 18px;
   margin-bottom: 20px;
 
-  @media (max-width: 900px) {
+  @media (max-width: 760px) {
     grid-template-columns: 1fr;
   }
 `;
