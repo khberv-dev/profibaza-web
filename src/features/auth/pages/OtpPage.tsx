@@ -1,12 +1,15 @@
-import { useForm } from "react-hook-form";
+// pages/auth/register/RegisterPage.tsx
+import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { isAxiosError } from "axios";
-
+import styled from "@emotion/styled";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { FaUserTie } from "react-icons/fa6";
 import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
-import { useRegister } from "../../../shared/modules/auth"; // ✅ хук регистрации
+import { useRegister } from "../../../shared/modules/auth";
 
 import {
   PageWrap,
@@ -23,21 +26,106 @@ import {
   AgreementText,
   AgreementA,
 } from "../login-style";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { IoBusinessSharp } from "react-icons/io5";
 
+/* ---------- типы формы ---------- */
 type FormValues = {
   name: string;
   surname: string;
   middleName?: string;
-  phone: string; // ожидаем маску, в onSubmit отправим только цифры
+  phone: string; // маска в CustomInput, в onSubmit берём только цифры
   password: string;
   confirmPassword: string;
+  role: "CLIENT" | "WORKER" | "";
 };
 
+/* ---------- стили выбора роли (карточки) ---------- */
+const RoleWrap = styled.div`
+  display: grid;
+  gap: 8px;
+  margin: 6px 0 4px;
+`;
+
+const FieldLabel = styled.div`
+  font-size: 13px;
+  color: #374151;
+`;
+
+const RoleGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr; /* ⬅️ только 1 колонка */
+  gap: 12px;
+`;
+
+const RoleCard = styled.label<{ active?: boolean; hasError?: boolean }>`
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid
+    ${({ active, hasError }) =>
+      hasError ? "#ef4444" : active ? "#2563eb" : "rgba(15,18,25,.12)"};
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.06s;
+
+  &:hover {
+    border-color: ${({ hasError }) => (hasError ? "#ef4444" : "#94b2ff")};
+    box-shadow: 0 8px 22px rgba(2, 32, 71, 0.06);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+`;
+
+const HiddenRadio = styled.input`
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+`;
+
+const RoleIconBox = styled.span`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display: grid;
+  place-items: center;
+
+  svg {
+    font-size: 22px; /* размер иконки */
+    color: #1e5cfb; /* LinkedIn blue */
+  }
+`;
+
+const RoleText = styled.div`
+  display: grid;
+  gap: 2px;
+`;
+
+const RoleTitle = styled.div`
+  font-weight: 700;
+  color: #0f172a;
+`;
+
+const RoleDesc = styled.div`
+  font-size: 13px;
+  color: #667085;
+`;
+
+const ErrorMsg = styled.div`
+  color: #b91c1c;
+  font-size: 13px;
+  margin-top: 4px;
+`;
+
+/* ---------- компонент ---------- */
 const RegisterPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
   const { mutateAsync: register, isPending } = useRegister();
 
   const { control, handleSubmit, setError, watch } = useForm<FormValues>({
@@ -48,6 +136,7 @@ const RegisterPage = () => {
       phone: "",
       password: "",
       confirmPassword: "",
+      role: "", // обязательный выбор
     },
     mode: "onChange",
   });
@@ -55,18 +144,19 @@ const RegisterPage = () => {
   const pwd = watch("password");
 
   const onSubmit = async (values: FormValues) => {
-    // телефон: берём только цифры
     const rawPhone = values.phone.replace(/\D/g, "");
 
-    // простая локальная проверка телефона
+    // локальные проверки
     if (rawPhone.length !== 12) {
       setError("phone", { message: t("phoneInvalid") });
       return;
     }
-
-    // проверка паролей (на всякий случай, у нас есть ещё и rule)
     if (values.password !== values.confirmPassword) {
       setError("confirmPassword", { message: t("passwordsNotMatch") });
+      return;
+    }
+    if (!values.role) {
+      setError("role", { message: t("roleRequired") });
       return;
     }
 
@@ -77,12 +167,13 @@ const RegisterPage = () => {
         middleName: values.middleName?.trim() || "",
         phone: rawPhone,
         password: values.password,
+        role: values.role as "CLIENT" | "WORKER",
       });
 
-      // После успешной регистрации: на страницу подтверждения кода
+      // после успешной регистрации — на логин (или ввод кода, если так задумано)
       navigate("/login", { state: { phone: rawPhone } });
     } catch (e: any) {
-      // показываем текст с сервера (например {"uz":"Raqam yoki parol xato"})
+      // красивый вывод ошибки сервера
       let serverMsg = t("loginFailed");
       if (isAxiosError(e) && e.response?.data) {
         const data = e.response.data;
@@ -93,7 +184,6 @@ const RegisterPage = () => {
           if (firstVal && typeof firstVal === "string") serverMsg = firstVal;
         }
       }
-      // дублируем под релевантные поля, чаще всего — телефон/пароль
       setError("phone", { message: serverMsg });
       setError("password", { message: serverMsg });
     }
@@ -104,11 +194,6 @@ const RegisterPage = () => {
       {/* Левая часть */}
       <LeftSide>
         <Brand>{t("brand")}</Brand>
-        {/* <Illustration
-          src="/illustrations/laptop-peace.png"
-          alt={t("welcome")}
-          loading="lazy"
-        /> */}
         <DotLottieReact
           src="https://lottie.host/44ba2cb8-1b7b-4e37-a5c5-99d9fb319ec1/SCGqvvOcYo.lottie"
           loop
@@ -142,7 +227,6 @@ const RegisterPage = () => {
             control={control}
             name="middleName"
             placeholder={t("middleName")}
-            rules={{ required: t("middleNameRequired") as string }}
           />
 
           <CustomInput
@@ -155,6 +239,65 @@ const RegisterPage = () => {
               validate: (v: string) =>
                 v.replace(/\D/g, "").length === 12 ||
                 (t("phoneInvalid") as string),
+            }}
+          />
+
+          {/* Выбор роли — карточки */}
+          <Controller
+            name="role"
+            control={control}
+            rules={{ required: t("roleRequired") as string }}
+            render={({ field, fieldState }) => {
+              const hasError = !!fieldState.error;
+              return (
+                <RoleWrap>
+                  <FieldLabel>{t("role")}</FieldLabel>
+                  <RoleGrid>
+                    <RoleCard
+                      active={field.value === "CLIENT"}
+                      hasError={hasError}
+                    >
+                      <HiddenRadio
+                        type="radio"
+                        value="CLIENT"
+                        checked={field.value === "CLIENT"}
+                        onChange={() => field.onChange("CLIENT")}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                      <RoleIconBox>
+                        <IoBusinessSharp />
+                      </RoleIconBox>
+                      <RoleText>
+                        <RoleTitle>{t("roleClient")}</RoleTitle>
+                        <RoleDesc>{t("roleClientDesc")}</RoleDesc>
+                      </RoleText>
+                    </RoleCard>
+
+                    <RoleCard
+                      active={field.value === "WORKER"}
+                      hasError={hasError}
+                    >
+                      <HiddenRadio
+                        type="radio"
+                        value="WORKER"
+                        checked={field.value === "WORKER"}
+                        onChange={() => field.onChange("WORKER")}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                      <RoleIconBox>
+                        <FaUserTie />
+                      </RoleIconBox>
+                      <RoleText>
+                        <RoleTitle>{t("roleWorker")}</RoleTitle>
+                        <RoleDesc>{t("roleWorkerDesc")}</RoleDesc>
+                      </RoleText>
+                    </RoleCard>
+                  </RoleGrid>
+                  {hasError && <ErrorMsg>{fieldState.error?.message}</ErrorMsg>}
+                </RoleWrap>
+              );
             }}
           />
 

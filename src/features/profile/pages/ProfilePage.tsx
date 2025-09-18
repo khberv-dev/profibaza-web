@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+// ProfilePage.tsx
+import { useMemo, useState } from "react";
 import { useMe } from "../../../shared/modules/user";
 import { useTranslation } from "react-i18next";
 import {
@@ -6,7 +7,6 @@ import {
   TopBar,
   Crumb,
   Card,
-  Cover,
   CardBody,
   AvatarWrap,
   Avatar,
@@ -29,6 +29,8 @@ import {
   SkeletonLine,
 } from "../profile-style";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
+import EditProfileModal from "./components/EditProfileModal";
+import { NavLink } from "react-router-dom";
 
 function formatPhoneHuman(p?: string | null) {
   const d = (p || "").replace(/\D/g, "");
@@ -42,6 +44,7 @@ function formatPhoneHuman(p?: string | null) {
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { data, isLoading, isError, error } = useMe();
+  const [editOpen, setEditOpen] = useState(false);
 
   const phonePretty = useMemo(
     () => formatPhoneHuman(data?.phone),
@@ -58,7 +61,6 @@ export default function ProfilePage() {
       </TopBar>
 
       <Card>
-        <Cover />
         <CardBody>
           <AvatarWrap>
             <Avatar aria-label="avatar placeholder" />
@@ -85,13 +87,23 @@ export default function ProfilePage() {
             </Subline>
 
             <MetaRow>
-              <Badge>{t("profile.member")}</Badge>
+              {isLoading ? (
+                <SkeletonLine w={80} />
+              ) : (
+                <Badge>
+                  {data?.role ? t(`profile.roles.${data.role}`) : "—"}
+                </Badge>
+              )}
               <Badge tone="muted">{t("profile.visibility.public")}</Badge>
             </MetaRow>
 
             <Actions>
-              <PrimaryBtn type="button">{t("profile.edit")}</PrimaryBtn>
-              <GhostBtn type="button">{t("profile.shareProfile")}</GhostBtn>
+              <PrimaryBtn type="button" onClick={() => setEditOpen(true)}>
+                {t("profile.edit")}
+              </PrimaryBtn>
+              <NavLink to="/app/settings" style={{ textDecoration: "none" }}>
+                <GhostBtn type="button">{t("profile.settings")}</GhostBtn>
+              </NavLink>
             </Actions>
           </Info>
         </CardBody>
@@ -133,6 +145,12 @@ export default function ProfilePage() {
       <SectionTitle style={{ marginTop: 28 }}>
         {t("profile.searchSettings")}
       </SectionTitle>
+
+      <EditProfileModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        me={data}
+      />
     </Wrap>
   );
 }

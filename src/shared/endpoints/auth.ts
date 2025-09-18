@@ -8,6 +8,7 @@ export type RegisterDto = {
   middleName?: string;
   phone: string;
   password: string;
+  role: "CLIENT" | "WORKER";
 };
 
 export const authApi = {

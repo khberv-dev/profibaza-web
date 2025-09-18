@@ -1,5 +1,76 @@
 {
   "brand": "PROFIBAZA",
+  "forgotTitle": "Parolni tiklash",
+  "forgotSubtitle": "Telefon raqamingizni kiriting — parolni almashtirish uchun kod yuboramiz",
+  "forgotSend": "Kod yuborish",
+  "remembered": "Parol esingizdami?",
+  "newPassword": "Yangi parol",
+  "resetCta": "Parolni tiklash",
+  "changePhone": "Рақамни ўзгартириш",
+  "demoCodeHint": "Синов коди: 00000",
+  "newPasswordTitle": "Янги пароль",
+  "backToCode": "Код киритишга қайтиш",
+  "codeOk": "Код тасдиқланди",
+  "role": "Platformadagi rolingiz",
+  "wrongCode": "Noto‘g‘ri kod",
+  "continue": "Davom etish",
+  "roleClient": "Men buyurtmachiman",
+  "roleWorker": "Men usta / ijrochiman",
+  "roleClientDesc": "Buyurtma yarataman va mutaxassis topaman",
+  "roleWorkerDesc": "Buyurtmalar olaman va vakansiyalarga javob beraman",
+  "roleRequired": "Rolni tanlang",
+  "nav": {
+    "find": "Ustani topish",
+    "orders": "Buyurtmalar",
+    "jobs": "Kompaniyalar uchun vakansiyalar",
+    "forMasters": "Ustalar uchun",
+    "help": "Yordam"
+  },
+  "topbar": {
+    "search": "Qidiruv",
+    "notifications": "Bildirishnomalar",
+    "profileBtn": "Mening profilim",
+    "menu": "Menyu",
+    "goProfile": "Profilga o‘tish"
+  },
+  "common": {
+    "save": "Saqlash",
+    "saving": "Saqlanmoqda...",
+    "cancel": "Bekor qilish",
+    "change": "O'zgartirish"
+  },
+  "validation": {
+    "required": "Maydonni to'ldiring",
+    "min6": "Kamida 6 ta belgi",
+    "phoneFull": "To'liq raqamni kiriting"
+  },
+  "settings": {
+    "title": "Sozlamalar",
+    "tabs": {
+      "profile": "Shaxsiy ma'lumotlar",
+      "blocked": "Nojo'ya",
+      "images": "Rasmlar",
+      "notify": "Bildirishnomalar",
+      "apps": "Ilovalarim"
+    },
+    "password": {
+      "title": "Parol",
+      "updatedAgo": "{{mins}} daqiqa oldin yangilangan",
+      "old": "Eski parol",
+      "new": "Yangi parol",
+      "confirm": "Parolni takrorlang",
+      "errors": {
+        "mismatch": "Parollar mos emas",
+        "generic": "Parolni o'zgartirib bo'lmadi"
+      }
+    },
+    "phone": {
+      "title": "Mobil telefon",
+      "changeTitle": "Telefonni o'zgartirish",
+      "new": "Yangi raqam",
+      "errors": { "generic": "Saqlab bo'lmadi" }
+    }
+  },
   "welcome": "Xush kelibsiz",
   "loginTitle": "Kirish",
   "registerTitle": "Ro'yxatdan o'tish",
@@ -43,6 +114,11 @@
   "loading": "Yuklanmoqda…",
   "profile": {
     "breadcrumbs": "Mening rezyumem",
+    "roles": {
+      "CLIENT": "Buyurtmachi",
+      "WORKER": "Ijrochi"
+    },
+    "settings": "Sozlamalar",
     "title": "Profil",
     "edit": "Tahrirlash",
     "shareProfile": "Profilni ulashish",

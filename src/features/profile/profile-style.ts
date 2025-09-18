@@ -1,19 +1,20 @@
+// profile-style.ts
 import styled from "@emotion/styled";
 import userSvg from "/avatar.png";
 
-/* ——— Цвета в стиле LinkedIn 2025 ——— */
+/* палитра — спокойная, без кислотных акцентов */
 const ink = "#0F172A";
 const sub = "#667085";
 const border = "#E7ECF3";
-const bg = "#F7F9FB";
-const primary = "#1e5cfb"; // LinkedIn blue
-const primaryHover = "rgb(4.0174672489,66.288209607,225.9825327511)";
+const bg = "#FCFDFE";
+const primary = "#1E5CFB";
+const primaryHover = "#194DDA";
 
-/* ——— Контейнер и верхняя панель ——— */
+/* контейнер */
 export const Wrap = styled.div`
-  max-width: 1040px;
   margin: 24px auto 80px;
   padding: 0 20px;
+  max-width: 1100px;
 `;
 
 export const TopBar = styled.div`
@@ -31,105 +32,62 @@ export const Crumb = styled.div`
   }
 `;
 
-/* ——— Профильная карточка ——— */
+/* карточка без Cover */
 export const Card = styled.section`
   border: 1px solid ${border};
-  border-radius: 16px;
-  overflow: hidden;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.06);
-  position: relative;
-`;
-
-export const Cover = styled.div`
-  height: 160px;
-  background: linear-gradient(135deg, ${primary} 0%, #4ca5ff 100%);
-  filter: saturate(0.95);
-  position: relative;
-  z-index: 1;
-
-  @media (max-width: 900px) {
-    height: 120px;
-  }
-  @media (max-width: 600px) {
-    height: 100px;
-  }
+  box-shadow: 0 6px 24px rgba(2, 32, 71, 0.06);
 `;
 
 export const CardBody = styled.div`
   display: grid;
-  grid-template-columns: 128px 1fr;
+  grid-template-columns: 112px 1fr;
   gap: 20px;
-  padding: 20px;
-  position: relative;
-  z-index: 2;
+  padding: 18px;
 
-  @media (max-width: 900px) {
-    grid-template-columns: 96px 1fr;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  @media (max-width: 600px) {
+  @media (max-width: 720px) {
     grid-template-columns: 1fr;
-    justify-items: center;
     text-align: center;
+    justify-items: center;
+    gap: 14px;
   }
 `;
 
 export const AvatarWrap = styled.div`
-  margin-top: -64px;
-  position: relative;
-  z-index: 3;
-
-  @media (max-width: 900px) {
-    margin-top: -48px;
-  }
-  @media (max-width: 600px) {
-    margin-top: -40px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 export const Avatar = styled.div`
-  width: 128px;
-  height: 128px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
-  border: 4px solid #fff;
-  background: #eef3f8 url(${userSvg}) center/100% no-repeat;
-  box-shadow: 0 6px 24px rgba(2, 32, 71, 0.15);
-  position: relative;
-  z-index: 3;
-
-  @media (max-width: 760px) {
-    width: 96px;
-    height: 96px;
-  }
+  border: 2px solid ${border};
+  background: #f1f5f9 url(${userSvg}) center/90% no-repeat;
 `;
 
 export const Info = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  gap: 8px;
 `;
 
 export const Name = styled.h1`
   margin: 0;
-  font-size: 28px;
+  font-size: 26px;
   line-height: 1.15;
   font-weight: 800;
   color: ${ink};
 
-  @media (max-width: 900px) {
-    font-size: 24px;
-  }
-  @media (max-width: 600px) {
-    font-size: 24px;
+  @media (max-width: 720px) {
+    font-size: 22px;
   }
 `;
 
 export const Subline = styled.div`
   color: ${sub};
-  font-size: 15px;
+  font-size: 14px;
 `;
 
 export const MetaRow = styled.div`
@@ -144,19 +102,22 @@ export const Badge = styled.span<{ tone?: "muted" | "solid" }>`
   border-radius: 999px;
   border: 1px solid ${border};
   color: ${({ tone }) => (tone === "muted" ? sub : ink)};
-  background: ${({ tone }) => (tone === "muted" ? "#F3F6FA" : "#fff")};
+  background: ${({ tone }) => (tone === "muted" ? "#F5F7FB" : "#fff")};
 `;
 
 export const Actions = styled.div`
   display: flex;
   gap: 10px;
-  margin-top: 6px;
   flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    justify-content: center;
+  }
 `;
 
 export const PrimaryBtn = styled.button`
-  height: 40px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 14px;
   border-radius: 10px;
   border: 1px solid ${primary};
   background: ${primary};
@@ -173,27 +134,27 @@ export const PrimaryBtn = styled.button`
 `;
 
 export const GhostBtn = styled.button`
-  height: 40px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 14px;
   border-radius: 10px;
   border: 1px solid ${border};
   background: #fff;
   color: ${ink};
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.06s ease,
-    border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.06s ease;
   &:hover {
-    box-shadow: 0 8px 22px rgba(16, 24, 40, 0.06);
     border-color: #dfe7f1;
+    box-shadow: 0 6px 16px rgba(2, 32, 71, 0.06);
   }
   &:active {
     transform: translateY(1px);
   }
 `;
 
-/* ——— Секции ——— */
+/* секции */
 export const SectionTitle = styled.h2`
-  margin: 28px 0 14px;
+  margin: 24px 0 12px;
   font-size: 18px;
   color: ${ink};
 `;
@@ -201,9 +162,8 @@ export const SectionTitle = styled.h2`
 export const Grid2 = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 16px;
   margin-bottom: 20px;
-
   @media (max-width: 760px) {
     grid-template-columns: 1fr;
   }
@@ -211,14 +171,14 @@ export const Grid2 = styled.div`
 
 export const ContactCard = styled.div`
   display: grid;
-  grid-template-columns: 44px 1fr;
+  grid-template-columns: 40px 1fr;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 14px;
   background: ${bg};
   border: 1px solid ${border};
-  border-radius: 14px;
-  transition: transform 0.06s ease, box-shadow 0.15s ease,
+  border-radius: 12px;
+  transition: box-shadow 0.15s ease, transform 0.06s ease,
     border-color 0.15s ease;
   &:hover {
     transform: translateY(-1px);
@@ -228,13 +188,13 @@ export const ContactCard = styled.div`
 `;
 
 export const ContactIcon = styled.img`
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   opacity: 0.9;
 `;
 
 export const FieldTitle = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: ${sub};
 `;
 
@@ -243,7 +203,6 @@ export const FieldValue = styled.div`
   color: ${ink};
 `;
 
-/* ——— Дополнительно ——— */
 export const AddLink = styled.a`
   color: ${primary};
   text-decoration: none;
@@ -262,7 +221,7 @@ export const Notice = styled.div<{ tone?: "error" | "info" }>`
   color: ${({ tone }) => (tone === "error" ? "#B91C1C" : ink)};
 `;
 
-/* ——— Скелетоны ——— */
+/* скелетон */
 export const SkeletonLine = styled.span<{ w?: number }>`
   display: inline-block;
   height: 14px;
