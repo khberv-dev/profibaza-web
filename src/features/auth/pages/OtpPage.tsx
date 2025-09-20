@@ -5,7 +5,9 @@ import { Trans, useTranslation } from "react-i18next";
 import { isAxiosError } from "axios";
 import styled from "@emotion/styled";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import { FaUserTie } from "react-icons/fa6";
+import { FaUserTie, FaUser } from "react-icons/fa6";
+import { PiCheckBold } from "react-icons/pi";
+
 import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
@@ -26,17 +28,17 @@ import {
   AgreementText,
   AgreementA,
 } from "../login-style";
-import { IoBusinessSharp } from "react-icons/io5";
 
 /* ---------- типы формы ---------- */
 type FormValues = {
   name: string;
   surname: string;
   middleName?: string;
-  phone: string; // маска в CustomInput, в onSubmit берём только цифры
+  phone: string;
   password: string;
   confirmPassword: string;
   role: "CLIENT" | "WORKER" | "";
+  clientKind?: "PERSON" | "LEGAL"; // подтип для CLIENT
 };
 
 /* ---------- стили выбора роли (карточки) ---------- */
@@ -53,7 +55,7 @@ const FieldLabel = styled.div`
 
 const RoleGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr; /* ⬅️ только 1 колонка */
+  grid-template-columns: 1fr;
   gap: 12px;
 `;
 
@@ -63,25 +65,51 @@ const RoleCard = styled.label<{ active?: boolean; hasError?: boolean }>`
   grid-template-columns: 44px 1fr;
   gap: 12px;
   align-items: center;
-  padding: 12px;
+  /* место под галочку справа */
+  padding: 12px 44px 12px 12px;
+
+  /* при active — прозрачная граница, ободок рисуем через background */
   border: 1px solid
     ${({ active, hasError }) =>
-      hasError ? "#ef4444" : active ? "#2563eb" : "rgba(15,18,25,.12)"};
+      hasError ? "#ef4444" : active ? "transparent" : "rgba(15,18,25,.12)"};
   border-radius: 12px;
-  background: #fff;
+
+  /* красивый активный ободок */
+  background: ${({ active }) =>
+    active
+      ? "linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, #7aa2ff, #1E5CFB) border-box"
+      : "#fff"};
+
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.06s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.06s,
+    background 0.2s;
+
+  /* тень при активной карточке */
+  box-shadow: ${({ active }) =>
+    active
+      ? "0 8px 24px rgba(30,92,251,0.12)"
+      : "0 8px 22px rgba(2,32,71,0.06)"};
 
   &:hover {
-    border-color: ${({ hasError }) => (hasError ? "#ef4444" : "#94b2ff")};
-    box-shadow: 0 8px 22px rgba(2, 32, 71, 0.06);
+    border-color: ${({ hasError, active }) =>
+      hasError ? "#ef4444" : active ? "transparent" : "#94b2ff"};
+    box-shadow: ${({ active }) =>
+      active
+        ? "0 10px 26px rgba(30,92,251,0.16)"
+        : "0 10px 22px rgba(2, 32, 71, 0.08)"};
   }
   &:active {
     transform: translateY(1px);
   }
+
+  &:has(input[type="radio"]:focus-visible) {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(30, 92, 251, 0.2),
+      0 8px 24px rgba(30, 92, 251, 0.14);
+  }
 `;
 
-const HiddenRadio = styled.input`
+const HiddenRadioMain = styled.input`
   position: absolute;
   opacity: 0;
   pointer-events: none;
@@ -96,8 +124,8 @@ const RoleIconBox = styled.span`
   place-items: center;
 
   svg {
-    font-size: 22px; /* размер иконки */
-    color: #1e5cfb; /* LinkedIn blue */
+    font-size: 22px;
+    color: #1e5cfb;
   }
 `;
 
@@ -122,6 +150,81 @@ const ErrorMsg = styled.div`
   margin-top: 4px;
 `;
 
+/* синяя галочка в правом верхнем углу карточки */
+const RoleTick = styled.span`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #1e5cfb;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(30, 92, 251, 0.3);
+`;
+
+/* ——— компактный сегмент «Юр / Физ» (CLIENT) ——— */
+const MiniSegWrap = styled.div`
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+
+  @media (max-width: 520px) {
+    padding-left: 0;
+  }
+`;
+
+const MiniSegLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+`;
+
+const MiniSegGroup = styled.div`
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const MiniSegOption = styled.label<{ active?: boolean }>`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid ${({ active }) => (active ? "#1E5CFB" : "#E5E7EB")};
+  background: ${({ active }) => (active ? "#EEF2FF" : "#fff")};
+  color: ${({ active }) => (active ? "#1E5CFB" : "#334155")};
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease,
+    transform 0.06s ease;
+
+  &:hover {
+    border-color: ${({ active }) => (active ? "#1E5CFB" : "#CBD5E1")};
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:has(input[type="radio"]:focus-visible) {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(30, 92, 251, 0.2);
+  }
+`;
+
+const MiniHiddenRadio = styled.input`
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+`;
+
 /* ---------- компонент ---------- */
 const RegisterPage = () => {
   const { t } = useTranslation();
@@ -137,6 +240,7 @@ const RegisterPage = () => {
       password: "",
       confirmPassword: "",
       role: "", // обязательный выбор
+      clientKind: "PERSON", // по умолчанию физ. лицо
     },
     mode: "onChange",
   });
@@ -146,7 +250,6 @@ const RegisterPage = () => {
   const onSubmit = async (values: FormValues) => {
     const rawPhone = values.phone.replace(/\D/g, "");
 
-    // локальные проверки
     if (rawPhone.length !== 12) {
       setError("phone", { message: t("phoneInvalid") });
       return;
@@ -160,6 +263,16 @@ const RegisterPage = () => {
       return;
     }
 
+    // Итоговая роль:
+    // CLIENT -> (PERSON => CLIENT, LEGAL => LEGAL)
+    // WORKER -> WORKER
+    let roleToSend: "CLIENT" | "LEGAL" | "WORKER";
+    if (values.role === "WORKER") {
+      roleToSend = "WORKER";
+    } else {
+      roleToSend = values.clientKind === "LEGAL" ? "LEGAL" : "CLIENT";
+    }
+
     try {
       await register({
         name: values.name.trim(),
@@ -167,19 +280,15 @@ const RegisterPage = () => {
         middleName: values.middleName?.trim() || "",
         phone: rawPhone,
         password: values.password,
-        role: values.role as "CLIENT" | "WORKER",
+        role: roleToSend,
       });
-
-      // после успешной регистрации — на логин (или ввод кода, если так задумано)
       navigate("/login", { state: { phone: rawPhone } });
     } catch (e: any) {
-      // красивый вывод ошибки сервера
       let serverMsg = t("loginFailed");
       if (isAxiosError(e) && e.response?.data) {
         const data = e.response.data;
-        if (typeof data === "string") {
-          serverMsg = data;
-        } else if (typeof data === "object") {
+        if (typeof data === "string") serverMsg = data;
+        else if (typeof data === "object") {
           const firstVal = Object.values(data)[0];
           if (firstVal && typeof firstVal === "string") serverMsg = firstVal;
         }
@@ -242,7 +351,7 @@ const RegisterPage = () => {
             }}
           />
 
-          {/* Выбор роли — карточки */}
+          {/* Выбор основной роли */}
           <Controller
             name="role"
             control={control}
@@ -253,11 +362,12 @@ const RegisterPage = () => {
                 <RoleWrap>
                   <FieldLabel>{t("role")}</FieldLabel>
                   <RoleGrid>
+                    {/* CLIENT */}
                     <RoleCard
                       active={field.value === "CLIENT"}
                       hasError={hasError}
                     >
-                      <HiddenRadio
+                      <HiddenRadioMain
                         type="radio"
                         value="CLIENT"
                         checked={field.value === "CLIENT"}
@@ -265,8 +375,13 @@ const RegisterPage = () => {
                         onBlur={field.onBlur}
                         name={field.name}
                       />
+                      {field.value === "CLIENT" && (
+                        <RoleTick aria-hidden>
+                          <PiCheckBold />
+                        </RoleTick>
+                      )}
                       <RoleIconBox>
-                        <IoBusinessSharp />
+                        <FaUser />
                       </RoleIconBox>
                       <RoleText>
                         <RoleTitle>{t("roleClient")}</RoleTitle>
@@ -274,11 +389,12 @@ const RegisterPage = () => {
                       </RoleText>
                     </RoleCard>
 
+                    {/* WORKER */}
                     <RoleCard
                       active={field.value === "WORKER"}
                       hasError={hasError}
                     >
-                      <HiddenRadio
+                      <HiddenRadioMain
                         type="radio"
                         value="WORKER"
                         checked={field.value === "WORKER"}
@@ -286,6 +402,11 @@ const RegisterPage = () => {
                         onBlur={field.onBlur}
                         name={field.name}
                       />
+                      {field.value === "WORKER" && (
+                        <RoleTick aria-hidden>
+                          <PiCheckBold />
+                        </RoleTick>
+                      )}
                       <RoleIconBox>
                         <FaUserTie />
                       </RoleIconBox>
@@ -295,6 +416,51 @@ const RegisterPage = () => {
                       </RoleText>
                     </RoleCard>
                   </RoleGrid>
+
+                  {/* Подблок выбора подтипа — только при CLIENT */}
+                  {field.value === "CLIENT" && (
+                    <Controller
+                      name="clientKind"
+                      control={control}
+                      render={({ field: cField }) => (
+                        <MiniSegWrap
+                          role="radiogroup"
+                          aria-labelledby="client-kind-label"
+                        >
+                          <MiniSegLabel id="client-kind-label">
+                            {t("clientKindHint")}
+                          </MiniSegLabel>
+
+                          <MiniSegGroup>
+                            {/* ЮР лицо — слева */}
+                            <MiniSegOption active={cField.value === "LEGAL"}>
+                              <MiniHiddenRadio
+                                type="radio"
+                                value="LEGAL"
+                                checked={cField.value === "LEGAL"}
+                                onChange={() => cField.onChange("LEGAL")}
+                                name={cField.name}
+                              />
+                              {t("workerKindLegal")}
+                            </MiniSegOption>
+
+                            {/* Физ лицо — справа */}
+                            <MiniSegOption active={cField.value === "PERSON"}>
+                              <MiniHiddenRadio
+                                type="radio"
+                                value="PERSON"
+                                checked={cField.value === "PERSON"}
+                                onChange={() => cField.onChange("PERSON")}
+                                name={cField.name}
+                              />
+                              {t("workerKindPerson")}
+                            </MiniSegOption>
+                          </MiniSegGroup>
+                        </MiniSegWrap>
+                      )}
+                    />
+                  )}
+
                   {hasError && <ErrorMsg>{fieldState.error?.message}</ErrorMsg>}
                 </RoleWrap>
               );
@@ -311,7 +477,6 @@ const RegisterPage = () => {
               minLength: { value: 8, message: t("passwordHelper") as string },
             }}
           />
-
           <CustomInput
             control={control}
             name="confirmPassword"
@@ -333,7 +498,6 @@ const RegisterPage = () => {
             {t("registerCta")}
           </CustomButton>
 
-          {/* соглашение с кликабельными ссылками */}
           <AgreementText>
             <Trans
               i18nKey="agreementRich"

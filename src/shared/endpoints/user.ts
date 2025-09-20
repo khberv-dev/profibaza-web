@@ -122,3 +122,27 @@ export const userApi = {
     return true;
   },
 };
+
+export const uploadAvatarApi = async (file: File): Promise<boolean> => {
+  const form = new FormData();
+  form.append("file", file); // поле строго "file", как ты указал
+
+  const { data } = await api.post<{ ok: boolean; message?: string }>(
+    "/user/update-avatar",
+    form,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+
+  if (!data?.ok) {
+    throw new Error(data?.message || "Не удалось загрузить аватар");
+  }
+  return true;
+};
+
+// Получение бинарника аватарки
+export const getAvatarBlobApi = async (): Promise<Blob> => {
+  const { data } = await api.get<Blob>("/user/avatar", {
+    responseType: "blob",
+  });
+  return data;
+};
