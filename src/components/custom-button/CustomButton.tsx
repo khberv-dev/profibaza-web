@@ -1,13 +1,12 @@
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties, ButtonHTMLAttributes } from "react";
 import { Spinner, StyledButton } from "./style";
 
-type Props = {
+// Наследуем все стандартные пропсы кнопки
+type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
   fullWidth?: boolean;
   loading?: boolean;
-  disabled?: boolean;
-  type?: "button" | "submit" | "reset";
-  onClick?: () => void;
+  style?: CSSProperties;
 };
 
 export function CustomButton({
@@ -17,6 +16,8 @@ export function CustomButton({
   loading = false,
   type = "button",
   onClick,
+  style,
+  ...rest
 }: Props) {
   return (
     <StyledButton
@@ -25,6 +26,8 @@ export function CustomButton({
       type={type}
       onClick={onClick}
       loading={loading}
+      style={style}
+      {...rest}
     >
       {loading ? <Spinner /> : children}
     </StyledButton>
