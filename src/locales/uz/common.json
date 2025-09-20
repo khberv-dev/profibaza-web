@@ -118,6 +118,18 @@
   "loginFailed": "Kirishda xatolik. Raqam va parolni tekshiring.",
   "loading": "Yuklanmoqda…",
   "profile": {
+    "address": {
+      "title": "Manzil",
+      "selectRegion": "Viloyatni tanlang",
+      "selectDistrict": "Tumanni tanlang",
+      "selectVillage": "Aholi punktini tanlang",
+      "save": "Manzilni saqlash",
+      "saving": "Saqlanmoqda…",
+      "clear": "Tozalash",
+      "saved": "Manzil saqlandi",
+      "fillAll": "Viloyat, tuman va aholi punktini tanlang",
+      "saveFailed": "Manzilni saqlab bo‘lmadi"
+    },
     "breadcrumbs": "Mening rezyumem",
     "roles": {
       "CLIENT": "Buyurtmachi",
