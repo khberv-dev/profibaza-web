@@ -200,5 +200,95 @@
   "footerExecutors": "Ijrochilar uchun",
   "footerClients": "Buyurtmachilar uchun",
   "footerTerms": "Foydalanuvchi kelishuvi",
-  "footerPrivacy": "Maxfiylik siyosati"
+  "footerPrivacy": "Maxfiylik siyosati",
+
+  "fields": {
+    "profession": "Kasb",
+    "experience": "Ish tajribasi",
+    "diploma": "Diplom / sertifikat yuklash",
+    "portfolio": "Portfolio (foto / video)",
+    "priceRange": "Narxlar oralig‘i",
+    "geo": "Geolokatsiya",
+    "addressActual": "Amaldagi manzil (ko‘cha, uy)",
+    "workAreas": "Ish hududlari",
+    "bigProjects": "Yirik qurilishlarga tayyorgarlik",
+    "team": "O‘z jamoasi mavjud",
+    "teamSize": "Odamlar soni",
+    "tools": "Texnika / asboblar mavjud",
+    "toolsOptional": "Ixtiyoriy: asosiy asbob-uskunalarni yozing",
+    "replySpeed": "Buyurtmalarga javob tezligi",
+    "reviews": "Baho va sharhlarni ko‘rish",
+    "ordersHistory": "Buyurtmalar tarixi",
+    "contests": "Tanlovlarda ishtirok",
+    "employment": "Bandlik formati"
+  },
+
+  "hints": {
+    "profCanMulti": "Bir nechta yo‘nalishni tanlashingiz mumkin. Filtrlash uchun yozishni boshlang.",
+    "experience": "Yillar va ish joyini ko‘rsating: bitta yoki vergul bilan ajratib bir nechtasini kiriting",
+    "priceExample": "Misol: 150 000 – 350 000 so‘m/soat",
+    "replyNote": "Bu sozlamalar mijozga sizning mavjudligingizni tushunishga yordam beradi",
+    "ratingNote": "API ulanib bo‘lgach ishga tushiriladi",
+    "historyNote": "Demo tugma"
+  },
+
+  "placeholders": {
+    "profInputEmpty": "Yozishni boshlang, masalan: Elektrik",
+    "profInputMore": "Yana qo‘shish…",
+    "experience": "Mas.: 2019–2024, «StroyPlus» MCHJ",
+    "priceMin": "Minimum, so‘m",
+    "priceMax": "Maksimum, so‘m",
+    "priceUnit": "O‘lchov birligi (soat, m², obyekt)",
+    "contestExample": "Ko‘rsating: masalan, “Mintaqaning eng yaxshi elektrik 2024”"
+  },
+
+  "dropdown": {
+    "notFound": "Topilmadimi?",
+    "add": "«{{value}}» ni qo‘shish"
+  },
+
+  "quick": {
+    "hotLabel": "Ommabop",
+    "hotList": ["Elektrik", "Santexnik", "Quruvchi"]
+  },
+
+  "groups": {
+    "popular": "Ommabop",
+    "finishing": "Pardoz ishlari",
+    "production": "Ishlab chiqarish / montaj"
+  },
+
+  "professions": [
+    "Elektrik",
+    "Santexnik",
+    "Quruvchi",
+    "Dizayner",
+    "Payvandchi",
+    "Bo‘yoqchi",
+    "Duradgor",
+    "Pardozchi",
+    "Muhandis-proRab"
+  ],
+
+  "areas": [
+    "Buxoro",
+    "G‘ijduvon",
+    "Kogon",
+    "Vobkent",
+    "Qorako‘l",
+    "Samarqand",
+    "Navoiy"
+  ],
+
+  "replySpeeds": ["Zudlik bilan", "1 soat ichida", "Faqat ish vaqtida"],
+  "employmentList": ["Individual", "Kompaniya", "Chet el"],
+
+  "common1": {
+    "yes": "Ha",
+    "no": "Yo‘q",
+    "openRating": "Reytingni ochish",
+    "show12mo": "Oxirgi 12 oy",
+    "save": "O‘zgarishlarni saqlash",
+    "cancel": "Bekor qilish"
+  }
 }

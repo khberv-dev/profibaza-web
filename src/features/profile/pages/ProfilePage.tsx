@@ -55,6 +55,7 @@ import {
 import CustomSelect, {
   SelectOption,
 } from "../../../components/custom-select/CustomSelect";
+import ProProfileSection from "./ProProfileSection";
 
 /* — компактная сетка под селекты — */
 const SelectRow = styled.div`
@@ -576,6 +577,8 @@ export default function ProfilePage() {
           </AddressCard>
         </>
       )}
+
+      <ProProfileSection />
 
       <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
       <AddLink href="#">{t("profile.add")}</AddLink>
