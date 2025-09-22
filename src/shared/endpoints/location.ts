@@ -60,20 +60,20 @@ export const pickName = (
 /** API */
 export const locationApi = {
   getRegions: async (): Promise<Region[]> => {
-    const { data } = await api.get<ListResponse>("/location/regions");
+    const { data } = await api.get<ListResponse>("/opt/location/regions");
     return (data.data || []).map(mapRegion);
   },
 
   getDistricts: async (regionId: number): Promise<District[]> => {
     const { data } = await api.get<ListResponse>(
-      `/location/districts/${regionId}`
+      `/opt/location/districts/${regionId}`
     );
     return (data.data || []).map(mapDistrict);
   },
 
   getVillages: async (districtId: number): Promise<Village[]> => {
     const { data } = await api.get<ListResponse>(
-      `/location/villages/${districtId}`
+      `/opt/location/villages/${districtId}`
     );
     return (data.data || []).map(mapVillage);
   },
