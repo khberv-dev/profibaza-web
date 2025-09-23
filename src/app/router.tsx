@@ -1,47 +1,67 @@
+// src/app/router/index.tsx
 import { createBrowserRouter } from "react-router-dom";
-// import { Protected } from "../components/Protected";
+import { Protected } from "../components/Protected";
+import { RoleGuard } from "../components/RoleGuard";
+
 import LoginPage from "../features/auth/pages/LoginPage";
 import OtpPage from "../features/auth/pages/OtpPage";
-import SearchPage from "../features/search/pages/SearchPage";
-import ProfilePage from "../features/profile/pages/ProfilePage";
-import NewOrderPage from "../features/orders/pages/NewOrderPage";
-import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
-import { RoleGuard } from "../components/RoleGuard";
-import CompanyProfilePage from "../features/profile/pages/CompanyProfilePage";
-import LandingPage from "../pages/landing/LandingPage";
-import Page404 from "../pages/not-found/Page404";
-// import { ProtectedLayout } from "../layouts/ProtectedLayout";
-import { TopbarLayout } from "../layouts/TopbarLayout";
-import SettingsPage from "../features/settings/pages/SettingsPage";
 import ForgotPasswordPage from "../features/auth/forgot/ForgotPasswordPage";
 
+import LandingPage from "../pages/landing/LandingPage";
+import Page404 from "../pages/not-found/Page404";
+
+import { TopbarLayout } from "../layouts/TopbarLayout";
+
+import SearchPage from "../features/search/pages/SearchPage";
+import ProfilePage from "../features/profile/pages/ProfilePage";
+import SettingsPage from "../features/settings/pages/SettingsPage";
+import NewOrderPage from "../features/orders/pages/NewOrderPage";
+import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
+import CompanyProfilePage from "../features/profile/pages/CompanyProfilePage";
+
 export const router = createBrowserRouter([
-  // Публичные страницы
+  // Публичные
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/forgot", element: <ForgotPasswordPage /> },
   { path: "/register", element: <OtpPage /> },
 
-  // Приложение — только после входа
+  // Всё ниже — только после входа
   {
-    path: "/app",
-    element: <TopbarLayout />,
+    element: <Protected />,
     children: [
-      { index: true, element: <SearchPage /> }, // /app
-      { path: "profile", element: <ProfilePage /> }, // /app/profile
-      { path: "settings", element: <SettingsPage /> }, // /app/profile
-      { path: "orders/new", element: <NewOrderPage /> }, // /app/orders/new
-      { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my
-
       {
-        element: <RoleGuard allow={["client_company"]} />,
+        path: "/app",
+        element: <TopbarLayout />,
         children: [
-          { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
+          { index: true, element: <SearchPage /> },           // /app
+          { path: "profile", element: <ProfilePage /> },      // /app/profile
+          { path: "settings", element: <SettingsPage /> },    // /app/settings
+          { path: "orders/new", element: <NewOrderPage /> },  // /app/orders/new
+          { path: "orders/my", element: <MyOrdersPage /> },   // /app/orders/my
+
+          // Раздел только для LEGAL (компании)
+          {
+            element: <RoleGuard allow={["LEGAL"]} />,
+            children: [
+              { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
+            ],
+          },
+
+          // при необходимости добавим блоки для CLIENT/WORKER
+          // {
+          //   element: <RoleGuard allow={["CLIENT"]} />,
+          //   children: [{ path: "client/dashboard", element: <ClientDashboardPage /> }],
+          // },
+          // {
+          //   element: <RoleGuard allow={["WORKER"]} />,
+          //   children: [{ path: "worker/jobs", element: <WorkerJobsPage /> }],
+          // },
         ],
       },
     ],
   },
 
-  // 404 (по желанию)
+  // 404
   { path: "*", element: <Page404 /> },
 ]);

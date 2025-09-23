@@ -11,7 +11,7 @@ export type MeResponseRaw = {
     phone: string;
     email: string | null;
     role: string;
-    created_at: string;
+    createdAt: string;
     updated_at: string;
   };
 };
@@ -60,7 +60,7 @@ const mapMe = (r: MeResponseRaw["data"]): Me => ({
   phone: r.phone,
   email: r.email,
   role: r.role,
-  createdAt: r.created_at,
+  createdAt: r.createdAt,
   updatedAt: r.updated_at,
 });
 

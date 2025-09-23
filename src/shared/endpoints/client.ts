@@ -18,7 +18,7 @@ export type ClientMeRaw = {
   address2: string | null;
   address3: string | null;
   userId: string;
-  created_at: string;
+  createdAt: string;
   updated_at: string;
 };
 
@@ -39,7 +39,7 @@ const mapClientMe = (r: ClientMeRaw): ClientMe => ({
   address2: r.address2,
   address3: r.address3,
   userId: r.userId,
-  createdAt: r.created_at,
+  createdAt: r.createdAt,
   updatedAt: r.updated_at,
 });
 

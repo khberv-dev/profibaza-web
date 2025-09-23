@@ -5,8 +5,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 import type { ApiError } from "./types";
-
-export const TOKEN_KEY = "pb_token";
+import { getAuthToken, useAuthStore } from "../stores/auth";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -15,7 +14,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+  const token = getAuthToken();
   if (!config.headers || !(config.headers instanceof AxiosHeaders)) {
     config.headers = new AxiosHeaders(config.headers);
   }
@@ -26,8 +25,13 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 api.interceptors.response.use(
   (r) => r,
   (error: AxiosError<any>) => {
+    // авто-логаут на 401
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+    }
+
     const data = error.response?.data;
-    const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0];
+    const lang = (localStorage.getItem("i18nextLng") || "uz").split("-")[0];
 
     const serverMsg =
       typeof data === "string"
@@ -36,7 +40,7 @@ api.interceptors.response.use(
 
     const e: ApiError = {
       status: error.response?.status ?? 0,
-      message: serverMsg, // 👈 уже человекочитаемое
+      message: serverMsg,
       details: data,
     };
     return Promise.reject(e);

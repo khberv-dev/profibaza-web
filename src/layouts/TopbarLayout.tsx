@@ -1,8 +1,7 @@
 /* TopbarLayout.tsx */
-import { Navigate, Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next"; // ⬅️
-import { TOKEN_KEY } from "../shared/api/client";
+import { useTranslation } from "react-i18next";
 import {
   Shell,
   Topbar,
@@ -18,29 +17,32 @@ import {
   Main,
   Content,
 } from "./topbar-layout.style";
+import { useAuthStore } from "../shared/stores/auth"; // ← читаем роль/авторизацию при желании
 
 export function TopbarLayout() {
-  const { t } = useTranslation(); // ⬅️
-  const token = localStorage.getItem(TOKEN_KEY);
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
-  // делаем NAV_ITEMS зависимым от t, чтобы реагировало на смену языка
-  const NAV_ITEMS = [
-    { to: "/app/find", label: t("nav.find") },
-    { to: "/app/orders", label: t("nav.orders") },
-    { to: "/app/jobs", label: t("nav.jobs") },
-    { to: "/app/forMasters", label: t("nav.forMasters") },
-    { to: "/app/help", label: t("nav.help") },
-  ];
+  // Можно учитывать роль, если какие-то пункты скрывать для ролей:
+  // const role = useAuthStore((s) => s.role);
+
+  // NAV зависит от языка — пересчёт по смене i18n.language
+  const NAV_ITEMS = useMemo(
+    () => [
+      { to: "/app/find", label: t("nav.find") },
+      { to: "/app/orders", label: t("nav.orders") },
+      { to: "/app/jobs", label: t("nav.jobs") },
+      { to: "/app/forMasters", label: t("nav.forMasters") },
+      { to: "/app/help", label: t("nav.help") },
+    ],
+    [i18n.language, t]
+  );
 
   const activePath = useMemo(() => {
     const found = NAV_ITEMS.find((n) => location.pathname.startsWith(n.to));
     return found?.to ?? "";
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, t]); // пересчитать при смене языка
-
-  if (!token) return <Navigate to="/login" replace />;
+  }, [location.pathname, NAV_ITEMS]);
 
   return (
     <Shell>
@@ -56,7 +58,6 @@ export function TopbarLayout() {
           aria-label={t("topbar.goProfile")}
         >
           <Brand>
-            {/* <BrandDot>pb</BrandDot> */}
             <BrandText>{t("brand")}</BrandText>
           </Brand>
         </Link>

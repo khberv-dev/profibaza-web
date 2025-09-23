@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { notifications } from "@mantine/notifications";
 import { sendOtp, verifyOtp } from "./api";
+import { authApi, LoginDto, RegisterDto } from "../../shared/endpoints/auth";
 
 export function useSendOtp() {
   return useMutation({
@@ -23,3 +24,16 @@ export function useVerifyOtp() {
       notifications.show({ color: "red", message: e?.response?.data?.message || "Неверный код" }),
   });
 }
+
+
+
+
+export const useLogin = () =>
+  useMutation({
+    mutationFn: (dto: LoginDto) => authApi.login(dto),
+  });
+
+export const useRegister = () =>
+  useMutation({
+    mutationFn: (dto: RegisterDto) => authApi.register(dto),
+  });

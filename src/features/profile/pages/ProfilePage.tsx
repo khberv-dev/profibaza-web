@@ -2,6 +2,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
+import "dayjs/locale/uz"; 
 import styled from "@emotion/styled";
 
 import {
@@ -127,6 +130,8 @@ const Row = styled.div`
   margin-top: 10px;
 `;
 
+
+
 function formatPhoneHuman(p?: string | null) {
   const d = (p || "").replace(/\D/g, "");
   if (d.length !== 12) return p || "—";
@@ -151,6 +156,12 @@ function findByAnyName<
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { data, isLoading, isError, error } = useMe();
+
+  const safeFormatDate = (v?: string | null) => {
+    if (!v) return "—";
+    const d = dayjs(v);
+    return d.isValid() ? d.locale(i18n.language).format("DD.MM.YYYY HH:mm") : "—";
+  };
 
   // === Аватарка ===
   const {
@@ -402,14 +413,16 @@ export default function ProfilePage() {
             </Name>
 
             <Subline>
-              {isLoading ? (
-                <SkeletonLine w={160} />
-              ) : data ? (
-                new Date(data.createdAt).toLocaleDateString()
-              ) : (
-                "—"
-              )}
-            </Subline>
+  {isLoading ? (
+    <SkeletonLine w={160} />
+  ) : data?.createdAt ? (
+    dayjs(data.createdAt).isValid()
+      ? dayjs(data.createdAt).locale(i18n.language).format("DD.MM.YYYY HH:mm")
+      : "—"
+  ) : (
+    "—"
+  )}
+</Subline>
 
             <MetaRow>
               {isLoading ? (
@@ -506,14 +519,12 @@ export default function ProfilePage() {
               <>
                 <AddressLine>{currentAddressText}</AddressLine>
                 <AddressSub>
-                  {saveMsg
-                    ? saveMsg
-                    : clientMe
-                    ? new Date(
-                        clientMe.updatedAt || clientMe.createdAt
-                      ).toLocaleString()
-                    : ""}
-                </AddressSub>
+  {saveMsg
+    ? saveMsg
+    : clientMe
+    ? safeFormatDate(clientMe.updatedAt || clientMe.createdAt)
+    : ""}
+</AddressSub>
               </>
             ) : (
               <>
@@ -578,7 +589,9 @@ export default function ProfilePage() {
         </>
       )}
 
-      <ProProfileSection />
+{data?.role === "WORKER" && <ProProfileSection role="WORKER" />}
+{data?.role === "LEGAL"  && <ProProfileSection role="LEGAL" />}
+{data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
 
       <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
       <AddLink href="#">{t("profile.add")}</AddLink>

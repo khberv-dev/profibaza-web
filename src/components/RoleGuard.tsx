@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
-/** roles: "client_person","client_company","exec_graduate","exec_master" */
-export function RoleGuard({ allow }: { allow: string[] }) {
-  const raw = localStorage.getItem("pb_user");
-  const user = raw ? JSON.parse(raw) : null;
-  const role = user?.role as string | undefined;
+import type { UserRole } from "../shared/auth/roles";
+import { useAuthStore } from "../shared/stores/auth";
+
+export function RoleGuard({ allow }: { allow: UserRole[] }) {
+  const role = useAuthStore((s) => s.role);
   return role && allow.includes(role) ? <Outlet /> : <Navigate to="/" replace />;
 }
