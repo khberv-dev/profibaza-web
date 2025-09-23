@@ -133,7 +133,8 @@
     "breadcrumbs": "Mening rezyumem",
     "roles": {
       "CLIENT": "Buyurtmachi",
-      "WORKER": "Ijrochi"
+      "WORKER": "Ijrochi",
+      "LEGAL": "Buyurtmachi (yuridik shaxs)"
     },
     "settings": "Sozlamalar",
     "uploadAvatar": "Avatar yuklash",

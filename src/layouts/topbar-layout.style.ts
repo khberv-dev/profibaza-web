@@ -229,7 +229,7 @@ export const Main = styled.div`
 `;
 
 export const Content = styled.main`
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 16px;
 `;

@@ -18,6 +18,7 @@ import SettingsPage from "../features/settings/pages/SettingsPage";
 import NewOrderPage from "../features/orders/pages/NewOrderPage";
 import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
 import CompanyProfilePage from "../features/profile/pages/CompanyProfilePage";
+import MastersSearchPage from "../features/search/pages/MasterCard";
 
 export const router = createBrowserRouter([
   // Публичные
@@ -34,17 +35,18 @@ export const router = createBrowserRouter([
         path: "/app",
         element: <TopbarLayout />,
         children: [
-          { index: true, element: <SearchPage /> },           // /app
-          { path: "profile", element: <ProfilePage /> },      // /app/profile
-          { path: "settings", element: <SettingsPage /> },    // /app/settings
-          { path: "orders/new", element: <NewOrderPage /> },  // /app/orders/new
-          { path: "orders/my", element: <MyOrdersPage /> },   // /app/orders/my
+          { index: true, element: <SearchPage /> }, // /app
+          { path: "profile", element: <ProfilePage /> }, // /app/profile
+          { path: "settings", element: <SettingsPage /> }, // /app/settings
+          { path: "orders/new", element: <NewOrderPage /> }, // /app/orders/new
+          { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my
 
           // Раздел только для LEGAL (компании)
           {
             element: <RoleGuard allow={["LEGAL"]} />,
             children: [
               { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
+              { path: "find", element: <MastersSearchPage /> }, // /app/company/profile
             ],
           },
 
