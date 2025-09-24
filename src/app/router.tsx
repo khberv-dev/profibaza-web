@@ -43,7 +43,7 @@ export const router = createBrowserRouter([
 
           // Раздел только для LEGAL (компании)
           {
-            element: <RoleGuard allow={["LEGAL"]} />,
+            element: <RoleGuard allow={["LEGAL", "WORKER"]} />,
             children: [
               { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
               { path: "find", element: <MastersSearchPage /> }, // /app/company/profile
