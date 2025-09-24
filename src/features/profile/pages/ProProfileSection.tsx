@@ -1,5 +1,5 @@
 // src/features/profile/pages/ProProfileSection.tsx
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Row,
   SectionTitle,
@@ -15,9 +15,7 @@ import {
   Textarea,
   Hint,
   Chips,
-  ChipsStack,
   Chip,
-  RailChip,
   SwitchWrap,
   SwitchBtn,
   Upload,
