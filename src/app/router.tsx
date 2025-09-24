@@ -40,13 +40,13 @@ export const router = createBrowserRouter([
           { path: "settings", element: <SettingsPage /> }, // /app/settings
           { path: "orders/new", element: <NewOrderPage /> }, // /app/orders/new
           { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my
+          { path: "find", element: <MastersSearchPage /> },
 
           // Раздел только для LEGAL (компании)
           {
             element: <RoleGuard allow={["LEGAL", "WORKER"]} />,
             children: [
               { path: "company/profile", element: <CompanyProfilePage /> }, // /app/company/profile
-              { path: "find", element: <MastersSearchPage /> }, // /app/company/profile
             ],
           },
 
