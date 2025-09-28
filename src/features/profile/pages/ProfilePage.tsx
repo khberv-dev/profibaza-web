@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
-import "dayjs/locale/uz"; 
+import "dayjs/locale/uz";
 import styled from "@emotion/styled";
 
 import {
@@ -130,8 +130,6 @@ const Row = styled.div`
   margin-top: 10px;
 `;
 
-
-
 function formatPhoneHuman(p?: string | null) {
   const d = (p || "").replace(/\D/g, "");
   if (d.length !== 12) return p || "—";
@@ -160,7 +158,9 @@ export default function ProfilePage() {
   const safeFormatDate = (v?: string | null) => {
     if (!v) return "—";
     const d = dayjs(v);
-    return d.isValid() ? d.locale(i18n.language).format("DD.MM.YYYY HH:mm") : "—";
+    return d.isValid()
+      ? d.locale(i18n.language).format("DD.MM.YYYY HH:mm")
+      : "—";
   };
 
   // === Аватарка ===
@@ -371,132 +371,138 @@ export default function ProfilePage() {
 
   return (
     <Wrap>
-      <TopBar>
-        <Crumb>
-          {t("profile.breadcrumbs")} / <span>{t("profile.title")}</span>
-        </Crumb>
-        <LangSwitcher />
-      </TopBar>
+      <div style={{ padding: 16 }}>
+        <TopBar>
+          <Crumb>
+            {t("profile.breadcrumbs")} / <span>{t("profile.title")}</span>
+          </Crumb>
+          <LangSwitcher />
+        </TopBar>
 
-      <Card>
-        <CardBody>
-          <AvatarWrap>
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="avatar"
-                width={112}
-                height={112}
-                style={{
-                  width: 112,
-                  height: 112,
-                  borderRadius: "50%",
-                  border: "2px solid #E7ECF3",
-                  objectFit: "cover",
-                  background: "#f1f5f9",
-                }}
-              />
-            ) : (
-              <Avatar aria-label="avatar placeholder" />
-            )}
-          </AvatarWrap>
-
-          <Info>
-            <Name>
-              {isLoading ? (
-                <SkeletonLine w={220} />
+        <Card>
+          <CardBody>
+            <AvatarWrap>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  width={112}
+                  height={112}
+                  style={{
+                    width: 112,
+                    height: 112,
+                    borderRadius: "50%",
+                    border: "2px solid #E7ECF3",
+                    objectFit: "cover",
+                    background: "#f1f5f9",
+                  }}
+                />
               ) : (
-                <>
-                  {data?.name || "—"} {data?.surname || ""}
-                </>
+                <Avatar aria-label="avatar placeholder" />
               )}
-            </Name>
+            </AvatarWrap>
 
-            <Subline>
-  {isLoading ? (
-    <SkeletonLine w={160} />
-  ) : data?.createdAt ? (
-    dayjs(data.createdAt).isValid()
-      ? dayjs(data.createdAt).locale(i18n.language).format("DD.MM.YYYY HH:mm")
-      : "—"
-  ) : (
-    "—"
-  )}
-</Subline>
+            <Info>
+              <Name>
+                {isLoading ? (
+                  <SkeletonLine w={220} />
+                ) : (
+                  <>
+                    {data?.name || "—"} {data?.surname || ""}
+                  </>
+                )}
+              </Name>
 
-            <MetaRow>
-              {isLoading ? (
-                <SkeletonLine w={80} />
-              ) : (
-                <Badge>
-                  {data?.role ? t(`profile.roles.${data.role}`) : "—"}
-                </Badge>
-              )}
-              <Badge tone="muted">{t("profile.visibility.public")}</Badge>
-            </MetaRow>
-
-            <Actions>
-              <PrimaryBtn type="button" onClick={onPick} disabled={uploading}>
-                {uploading
-                  ? t("profile.uploading") || "Загрузка..."
-                  : t("profile.uploadAvatar") || "Загрузить аватар"}
-              </PrimaryBtn>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                style={{ display: "none" }}
-              />
-
-              <NavLink to="/app/settings" style={{ textDecoration: "none" }}>
-                <GhostBtn type="button" disabled={uploading}>
-                  {t("profile.settings")}
-                </GhostBtn>
-              </NavLink>
-            </Actions>
-
-            {(avatarLoading || uploading) && (
               <Subline>
-                {uploading
-                  ? t("profile.uploading") || "Отправляем файл..."
-                  : t("profile.loadingAvatar") || "Загружаем аватар..."}
+                {isLoading ? (
+                  <SkeletonLine w={160} />
+                ) : data?.createdAt ? (
+                  dayjs(data.createdAt).isValid() ? (
+                    dayjs(data.createdAt)
+                      .locale(i18n.language)
+                      .format("DD.MM.YYYY HH:mm")
+                  ) : (
+                    "—"
+                  )
+                ) : (
+                  "—"
+                )}
               </Subline>
-            )}
-            {avatarError && avatarUrl == null && null}
-          </Info>
-        </CardBody>
-      </Card>
 
-      {isError && (
-        <Notice tone="error">
-          {(error as any)?.message || t("profile.loadFailed")}
-        </Notice>
-      )}
+              <MetaRow>
+                {isLoading ? (
+                  <SkeletonLine w={80} />
+                ) : (
+                  <Badge>
+                    {data?.role ? t(`profile.roles.${data.role}`) : "—"}
+                  </Badge>
+                )}
+                <Badge tone="muted">{t("profile.visibility.public")}</Badge>
+              </MetaRow>
 
-      <SectionTitle>{t("profile.contacts")}</SectionTitle>
+              <Actions>
+                <PrimaryBtn type="button" onClick={onPick} disabled={uploading}>
+                  {uploading
+                    ? t("profile.uploading") || "Загрузка..."
+                    : t("profile.uploadAvatar") || "Загрузить аватар"}
+                </PrimaryBtn>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileChange}
+                  style={{ display: "none" }}
+                />
 
-      <Grid2>
-        <ContactCard>
-          <ContactIcon src="/phone.svg" alt="" />
-          <div>
-            <FieldTitle>{t("profile.phone")}</FieldTitle>
-            <FieldValue>
-              {isLoading ? <SkeletonLine w={120} /> : phonePretty}
-            </FieldValue>
-          </div>
-        </ContactCard>
+                <NavLink to="/app/settings" style={{ textDecoration: "none" }}>
+                  <GhostBtn type="button" disabled={uploading}>
+                    {t("profile.settings")}
+                  </GhostBtn>
+                </NavLink>
+              </Actions>
 
-        <ContactCard>
-          <ContactIcon src="/mail.svg" alt="" />
-          <div>
-            <FieldTitle>{t("profile.email")}</FieldTitle>
-            <FieldValue>
-              {isLoading ? <SkeletonLine w={200} /> : data?.email || "—"}
-            </FieldValue>
-          </div>
-        </ContactCard>
-      </Grid2>
+              {(avatarLoading || uploading) && (
+                <Subline>
+                  {uploading
+                    ? t("profile.uploading") || "Отправляем файл..."
+                    : t("profile.loadingAvatar") || "Загружаем аватар..."}
+                </Subline>
+              )}
+              {avatarError && avatarUrl == null && null}
+            </Info>
+          </CardBody>
+        </Card>
+
+        {isError && (
+          <Notice tone="error">
+            {(error as any)?.message || t("profile.loadFailed")}
+          </Notice>
+        )}
+
+        <SectionTitle>{t("profile.contacts")}</SectionTitle>
+
+        <Grid2>
+          <ContactCard>
+            <ContactIcon src="/phone.svg" alt="" />
+            <div>
+              <FieldTitle>{t("profile.phone")}</FieldTitle>
+              <FieldValue>
+                {isLoading ? <SkeletonLine w={120} /> : phonePretty}
+              </FieldValue>
+            </div>
+          </ContactCard>
+
+          <ContactCard>
+            <ContactIcon src="/mail.svg" alt="" />
+            <div>
+              <FieldTitle>{t("profile.email")}</FieldTitle>
+              <FieldValue>
+                {isLoading ? <SkeletonLine w={200} /> : data?.email || "—"}
+              </FieldValue>
+            </div>
+          </ContactCard>
+        </Grid2>
+      </div>
 
       {/* Адрес — только для CLIENT */}
       {isClient && (
@@ -519,12 +525,12 @@ export default function ProfilePage() {
               <>
                 <AddressLine>{currentAddressText}</AddressLine>
                 <AddressSub>
-  {saveMsg
-    ? saveMsg
-    : clientMe
-    ? safeFormatDate(clientMe.updatedAt || clientMe.createdAt)
-    : ""}
-</AddressSub>
+                  {saveMsg
+                    ? saveMsg
+                    : clientMe
+                    ? safeFormatDate(clientMe.updatedAt || clientMe.createdAt)
+                    : ""}
+                </AddressSub>
               </>
             ) : (
               <>
@@ -589,16 +595,17 @@ export default function ProfilePage() {
         </>
       )}
 
-{data?.role === "WORKER" && <ProProfileSection role="WORKER" />}
-{data?.role === "LEGAL"  && <ProProfileSection role="LEGAL" />}
-{data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
+      {data?.role === "WORKER" && <ProProfileSection role="WORKER" />}
+      {data?.role === "LEGAL" && <ProProfileSection role="LEGAL" />}
+      {data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
+      <div style={{ padding: 16 }}>
+        <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
+        <AddLink href="#">{t("profile.add")}</AddLink>
 
-      <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
-      <AddLink href="#">{t("profile.add")}</AddLink>
-
-      <SectionTitle style={{ marginTop: 28 }}>
-        {t("profile.searchSettings")}
-      </SectionTitle>
+        <SectionTitle style={{ marginTop: 28 }}>
+          {t("profile.searchSettings")}
+        </SectionTitle>
+      </div>
 
       <EditProfileModal
         open={editOpen}

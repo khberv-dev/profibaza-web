@@ -139,7 +139,7 @@ export const Page = styled.div`
   padding: 24px;
   color: ${UI.text};
   @media (max-width: 960px) {
-    padding: 16px;
+    // padding: 16px;
   }
 `;
 
