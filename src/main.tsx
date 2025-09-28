@@ -9,11 +9,9 @@ import { router } from "./app/router.tsx";
 import { queryClient } from "./app/queryClient.ts";
 
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AppTheme>
-        <RouterProvider router={router} />
-      </AppTheme>
-    </QueryClientProvider>
-  </React.StrictMode>
+  <QueryClientProvider client={queryClient}>
+    <AppTheme>
+      <RouterProvider router={router} />
+    </AppTheme>
+  </QueryClientProvider>
 );

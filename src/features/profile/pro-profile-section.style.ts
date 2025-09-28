@@ -32,7 +32,7 @@ export const Card = styled.section`
   border-radius: 16px;
   background: #ffffff;
   margin-bottom: 28px;
-//   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  //   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
   overflow: hidden; /* страховка от переполнений */
 `;
 
@@ -106,12 +106,24 @@ export const Notice = styled.div<{ tone?: "error" | "muted" }>`
   font-size: 14px;
   margin-top: 14px;
   background: ${(p) =>
-    p.tone === "error" ? "#fef2f2" : p.tone === "muted" ? "#f5f8fc" : "#f8fafc"};
+    p.tone === "error"
+      ? "#fef2f2"
+      : p.tone === "muted"
+      ? "#f5f8fc"
+      : "#f8fafc"};
   color: ${(p) =>
-    p.tone === "error" ? "#7f1d1d" : p.tone === "muted" ? "#475569" : "#0f172a"};
+    p.tone === "error"
+      ? "#7f1d1d"
+      : p.tone === "muted"
+      ? "#475569"
+      : "#0f172a"};
   border: 1px solid
     ${(p) =>
-      p.tone === "error" ? "#fee2e2" : p.tone === "muted" ? "#e7ecf3" : "#e7ecf3"};
+      p.tone === "error"
+        ? "#fee2e2"
+        : p.tone === "muted"
+        ? "#e7ecf3"
+        : "#e7ecf3"};
 `;
 
 /* ===== Grids ===== */
@@ -143,18 +155,22 @@ export const RailRow = styled.div`
   grid-template-columns: 1fr;
   gap: ${gapMobile + 4}px;
 
-  @media (min-width: 900px) {
-    grid-template-columns: clamp(${colStickyMin}px, 24vw, ${colStickyMax}px) minmax(0, 1fr);
+  @media (min-width: 980px) {
+    grid-template-columns: clamp(${colStickyMin}px, 26vw, ${colStickyMax}px) minmax(
+        0,
+        1fr
+      );
     gap: ${gapTablet + 4}px;
   }
   @media (min-width: 1280px) {
     gap: ${gapDesktop + 4}px;
   }
 
+  /* липкий левый сайдбар — в духе HH */
   @media (min-width: 1024px) {
     & > :first-of-type {
       position: sticky;
-      top: 16px;
+      top: 18px; /* чётко под шапкой */
       align-self: start;
     }
   }
@@ -202,7 +218,8 @@ export const Input = styled.input`
   background: #fff;
   outline: none;
   box-sizing: border-box; /* защищаем от переполнения */
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 
   &::placeholder {
     color: #9aa5b1;
@@ -228,7 +245,8 @@ export const Textarea = styled.textarea`
   outline: none;
   resize: vertical;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background 0.15s ease;
 
   &::placeholder {
     color: #9aa5b1;
@@ -328,7 +346,8 @@ export const Upload = styled.label`
   background: #fafbff;
   color: #334155;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.08s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.08s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     background: #f3f6ff;
@@ -417,7 +436,6 @@ export const Divider = styled.hr`
     margin: 26px 0;
   }
 `;
-
 
 export const HotRow = styled.div`
   display: flex;

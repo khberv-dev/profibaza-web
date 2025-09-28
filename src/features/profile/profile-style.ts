@@ -14,7 +14,7 @@ const primaryHover = "#194DDA";
 export const Wrap = styled.div`
   margin: 24px auto 80px;
   padding: 0 20px;
-  max-width: 1100px;
+  max-width: 1800px;
 `;
 
 export const TopBar = styled.div`

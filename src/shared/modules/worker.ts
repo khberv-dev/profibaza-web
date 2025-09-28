@@ -25,6 +25,9 @@ export type WorkerProfessionPayload = {
   hasTeam: boolean;
   teamMemberCount: number;
   readyForHugeProject: boolean;
+  // доп. поля
+  competitions?: "YES" | "NO";
+  inventory?: string;
 };
 
 export type WorkerProfessionRow = {
@@ -39,9 +42,105 @@ export type WorkerProfessionRow = {
   professionId: string;
   createdAt: string;
   updatedAt: string;
+  // доп. поля
+  competitions?: "YES" | "NO";
+  inventory?: string;
 };
 
-// Сохранить/обновить
+// ==== DEMO (портфолио) ====
+
+export type ProfessionDemoRaw = {
+  id: string;
+  fileId: string;
+  comment: string | null;
+  workerProfessionId: string;
+  createdAt: string;
+};
+
+export type ProfessionDemo = {
+  id: string;
+  url: string; // собран из fileId
+  type: "image" | "video";
+  createdAt: string;
+  comment?: string | null;
+  fileId: string;
+  workerProfessionId: string;
+};
+
+// Сформировать прямую ссылку на файл демо по fileId.
+// Если у вас другой роут раздачи файлов — поправьте здесь один раз.
+const buildDemoUrl = (fileId?: string | null): string => {
+  if (!fileId) return "";
+  const base = import.meta.env.VITE_API_URL || "";
+  // предположительно файлы отдаются по /files/:fileId — при необходимости поменяй путь
+  return `${base.replace(/\/$/, "")}/files/${encodeURIComponent(fileId)}`;
+};
+
+const inferMediaType = (fileId: string): "image" | "video" => {
+  const id = fileId.toLowerCase();
+  return /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(id) ? "video" : "image";
+};
+
+// GET /worker/profession/demos/:id
+export async function getProfessionDemos(
+  workerProfessionId: string,
+  signal?: AbortSignal
+): Promise<ProfessionDemo[]> {
+  const { data } = await api.get<{ ok: boolean; data: ProfessionDemoRaw[] }>(
+    `/worker/profession/demos/${encodeURIComponent(workerProfessionId)}`,
+    { signal }
+  );
+
+  const items = Array.isArray(data?.data) ? data.data : [];
+  return items.map((x) => ({
+    id: x.id,
+    fileId: x.fileId,
+    workerProfessionId: x.workerProfessionId,
+    createdAt: x.createdAt,
+    comment: x.comment,
+    url: buildDemoUrl(x.fileId),
+    type: inferMediaType(x.fileId),
+  }));
+}
+
+// POST /worker/profession/upload-demo/:id  (FormData: file)
+export async function uploadProfessionDemo(
+  workerProfessionId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+  signal?: AbortSignal
+): Promise<ProfessionDemo> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const { data } = await api.post<{ ok: boolean; data: ProfessionDemoRaw }>(
+    `/worker/profession/upload-demo/${encodeURIComponent(workerProfessionId)}`,
+    form,
+    {
+      signal,
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (ev) => {
+        if (!onProgress || !ev.total) return;
+        onProgress(Math.round((ev.loaded / ev.total) * 100));
+      },
+    }
+  );
+
+  const raw = data?.data;
+  if (!raw?.fileId) throw new Error("Некорректный ответ при загрузке демо");
+
+  return {
+    id: raw.id,
+    fileId: raw.fileId,
+    workerProfessionId: raw.workerProfessionId,
+    createdAt: raw.createdAt,
+    comment: raw.comment,
+    url: buildDemoUrl(raw.fileId),
+    type: inferMediaType(raw.fileId),
+  };
+}
+
+// POST /worker/profession  (создать)
 export async function saveWorkerProfession(
   payload: WorkerProfessionPayload,
   signal?: AbortSignal
@@ -49,7 +148,18 @@ export async function saveWorkerProfession(
   await api.post("/worker/profession", payload, { signal });
 }
 
-// (опционально) получить текущие значения, если бэкенд это поддерживает
+// PUT /worker/profession/:id  (обновить)
+export async function updateWorkerProfession(
+  id: string,
+  payload: WorkerProfessionPayload,
+  signal?: AbortSignal
+): Promise<void> {
+  await api.put(`/worker/profession/${encodeURIComponent(id)}`, payload, {
+    signal,
+  });
+}
+
+// (опционально) получить текущие значения
 export type WorkerProfessionState = WorkerProfessionPayload & { id?: string };
 export async function getWorkerProfession(
   signal?: AbortSignal
@@ -59,17 +169,14 @@ export async function getWorkerProfession(
       ok: boolean;
       data: WorkerProfessionRow[];
     }>("/worker/profession", { signal });
-
-    if (Array.isArray(data?.data) && data.data.length > 0) {
-      return data.data[0]; // берём первую запись
-    }
+    if (Array.isArray(data?.data) && data.data.length > 0) return data.data[0];
     return null;
   } catch {
     return null;
   }
 }
 
-// ============= Документы (как у тебя было) =============
+// ============= Документы =============
 export type WorkerDocRaw = {
   id: string;
   fileId: string;
@@ -88,7 +195,6 @@ export type UploadedDoc = {
   url: string | null;
   type?: string;
   createdAt?: string;
-  // удобный доступ к fileId для скачки
   fileId?: string | null;
 };
 
@@ -153,14 +259,12 @@ export async function uploadWorkerDocument(
   };
 }
 
-// удобная скачка по fileId (GET /worker/documents/:fileId)
 export async function downloadWorkerDocument(
   fileId: string,
   filename?: string
 ) {
   const url = buildFileUrl(fileId);
   if (!url) return;
-
   const res = await api.get(url, { responseType: "blob" });
   const blob = new Blob([res.data]);
   const a = document.createElement("a");
