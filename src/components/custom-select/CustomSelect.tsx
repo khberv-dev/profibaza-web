@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useId } from "react";
 import styled from "@emotion/styled";
 import { PiCaretDownBold, PiCheckBold } from "react-icons/pi";
 
-export type SelectOption = { value: string | number; label: string };
+export type SelectOption = { value: string | number; label: string; disabled?: boolean };
 
 type Props = {
   options: SelectOption[];
@@ -31,8 +31,7 @@ const Trigger = styled.button<{ disabled?: boolean }>`
   color: #0f172a;
   text-align: left;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-  transition: border-color 0.15s ease, box-shadow 0.15s ease,
-    transform 0.06s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
 
   &:hover {
     border-color: ${({ disabled }) => (disabled ? "#e7ecf3" : "#dfe7f1")};
@@ -72,7 +71,7 @@ const Menu = styled.div<{ $maxh: number }>`
   max-height: ${({ $maxh }) => `${$maxh}px`};
 `;
 
-const Item = styled.div<{ $active?: boolean; $selected?: boolean }>`
+const Item = styled.div<{ $active?: boolean; $selected?: boolean; $disabled?: boolean }>`
   position: relative;
   display: grid;
   grid-template-columns: 1fr 20px;
@@ -82,11 +81,13 @@ const Item = styled.div<{ $active?: boolean; $selected?: boolean }>`
   font-size: 14px;
   color: ${({ $active }) => ($active ? "#0f172a" : "#111827")};
   background: ${({ $active }) => ($active ? "#f5f7fb" : "#fff")};
-  cursor: pointer;
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   transition: background 0.12s ease, color 0.12s ease;
+  opacity: ${({ $disabled }) => ($disabled ? 0.5 : 1)};
+  pointer-events: ${({ $disabled }) => ($disabled ? "none" : "auto")};
 
   &:hover {
-    background: #f5f7fb;
+    background: ${({ $disabled }) => ($disabled ? "#fff" : "#f5f7fb")};
   }
 
   .check {
@@ -126,13 +127,28 @@ export function CustomSelect({
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState<number>(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const listId = id ? `${id}-listbox` : undefined;
+  const listId = id ? `${id}-listbox` : useId();
 
   const selectedIndex = useMemo(
     () => options.findIndex((o) => String(o.value) === String(value ?? "")),
     [options, value]
   );
   const selected = selectedIndex >= 0 ? options[selectedIndex] : undefined;
+
+  const isDisabledIdx = (idx: number) => Boolean(options[idx]?.disabled);
+
+  // найти следующий/предыдущий доступный индекс
+  const findNextEnabled = (from: number, dir: 1 | -1) => {
+    if (options.length === 0) return -1;
+    let i = from;
+    for (let step = 0; step < options.length; step++) {
+      i = Math.min(options.length - 1, Math.max(0, i + dir));
+      if (!isDisabledIdx(i)) return i;
+      // если упёрлись в край — дальше нет вариантов
+      if ((dir === 1 && i === options.length - 1) || (dir === -1 && i === 0)) break;
+    }
+    return -1;
+  };
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -144,13 +160,20 @@ export function CustomSelect({
   }, [open]);
 
   useEffect(() => {
-    // при открытии подсветим текущий выбранный
-    if (open) setHighlight(selectedIndex);
-  }, [open, selectedIndex]);
+    // при открытии подсветим выбранный (если он не disabled), иначе — первый доступный
+    if (open) {
+      if (selectedIndex >= 0 && !isDisabledIdx(selectedIndex)) {
+        setHighlight(selectedIndex);
+      } else {
+        const firstEnabled = options.findIndex((o) => !o.disabled);
+        setHighlight(firstEnabled);
+      }
+    }
+  }, [open, selectedIndex, options]);
 
   const choose = (idx: number) => {
     const opt = options[idx];
-    if (!opt) return;
+    if (!opt || opt.disabled) return; // защита
     onChange(opt.value, opt);
     setOpen(false);
   };
@@ -170,30 +193,37 @@ export function CustomSelect({
     }
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      if (highlight >= 0) choose(highlight);
+      if (highlight >= 0 && !isDisabledIdx(highlight)) choose(highlight);
       return;
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlight((h) => {
-        const next = Math.min(options.length - 1, (h < 0 ? -1 : h) + 1);
-        return next;
-      });
+      const start = highlight < 0 ? -1 : highlight;
+      const next = findNextEnabled(start, 1);
+      if (next >= 0) setHighlight(next);
       return;
     }
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlight((h) => Math.max(0, (h < 0 ? 0 : h) - 1));
+      const start = highlight < 0 ? options.length : highlight;
+      const prev = findNextEnabled(start, -1);
+      if (prev >= 0) setHighlight(prev);
       return;
     }
     if (e.key === "Home") {
       e.preventDefault();
-      setHighlight(0);
+      const first = options.findIndex((o) => !o.disabled);
+      if (first >= 0) setHighlight(first);
       return;
     }
     if (e.key === "End") {
       e.preventDefault();
-      setHighlight(options.length - 1);
+      for (let i = options.length - 1; i >= 0; i--) {
+        if (!options[i].disabled) {
+          setHighlight(i);
+          break;
+        }
+      }
       return;
     }
   };
@@ -225,10 +255,13 @@ export function CustomSelect({
                 key={String(opt.value)}
                 role="option"
                 aria-selected={selectedIndex === idx}
+                aria-disabled={opt.disabled ? true : undefined}
                 $active={highlight === idx}
                 $selected={selectedIndex === idx}
-                onMouseEnter={() => setHighlight(idx)}
+                $disabled={opt.disabled}
+                onMouseEnter={() => !opt.disabled && setHighlight(idx)}
                 onClick={() => choose(idx)}
+                title={opt.disabled ? "Недоступно" : undefined}
               >
                 <span>{opt.label}</span>
                 <span className="check">
@@ -237,9 +270,7 @@ export function CustomSelect({
               </Item>
             ))}
           {!loading && options.length > 0 && <Divider />}
-          {!loading && (
-            <Hint style={{ fontSize: 12 }}>Esc — закрыть • ↑/↓ — выбор</Hint>
-          )}
+          {!loading && <Hint style={{ fontSize: 12 }}>Esc — закрыть • ↑/↓ — выбор</Hint>}
         </Menu>
       )}
     </Wrap>

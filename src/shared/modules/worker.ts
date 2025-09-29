@@ -159,18 +159,25 @@ export async function updateWorkerProfession(
   });
 }
 
+
+export async function getWorkerProfessions(
+  signal?: AbortSignal
+): Promise<WorkerProfessionRow[]> {
+  const { data } = await api.get<{ ok: boolean; data: WorkerProfessionRow[] }>(
+    "/worker/profession",
+    { signal }
+  );
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
 // (опционально) получить текущие значения
 export type WorkerProfessionState = WorkerProfessionPayload & { id?: string };
 export async function getWorkerProfession(
   signal?: AbortSignal
 ): Promise<WorkerProfessionRow | null> {
   try {
-    const { data } = await api.get<{
-      ok: boolean;
-      data: WorkerProfessionRow[];
-    }>("/worker/profession", { signal });
-    if (Array.isArray(data?.data) && data.data.length > 0) return data.data[0];
-    return null;
+    const list = await getWorkerProfessions(signal);
+    return list[0] ?? null;
   } catch {
     return null;
   }
