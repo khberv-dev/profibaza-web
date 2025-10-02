@@ -1,9 +1,9 @@
 // src/features/profile/pages/ProProfileSection.tsx
 import React from "react";
 import { SectionTitle, RailRow } from "../pro-profile-section.style";
-import { WorkerProfile } from "./components/WorkerProfile";
+import { WorkerProfile } from "./components/worker/WorkerProfile";
 import { LegalProfile } from "./components/LegalProfile";
-import { ClientProfile } from "./components/ClientProfile";
+import { ClientProfile } from "./components/client/ClientProfile";
 
 type Role = "WORKER" | "LEGAL" | "CLIENT";
 

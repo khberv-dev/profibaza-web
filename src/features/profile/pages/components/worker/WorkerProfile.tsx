@@ -1,4 +1,14 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  Pencil,
+  Clock,
+  Users,
+  Banknote,
+  Rocket,
+  Trophy,
+  Wrench,
+} from "lucide-react";
+import { Image } from "antd";
 import { toast, Toaster } from "react-hot-toast";
 import {
   Page,
@@ -31,45 +41,51 @@ import {
   Small,
   JobItem,
   JobTitle,
-  Subtle,
   StatRow,
   StatPill,
   ActionRow,
   SoftPill,
-  LinkRow,
-  TextLink,
   MutedBar,
+  HeadRow,
+  Meta,
 } from "./worker-profile.style";
 
 import {
   downloadWorkerDocument,
   getProfessions,
   getWorkerDocuments,
-  getWorkerProfession,
   saveWorkerProfession,
   uploadWorkerDocument,
   Profession,
   UploadedDoc,
   updateWorkerProfession,
   WorkerProfessionRow,
-  getProfessionDemos,
   uploadProfessionDemo,
   getWorkerProfessions,
-} from "../../../../shared/modules/worker";
+} from "../../../../../shared/modules/worker";
 type DemoMap = Record<
   string,
-  import("../../../../shared/modules/worker").ProfessionDemo[]
+  import("../../../../../shared/modules/worker").ProfessionDemo[]
 >;
-
+import type { ProfessionDemo } from "../../../../../shared/modules/worker";
 import CustomSelect, {
   SelectOption,
-} from "../../../../components/custom-select/CustomSelect";
+} from "../../../../../components/custom-select/CustomSelect";
 import axios from "axios";
-import { Modal } from "../../../../components/modal/Modal";
+import { Modal } from "../../../../../components/modal/Modal";
+import { useTranslation } from "react-i18next";
 
 type Mode = "list" | "create" | "edit";
+type RawDemo = {
+  id: string;
+  fileId: string;
+  workerProfessionId: string;
+  createdAt: string;
+  comment?: string | null;
+};
 
 export const WorkerProfile: React.FC = () => {
+  const { t } = useTranslation();
   // === справочники / текущие данные ===
   const [professions, setProfessions] = useState<Profession[]>([]);
   const [profLoading, setProfLoading] = useState(true);
@@ -136,17 +152,47 @@ export const WorkerProfile: React.FC = () => {
   const createdList = useMemo(() => {
     // маппим к объекту { row, profession }
     return workerProfs
-      .map(row => ({
+      .map((row) => ({
         row,
-        profession: professions.find(p => p.id === row.professionId) || null,
+        profession: professions.find((p) => p.id === row.professionId) || null,
       }))
-      .filter(x => !!x.profession);
+      .filter((x) => !!x.profession);
   }, [workerProfs, professions]);
-  
+
   const hasAvailableForCreate = useMemo(
-    () => professions.some(p => !createdIds.has(p.id)),
+    () => professions.some((p) => !createdIds.has(p.id)),
     [professions, createdIds]
-  )
+  );
+
+  const demoUrlFromFileId = (fileId: string) =>
+    `https://pointer.uz/public/demo/${fileId}`; // твой CDN/endpoint
+  const demoTypeFromFileId = (fileId: string): "image" | "video" => {
+    const ext = (fileId.split(".").pop() || "").toLowerCase();
+    const vid = ["mp4", "mov", "webm", "m4v"];
+    return vid.includes(ext) ? "video" : "image";
+  };
+
+  // Превращаем raw-данные бекенда в полноценный ProfessionDemo
+  const makeDemo = (raw: RawDemo): ProfessionDemo => ({
+    id: raw.id,
+    fileId: raw.fileId,
+    workerProfessionId: raw.workerProfessionId,
+    createdAt: raw.createdAt as any,
+    comment: raw.comment ?? null,
+    url: demoUrlFromFileId(raw.fileId),
+    type: demoTypeFromFileId(raw.fileId),
+  });
+
+  type DemoMap = Record<string, ProfessionDemo[]>;
+
+  const buildDemoMap = (rows: WorkerProfessionRow[]): DemoMap => {
+    const map: DemoMap = {};
+    for (const r of rows) {
+      const arr = ((r as any)?.demos || []) as RawDemo[];
+      map[r.id] = arr.map(makeDemo);
+    }
+    return map;
+  };
 
   // === загрузка справочников и текущей профессии ===
   useEffect(() => {
@@ -156,30 +202,22 @@ export const WorkerProfile: React.FC = () => {
         setProfLoading(true);
         const [opts, rows] = await Promise.all([
           getProfessions(ac.signal),
-          // НОВОЕ: получаем все записи
-          getWorkerProfessions(ac.signal).catch(() => [] as WorkerProfessionRow[]),
+          getWorkerProfessions(ac.signal).catch(
+            () => [] as WorkerProfessionRow[]
+          ),
         ]);
         setProfessions(opts);
         setWorkerProfs(rows);
-  
-        // отметим уже созданные профессии
-        setCreatedIds(new Set(rows.map(r => r.professionId)));
-  
-        // подтянем демо по всем строкам (опционально — можно лениво по клику)
-        for (const r of rows) {
-          try {
-            const items = await getProfessionDemos(r.id, ac.signal);
-            setDemosByRowId(prev => ({ ...prev, [r.id]: items }));
-          } catch { /* ignore */ }
-        }
+        setCreatedIds(new Set(rows.map((r) => r.professionId)));
+
+        // <-- НОВОЕ: собираем карту демо из уже полученных rows
+        setDemosByRowId(buildDemoMap(rows));
       } finally {
         setProfLoading(false);
       }
     })();
     return () => ac.abort();
   }, []);
-
-  
 
   // документы
   useEffect(() => {
@@ -211,11 +249,11 @@ export const WorkerProfile: React.FC = () => {
     setCurrentRowId(null);
     if (prefillId) setProfessionId(prefillId);
     else {
-      const firstAvail = professions.find(p => !createdIds.has(p.id));
+      const firstAvail = professions.find((p) => !createdIds.has(p.id));
       setProfessionId(firstAvail?.id || "");
     }
   };
-  
+
   // открыть «редактирование» — теперь принимаем строку row
   const openEditFor = (row: WorkerProfessionRow) => {
     setMode("edit");
@@ -229,11 +267,7 @@ export const WorkerProfile: React.FC = () => {
     const comp = (row as any)?.competitions;
     setCompetitions(comp === "YES" || comp === "NO" ? comp : "NO");
     setInventory(((row as any)?.inventory as string) ?? "");
-  
-    // демо для этой строки
-    getProfessionDemos(row.id)
-      .then(items => setDemosByRowId(prev => ({ ...prev, [row.id]: items })))
-      .catch(() => {});
+    // демо уже есть в demosByRowId из buildDemoMap
   };
 
   const closeForm = () => {
@@ -279,7 +313,7 @@ export const WorkerProfile: React.FC = () => {
     setSavedOk(false);
     try {
       if (!professionId) throw new Error("Выберите профессию");
-  
+
       const payload: UpsertPayload = {
         professionId,
         minPrice: Number(minPrice) || 0,
@@ -290,26 +324,22 @@ export const WorkerProfile: React.FC = () => {
         competitions,
         inventory: inventory?.trim() || "",
       };
-  
+
       if (mode === "edit" && currentRowId) {
         await updateWorkerProfession(currentRowId, payload);
       } else {
         await saveWorkerProfession(payload);
       }
-  
+
       // перезагрузим список
-      const rows = await getWorkerProfessions().catch(() => [] as WorkerProfessionRow[]);
+      const rows = await getWorkerProfessions().catch(
+        () => [] as WorkerProfessionRow[]
+      );
       setWorkerProfs(rows);
-      setCreatedIds(new Set(rows.map(r => r.professionId)));
-  
+      setCreatedIds(new Set(rows.map((r) => r.professionId)));
+      setDemosByRowId(buildDemoMap(rows));
       // актуализируем демо для изменённой строки (если есть)
-      if (mode === "edit" && currentRowId) {
-        try {
-          const items = await getProfessionDemos(currentRowId);
-          setDemosByRowId(prev => ({ ...prev, [currentRowId]: items }));
-        } catch {}
-      }
-  
+
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 1500);
       setMode("list");
@@ -341,19 +371,6 @@ export const WorkerProfile: React.FC = () => {
     });
     return `${date} в ${time}`;
   };
-  const getFormFor = (id: string, row?: WorkerProfessionRow | null) => {
-    const r = row && row.professionId === id ? row : null;
-    return {
-      updatedAt: (r as any)?.updatedAt,
-      minPrice: r?.minPrice ?? null,
-      maxPrice: r?.maxPrice ?? null,
-      hasTeam: Boolean(r?.hasTeam),
-      teamCount: r?.teamMemberCount ?? null,
-      huge: Boolean(r?.readyForHugeProject),
-      competitions: (r as any)?.competitions === "YES",
-      inventory: (r as any)?.inventory || "",
-    };
-  };
 
   // ====== RENDER ======
   const modalOpen = mode !== "list";
@@ -362,46 +379,80 @@ export const WorkerProfile: React.FC = () => {
       ? "Создание новой профессии"
       : `Редактирование: ${profLabelById(professionId)}`;
 
-      const onDemoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        if (f.size > 20 * 1024 * 1024) {
-          setDemoUploadErr("Файл превышает 20 МБ");
-          e.target.value = "";
-          return;
-        }
-        if (!currentRowId) {
-          setDemoUploadErr("Сначала сохраните профессию, затем добавьте портфолио");
-          e.target.value = "";
-          return;
-        }
-      
-        setDemoUploadErr(null);
-        setDemoUploadPct(0);
-        demoAbortRef.current?.abort();
-        demoAbortRef.current = new AbortController();
-      
-        try {
-          const demo = await uploadProfessionDemo(
-            currentRowId,
-            f,
-            (p) => setDemoUploadPct(p),
-            demoAbortRef.current.signal
-          );
-          setDemosByRowId(prev => ({
-            ...prev,
-            [currentRowId]: [demo, ...(prev[currentRowId] || [])],
-          }));
-          setDemoUploadPct(null);
-        } catch (err: any) {
-          if (axios.isCancel(err)) return;
-          setDemoUploadErr(err?.message || "Не удалось загрузить портфолио");
-          setDemoUploadPct(null);
-        } finally {
-          if (demoFileInputRef.current) demoFileInputRef.current.value = "";
-        }
+  const onDemoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) {
+      setDemoUploadErr("Файл превышает 20 МБ");
+      e.target.value = "";
+      return;
+    }
+    if (!currentRowId) {
+      setDemoUploadErr("Сначала сохраните профессию, затем добавьте портфолио");
+      e.target.value = "";
+      return;
+    }
+
+    setDemoUploadErr(null);
+    setDemoUploadPct(0);
+    demoAbortRef.current?.abort();
+    demoAbortRef.current = new AbortController();
+
+    try {
+      // 1) грузим демо
+      const demo = await uploadProfessionDemo(
+        currentRowId,
+        f,
+        (p) => setDemoUploadPct(p),
+        demoAbortRef.current.signal
+      );
+
+      // 2) оптимистично показываем превью (если пришёл local-id — это временно)
+      const raw: RawDemo = {
+        id: demo.id,
+        fileId: demo.fileId,
+        workerProfessionId: currentRowId,
+        createdAt: demo.createdAt || new Date().toISOString(),
+        comment: demo.comment ?? null,
       };
-      
+      const full = makeDemo(raw);
+
+      setDemosByRowId((prev) => ({
+        ...prev,
+        [currentRowId]: [full, ...(prev[currentRowId] || [])],
+      }));
+
+      setWorkerProfs((prev) =>
+        prev.map((r) =>
+          r.id === currentRowId
+            ? ({
+                ...r,
+                demos: [raw, ...(((r as any).demos as RawDemo[]) || [])],
+              } as any)
+            : r
+        )
+      );
+
+      // 3) ВАЖНО: после успешной загрузки подтягиваем Актуальные worker professions
+      //    (рефрешим rating/updatedAt/нормальный fileId и т.д.)
+      const rows = await getWorkerProfessions().catch(
+        () => [] as WorkerProfessionRow[]
+      );
+      setWorkerProfs(rows);
+      setCreatedIds(new Set(rows.map((r) => r.professionId)));
+      setDemosByRowId(buildDemoMap(rows));
+
+      // 4) UI
+      setDemoUploadPct(null);
+      toast.success("Портфолио добавлено");
+    } catch (err: any) {
+      if (axios.isCancel(err)) return;
+      setDemoUploadErr(err?.message || "Не удалось загрузить портфолио");
+      setDemoUploadPct(null);
+    } finally {
+      if (demoFileInputRef.current) demoFileInputRef.current.value = "";
+    }
+  };
 
   const cancelDemoUpload = () => {
     demoAbortRef.current?.abort();
@@ -410,7 +461,7 @@ export const WorkerProfile: React.FC = () => {
 
   const demoInputId = useId();
   const canUploadDemo = Boolean(currentRowId);
-  
+
   const handleCreateClick = () => {
     if (!hasAvailableForCreate) {
       toast.error("Доступные профессии уже созданы");
@@ -422,95 +473,146 @@ export const WorkerProfile: React.FC = () => {
   return (
     <Page>
       <Header>
-        <Title>Профиль специалиста</Title>
+        <Title>{t("worker.title")}</Title>
       </Header>
 
       <Layout>
         <Main>
-          {/* ===== Мои профессии (только созданные) ===== */}
+          {/* ===== Мои профессии ===== */}
           <Card>
             <CardHeader>
-              <CardTitle>Мои профессии</CardTitle>
+              <CardTitle>{t("worker.myProfs")}</CardTitle>
               <GhostBtn
-  type="button"
-  onClick={handleCreateClick}
-  title={
-    hasAvailableForCreate
-      ? "Добавить новую профессию"
-      : "Все доступные профессии уже созданы"
-  }
->
-  + Создать новую
-</GhostBtn>
+                type="button"
+                onClick={handleCreateClick}
+                title={
+                  hasAvailableForCreate
+                    ? t("worker.canCreateHint")
+                    : t("worker.cantCreateHint")
+                }
+              >
+                {t("worker.createNew")}
+              </GhostBtn>
             </CardHeader>
             <CardBody>
-            {createdList.length > 0 ? (
-      <div style={{ display: "grid", gap: 12 }}>
-        {createdList.map(({ row, profession }) => {
-          const label = profession ? profLabel(profession) : "Профессия";
-          const f = {
-            updatedAt: row.updatedAt,
-            minPrice: row.minPrice,
-            maxPrice: row.maxPrice,
-            hasTeam: row.hasTeam,
-            teamCount: row.teamMemberCount,
-            huge: row.readyForHugeProject,
-            competitions: (row as any)?.competitions === "YES",
-            inventory: (row as any)?.inventory || "",
-          };
-          return (
-            <JobItem key={row.id}>
-              <JobTitle>{label}</JobTitle>
-              <Subtle>Обновлено {fmtUpdated(f.updatedAt)}</Subtle>
+              {createdList.length > 0 ? (
+                <div style={{ display: "grid", gap: 12 }}>
+                  {createdList.map(({ row, profession }) => {
+                    const label = profession
+                      ? profLabel(profession)
+                      : t("worker.profession");
+                    const f = {
+                      updatedAt: row.updatedAt,
+                      minPrice: row.minPrice,
+                      maxPrice: row.maxPrice,
+                      hasTeam: row.hasTeam,
+                      teamCount: row.teamMemberCount,
+                      huge: row.readyForHugeProject,
+                      competitions: (row as any)?.competitions === "YES",
+                      inventory: (row as any)?.inventory || "",
+                    };
 
-              <div>
-                <Label>Параметры</Label>
-                <StatRow>
-                  <StatPill>
-                    <b>{fmtMoney(f.minPrice)}</b><span>минимальная цена</span>
-                  </StatPill>
-                  <StatPill>
-                    <b>{fmtMoney(f.maxPrice)}</b><span>максимальная цена</span>
-                  </StatPill>
-                  <StatPill>
-                    <b>{f.hasTeam ? f.teamCount || 0 : 0}</b>
-                    <span>{f.hasTeam ? "в команде" : "команды нет"}</span>
-                  </StatPill>
-                </StatRow>
-              </div>
+                    return (
+                      <JobItem key={row.id}>
+                        <HeadRow>
+                          <div>
+                            <JobTitle>{label}</JobTitle>
+                            <Meta>
+                              <Clock size={14} className="icon" />
+                              {t("worker.updated")} {fmtUpdated(f.updatedAt)}
+                            </Meta>
+                          </div>
 
-              <ActionRow>
-                <PrimaryBtn type="button" onClick={() => openEditFor(row)}>
-                  Редактировать
-                </PrimaryBtn>
-                <SoftPill>Крупные проекты: {f.huge ? "Да" : "Нет"}</SoftPill>
-                <SoftPill>Конкурсы: {f.competitions ? "Да" : "Нет"}</SoftPill>
-              </ActionRow>
+                          <PrimaryBtn
+                            type="button"
+                            onClick={() => openEditFor(row)}
+                          >
+                            <Pencil size={14} className="icon" />
+                            {t("worker.edit")}
+                          </PrimaryBtn>
+                        </HeadRow>
 
-              <MutedBar>
-                <b>Инструменты:</b> {f.inventory ? f.inventory : "не указаны"}
-              </MutedBar>
-            </JobItem>
-          );
-        })}
-      </div>
-    ) : (
-      <Notice tone="neutral">Пока ни одной профессии не добавлено. Нажмите «Создать новую», чтобы добавить.</Notice>
-    )}
+                        <div>
+                          <Label>{t("worker.params")}</Label>
+                          <StatRow>
+                            <StatPill title={t("worker.minPrice")}>
+                              <Banknote className="icon" />
+                              <b>{fmtMoney(f.minPrice)}</b>
+                              <span>{t("worker.minPriceSub")}</span>
+                            </StatPill>
+
+                            <StatPill title={t("worker.maxPrice")}>
+                              <Banknote className="icon" />
+                              <b>{fmtMoney(f.maxPrice)}</b>
+                              <span>{t("worker.maxPriceSub")}</span>
+                            </StatPill>
+
+                            <StatPill
+                              title={
+                                f.hasTeam
+                                  ? t("worker.teamSize")
+                                  : t("worker.hasNoTeam")
+                              }
+                            >
+                              <Users className="icon" />
+                              <b>{f.hasTeam ? f.teamCount || 0 : 0}</b>
+                              <span>
+                                {f.hasTeam
+                                  ? t("worker.inTeam")
+                                  : t("worker.hasNoTeam")}
+                              </span>
+                            </StatPill>
+                          </StatRow>
+                        </div>
+
+                        <ActionRow>
+                          <SoftPill>
+                            <Rocket className="icon" />
+                            {t("worker.bigProjects")}:{" "}
+                            {f.huge ? t("worker.yes") : t("worker.no")}
+                          </SoftPill>
+
+                          <SoftPill>
+                            <Trophy className="icon" />
+                            {t("worker.contests")}:{" "}
+                            {f.competitions ? t("worker.yes") : t("worker.no")}
+                          </SoftPill>
+                        </ActionRow>
+
+                        <MutedBar>
+                          <b
+                            style={{
+                              display: "inline-flex",
+                              gap: 8,
+                              alignItems: "center",
+                            }}
+                          >
+                            <Wrench size={14} className="icon" />
+                            {t("worker.tools")}
+                          </b>{" "}
+                          {f.inventory ? f.inventory : t("worker.notSpecified")}
+                        </MutedBar>
+                      </JobItem>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Notice tone="neutral">{t("worker.noneYet")}</Notice>
+              )}
             </CardBody>
           </Card>
 
           {/* Документы */}
           <Card>
             <CardHeader>
-              <CardTitle>Дипломы и сертификаты</CardTitle>
+              <CardTitle>{t("worker.docsTitle")}</CardTitle>
             </CardHeader>
             <CardBody>
               <Upload>
                 <div>
-                  Перетащите PDF/JPG сюда или нажмите для выбора
+                  {t("worker.dragHere")}
                   <br />
-                  <Small>Файл отправится на сервер</Small>
+                  <Small>{t("worker.fileWillGo")}</Small>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -526,9 +628,11 @@ export const WorkerProfile: React.FC = () => {
                     <i style={{ width: `${uploadPct}%` }} />
                   </Progress>
                   <Inline style={{ marginTop: 6 }}>
-                    <Small>Загрузка: {uploadPct}%</Small>
+                    <Small>
+                      {t("worker.loading")}: {uploadPct}%
+                    </Small>
                     <GhostBtn type="button" onClick={cancelUpload}>
-                      Отмена
+                      {t("worker.cancel")}
                     </GhostBtn>
                   </Inline>
                 </div>
@@ -539,7 +643,7 @@ export const WorkerProfile: React.FC = () => {
                   {docs.map((d) => (
                     <DocItem key={d.id}>
                       <div>
-                        <strong>{d.type || "Документ"}</strong>{" "}
+                        <strong>{d.type || t("worker.document")}</strong>{" "}
                         {d.createdAt && (
                           <Small>
                             {new Date(d.createdAt).toLocaleDateString()}
@@ -556,10 +660,10 @@ export const WorkerProfile: React.FC = () => {
                             )
                           }
                         >
-                          Скачать
+                          {t("worker.download")}
                         </PrimaryBtn>
                       ) : (
-                        <Small>Ссылка появится после модерации</Small>
+                        <Small>{t("worker.linkAfterMod")}</Small>
                       )}
                     </DocItem>
                   ))}
@@ -573,10 +677,10 @@ export const WorkerProfile: React.FC = () => {
         <Aside>
           <Card>
             <CardHeader>
-              <CardTitle>Готовность профиля</CardTitle>
+              <CardTitle>{t("worker.profileReady")}</CardTitle>
             </CardHeader>
             <CardBody>
-              <Small>Заполните основные поля, добавьте документы</Small>
+              <Small>{t("worker.fillBasic")}</Small>
               <div style={{ marginTop: 10 }}>
                 <Progress>
                   <i style={{ width: `${workerProfRaw ? 70 : 40}%` }} />
@@ -587,43 +691,49 @@ export const WorkerProfile: React.FC = () => {
         </Aside>
       </Layout>
 
-      {/* ===== МОДАЛ: форма создания/редактирования ===== */}
+      {/* ===== МОДАЛ ===== */}
       <Modal
         open={modalOpen}
-        title={modalTitle}
+        title={
+          mode === "create"
+            ? t("worker.modalCreateTitle")
+            : t("worker.modalEditTitle", { name: profLabelById(professionId) })
+        }
         onClose={closeForm}
         width={820}
         maxWidth="92vw"
         closeOnOverlay={true}
-        ariaLabel="Форма профессии"
+        ariaLabel={t("worker.modalAria")}
       >
         <FormGrid columns={2}>
           <Field>
-            <Label>Профессия</Label>
+            <Label>{t("worker.selectProfession")}</Label>
             <SelectBox>
               <CustomSelect
                 id="worker-profession"
                 options={profOptions}
                 value={professionId || null}
                 onChange={(value) => setProfessionId(String(value ?? ""))}
-                placeholder="Выберите профессию"
-                disabled={mode === "edit" || profLoading || profOptions.length === 0}
+                placeholder={t("worker.selectPlaceholder")}
+                disabled={
+                  mode === "edit" || profLoading || profOptions.length === 0
+                }
                 loading={profLoading}
                 width="100%"
                 menuMaxHeight={300}
               />
             </SelectBox>
             {mode === "create" && (
-              <Help>Уже созданные профессии недоступны для выбора</Help>
+              <Help>{t("worker.createdDisabledHint")}</Help>
             )}
           </Field>
 
           <div />
 
           <Field>
-            <Label>Минимальная цена</Label>
+            <Label>{t("worker.minPrice")}</Label>
             <Input
-              placeholder="от, сум"
+              placeholder={t("worker.minPlaceholderFrom")}
               inputMode="numeric"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
@@ -631,9 +741,9 @@ export const WorkerProfile: React.FC = () => {
           </Field>
 
           <Field>
-            <Label>Максимальная цена</Label>
+            <Label>{t("worker.maxPrice")}</Label>
             <Input
-              placeholder="до, сум"
+              placeholder={t("worker.maxPlaceholderTo")}
               inputMode="numeric"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
@@ -641,36 +751,36 @@ export const WorkerProfile: React.FC = () => {
           </Field>
 
           <Field>
-            <Label>Готовность к крупным проектам</Label>
+            <Label>{t("worker.bigProjectsReady")}</Label>
             <ToggleGroup>
               <Toggle
                 active={readyForHugeProject}
                 onClick={() => setReadyForHugeProject(true)}
               >
-                Да
+                {t("worker.yes")}
               </Toggle>
               <Toggle
                 active={!readyForHugeProject}
                 onClick={() => setReadyForHugeProject(false)}
               >
-                Нет
+                {t("worker.no")}
               </Toggle>
             </ToggleGroup>
           </Field>
 
           <Field>
-            <Label>Наличие команды</Label>
+            <Label>{t("worker.teamPresence")}</Label>
             <Inline>
               <ToggleGroup>
                 <Toggle active={hasTeam} onClick={() => setHasTeam(true)}>
-                  Да
+                  {t("worker.yes")}
                 </Toggle>
                 <Toggle active={!hasTeam} onClick={() => setHasTeam(false)}>
-                  Нет
+                  {t("worker.no")}
                 </Toggle>
               </ToggleGroup>
               <Input
-                placeholder="Количество человек"
+                placeholder={t("worker.peopleCount")}
                 inputMode="numeric"
                 disabled={!hasTeam}
                 value={teamMemberCount}
@@ -681,69 +791,72 @@ export const WorkerProfile: React.FC = () => {
           </Field>
 
           <Field>
-            <Label>Участие в конкурсах</Label>
+            <Label>{t("worker.contestsParticipation")}</Label>
             <ToggleGroup>
               <Toggle
                 active={competitions === "YES"}
                 onClick={() => setCompetitions("YES")}
               >
-                Да
+                {t("worker.yes")}
               </Toggle>
               <Toggle
                 active={competitions === "NO"}
                 onClick={() => setCompetitions("NO")}
               >
-                Нет
+                {t("worker.no")}
               </Toggle>
             </ToggleGroup>
           </Field>
 
           <Field>
-            <Label>Инструменты (инвентарь)</Label>
+            <Label>{t("worker.inventoryLabel")}</Label>
             <Input
-              placeholder="Например: перфоратор, лазерный уровень, шуруповёрт…"
+              placeholder={t("worker.inventoryPlaceholder")}
               value={inventory}
               onChange={(e) => setInventory(e.target.value)}
             />
-            <Help>Кратко перечислите ключевые инструменты</Help>
+            <Help>{t("worker.inventoryHelp")}</Help>
           </Field>
         </FormGrid>
 
-        {/* <div style={{ marginTop: 16 }}>
-          <Label>Портфолио (фото/видео, до 20 МБ)</Label>
+        <div style={{ marginTop: 16 }}>
+          <Label>{t("worker.portfolioLabel")}</Label>
 
-        <Upload
-   as="label"
-   htmlFor={canUploadDemo ? demoInputId : undefined}
-   style={{ marginTop: 8, cursor: canUploadDemo ? "pointer" : "not-allowed" }}
-   aria-disabled={!canUploadDemo}
-   title={
-     canUploadDemo
-       ? "Нажмите, чтобы выбрать файл"
-       : "Сначала откройте «Редактировать» и сохраните профессию"
-   }
->
-  <div>
-    Перетащите файл сюда или нажмите для выбора
-    <br />
-    <Small>Поддерживаются изображения и видео, макс. 20 МБ</Small>
-    {!canUploadDemo && (
-      <div style={{ marginTop: 6 }}>
-        <Small>Сначала сохраните конкретную запись профессии</Small>
-      </div>
-    )}
-  </div>
+          <Upload
+            as="label"
+            htmlFor={canUploadDemo ? demoInputId : undefined}
+            style={{
+              marginTop: 8,
+              cursor: canUploadDemo ? "pointer" : "not-allowed",
+            }}
+            aria-disabled={!canUploadDemo}
+            title={
+              canUploadDemo
+                ? t("worker.dragFileHere")
+                : t("worker.needSaveFirst")
+            }
+          >
+            <div>
+              {t("worker.dragFileHere")}
+              <br />
+              <Small>{t("worker.portfolioHelp")}</Small>
+              {!canUploadDemo && (
+                <div style={{ marginTop: 6 }}>
+                  <Small>{t("worker.needSaveFirst")}</Small>
+                </div>
+              )}
+            </div>
 
-  <input
-  id={demoInputId}
-  ref={demoFileInputRef}
-  type="file"
-  accept="image/*,video/*"
-  onChange={onDemoFileChange}
-  disabled={!canUploadDemo}
-  style={{ display: "none" }}
-/>
-</Upload>
+            <input
+              id={demoInputId}
+              ref={demoFileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              onChange={onDemoFileChange}
+              disabled={!canUploadDemo}
+              style={{ display: "none" }}
+            />
+          </Upload>
 
           {demoUploadPct !== null && (
             <div style={{ marginTop: 10 }}>
@@ -751,9 +864,11 @@ export const WorkerProfile: React.FC = () => {
                 <i style={{ width: `${demoUploadPct}%` }} />
               </Progress>
               <Inline style={{ marginTop: 6 }}>
-                <Small>Загрузка: {demoUploadPct}%</Small>
+                <Small>
+                  {t("worker.loading")}: {demoUploadPct}%
+                </Small>
                 <GhostBtn type="button" onClick={cancelDemoUpload}>
-                  Отмена
+                  {t("worker.cancel")}
                 </GhostBtn>
               </Inline>
             </div>
@@ -765,29 +880,76 @@ export const WorkerProfile: React.FC = () => {
           )}
 
           {(() => {
-  const rowId = currentRowId;
-  const list = rowId ? (demosByRowId[rowId] || []) : [];
-  if (!rowId) {
-    return <Small style={{ display: "block", marginTop: 8 }}>
-      Сохраните профессию, чтобы добавить примеры работ
-    </Small>;
-  }
-  if (list.length === 0) return null;
-  return (
-    <div style={{ marginTop: 12, display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
-      {list.map(d => (
-        <div key={d.id} style={{ borderRadius: 12, overflow: "hidden", border: "1px solid rgba(0,0,0,0.06)" }}>
-          {d.type === "video" ? (
-            <video src={d.url} controls playsInline style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
-          ) : (
-            <img src={d.url} alt="" loading="lazy" style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
-          )}
+            const rowId = currentRowId;
+            const list = rowId ? demosByRowId[rowId] || [] : [];
+            if (!rowId) {
+              return (
+                <Small style={{ display: "block", marginTop: 8 }}>
+                  {t("worker.saveProfessionToAddDemos")}
+                </Small>
+              );
+            }
+            if (list.length === 0) return null;
+
+            const images = list.filter((d) => d.type !== "video");
+            const videos = list.filter((d) => d.type === "video");
+
+            return (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "grid",
+                  gap: 8,
+                  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                }}
+              >
+                <Image.PreviewGroup>
+                  {images.map((d) => (
+                    <div
+                      key={d.id}
+                      style={{
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                      }}
+                    >
+                      <Image
+                        src={d.url}
+                        alt=""
+                        width="100%"
+                        height={140}
+                        style={{ objectFit: "cover", display: "block" }}
+                      />
+                    </div>
+                  ))}
+                </Image.PreviewGroup>
+
+                {videos.map((d) => (
+                  <div
+                    key={d.id}
+                    style={{
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <video
+                      src={d.url}
+                      controls
+                      playsInline
+                      style={{
+                        width: "100%",
+                        height: 140,
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
-      ))}
-    </div>
-  );
-})()}
-        </div> */}
 
         <Actions style={{ marginTop: 12 }}>
           <PrimaryBtn
@@ -796,13 +958,13 @@ export const WorkerProfile: React.FC = () => {
             disabled={saving || !professionId}
           >
             {saving
-              ? "Сохранение…"
+              ? t("worker.saving")
               : mode === "create"
-              ? "Создать"
-              : "Сохранить"}
+              ? t("worker.create")
+              : t("worker.save")}
           </PrimaryBtn>
           <GhostBtn type="button" onClick={closeForm}>
-            Отмена
+            {t("worker.close")}
           </GhostBtn>
         </Actions>
 
@@ -813,7 +975,7 @@ export const WorkerProfile: React.FC = () => {
         )}
         {savedOk && (
           <Notice tone="success" style={{ marginTop: 12 }}>
-            Сохранено
+            {t("worker.saveSuccess")}
           </Notice>
         )}
       </Modal>
@@ -830,18 +992,6 @@ export const WorkerProfile: React.FC = () => {
             padding: "10px 16px",
             fontSize: "14px",
           },
-          // success: {
-          //   iconTheme: {
-          //     primary: "#fff",
-          //     secondary: "#000",
-          //   },
-          // },
-          // error: {
-          //   iconTheme: {
-          //     primary: "#fff",
-          //     secondary: "#000",
-          //   },
-          // },
         }}
       />
     </Page>

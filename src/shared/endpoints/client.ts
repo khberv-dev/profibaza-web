@@ -43,6 +43,23 @@ const mapClientMe = (r: ClientMeRaw): ClientMe => ({
   updatedAt: r.updated_at,
 });
 
+export type CreateOrderDto = {
+  workerProfessionId: string; // таргет на конкретного исполнителя (его строка профиля)
+  description: string;
+  deadline: string; // ISO: 2025-01-05
+  budget: number; // сум
+  address1?: string | null; // область/город
+  address2?: string | null; // район/посёлок
+  address3?: string | null; // улица/ориентир
+};
+
+export type CreateOrderResp = {
+  ok: boolean;
+  data: {
+    id: string;
+  };
+};
+
 /* ---------- api ---------- */
 export const clientApi = {
   updateAddress: async (dto: UpdateAddressDto): Promise<boolean> => {
@@ -73,5 +90,13 @@ export const clientApi = {
       if (e?.response?.status === 404) return null;
       throw e;
     }
+  },
+
+  createOrder: async (dto: CreateOrderDto) => {
+    const { data } = await api.post<CreateOrderResp>(
+      "/client/create-order",
+      dto
+    );
+    return data;
   },
 };

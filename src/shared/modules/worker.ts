@@ -104,6 +104,17 @@ export async function getProfessionDemos(
 }
 
 // POST /worker/profession/upload-demo/:id  (FormData: file)
+// вспомогалка: тип по имени файла/типу blob
+const inferMediaTypeByFile = (f: File): "image" | "video" => {
+  const name = f.name?.toLowerCase() || "";
+  const mime = f.type?.toLowerCase() || "";
+  const str = `${name} ${mime}`;
+  return /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(str) || /video\//.test(str)
+    ? "video"
+    : "image";
+};
+
+// ЗАМЕНИ ЭТУ ФУНКЦИЮ
 export async function uploadProfessionDemo(
   workerProfessionId: string,
   file: File,
@@ -113,7 +124,11 @@ export async function uploadProfessionDemo(
   const form = new FormData();
   form.append("file", file);
 
-  const { data } = await api.post<{ ok: boolean; data: ProfessionDemoRaw }>(
+  const resp = await api.post<{
+    ok?: boolean;
+    data?: ProfessionDemoRaw;
+    message?: unknown; // {"uz":"Fayl qo'shildi"} и т.п.
+  }>(
     `/worker/profession/upload-demo/${encodeURIComponent(workerProfessionId)}`,
     form,
     {
@@ -126,18 +141,37 @@ export async function uploadProfessionDemo(
     }
   );
 
-  const raw = data?.data;
-  if (!raw?.fileId) throw new Error("Некорректный ответ при загрузке демо");
+  const raw = resp?.data?.data;
 
-  return {
-    id: raw.id,
-    fileId: raw.fileId,
-    workerProfessionId: raw.workerProfessionId,
-    createdAt: raw.createdAt,
-    comment: raw.comment,
-    url: buildDemoUrl(raw.fileId),
-    type: inferMediaType(raw.fileId),
-  };
+  // 1) Классический ответ с data
+  if (raw?.fileId) {
+    return {
+      id: raw.id,
+      fileId: raw.fileId,
+      workerProfessionId: raw.workerProfessionId,
+      createdAt: raw.createdAt,
+      comment: raw.comment,
+      url: buildDemoUrl(raw.fileId),
+      type: inferMediaType(raw.fileId),
+    };
+  }
+
+  // 2) Новый ответ: ok + message (без data). Возвращаем оптимистичный локальный объект
+  if (resp?.data?.ok) {
+    const localUrl = URL.createObjectURL(file); // ВАЖНО: отревокать позже в UI
+    return {
+      id: `local-${crypto.randomUUID()}`,
+      fileId: "", // серверный появится позже при последующей выборке
+      workerProfessionId,
+      createdAt: new Date().toISOString(),
+      comment: null,
+      url: localUrl,
+      type: inferMediaTypeByFile(file),
+    };
+  }
+
+  // 3) Иное — считаем ошибкой
+  throw new Error("Не удалось загрузить демо");
 }
 
 // POST /worker/profession  (создать)
@@ -158,7 +192,6 @@ export async function updateWorkerProfession(
     signal,
   });
 }
-
 
 export async function getWorkerProfessions(
   signal?: AbortSignal

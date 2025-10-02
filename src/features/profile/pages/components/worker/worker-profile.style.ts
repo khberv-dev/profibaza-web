@@ -1,5 +1,13 @@
 import styled from "@emotion/styled";
 
+const iconCss = `
+  & .icon {
+    width: 16px;
+    height: 16px;
+    opacity: .9;
+  }
+`;
+
 /* ===== Design tokens (HH-like) ===== */
 export const UI = {
   max: 1860,
@@ -25,6 +33,12 @@ export const JobItem = styled.div`
   border-radius: ${UI.rLg}px;
   background: ${UI.bg};
   padding: 16px;
+  transition: box-shadow 0.15s ease, transform 0.05s ease,
+    border-color 0.15s ease;
+  &:hover {
+    box-shadow: ${UI.shadow};
+    border-color: #dbe2ea;
+  }
 `;
 
 export const JobTitle = styled.h3`
@@ -47,10 +61,11 @@ export const StatRow = styled.div`
 `;
 
 export const StatPill = styled.div`
+  ${iconCss}
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border: 1px solid ${UI.line};
   border-radius: 10px;
   background: ${UI.bgSoft};
@@ -74,8 +89,10 @@ export const ActionRow = styled.div`
 `;
 
 export const SoftPill = styled.span`
+  ${iconCss}
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   padding: 6px 10px;
   border-radius: 999px;
   background: ${UI.bgSoft};
@@ -107,6 +124,9 @@ export const TextLink = styled.button`
 export const MutedBar = styled.div`
   margin-top: 12px;
   padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   border-radius: ${UI.rMd}px;
   background: ${UI.bgSoft};
   border: 1px solid ${UI.lineSoft};
@@ -255,6 +275,22 @@ export const Input = styled.input`
   }
 `;
 
+export const HeadRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+`;
+
+export const Meta = styled.div`
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: ${UI.textMuted};
+`;
+
 export const SelectBox = styled.div`
   position: relative;
   > .trigger {
@@ -373,8 +409,12 @@ export const Actions = styled.div`
 `;
 
 export const PrimaryBtn = styled.button`
+  ${iconCss}
   height: 40px;
   padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 0;
   border-radius: ${UI.rSm}px;
   background: ${UI.primary};
