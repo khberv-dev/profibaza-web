@@ -65,7 +65,7 @@ export const ClientProfile: React.FC = () => {
   return (
     <div style={{ gridColumn: "1 / -1" }}>
       <Card style={{ marginTop: "20px" }}>
-        <CreateOrderCard />
+        {/* <CreateOrderCard /> */}
       </Card>
     </div>
   );

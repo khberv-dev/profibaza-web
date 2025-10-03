@@ -980,20 +980,7 @@ export const WorkerProfile: React.FC = () => {
         )}
       </Modal>
 
-      <Toaster
-        position="bottom-right"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: "#0b0b0f",
-            color: "#fff",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            fontSize: "14px",
-          },
-        }}
-      />
+
     </Page>
   );
 };

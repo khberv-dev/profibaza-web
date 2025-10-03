@@ -32,26 +32,28 @@ export type Village = {
   parent: number; // districtId
 };
 
-/** Мапперы */
-const mapRegion = (r: LocationRaw): Region => ({
-  id: r.id,
-  nameUz: r.nameUz,
-  nameRu: r.nameRu,
-});
-const mapDistrict = (r: LocationRaw): District => ({
-  id: r.id,
-  nameUz: r.nameUz,
-  nameRu: r.nameRu,
-  parent: r.parent as number,
-});
-const mapVillage = (r: LocationRaw): Village => ({
-  id: r.id,
-  nameUz: r.nameUz,
-  nameRu: r.nameRu,
-  parent: r.parent as number,
-});
 
+type ListResponseFlat = { ok: boolean; data: LocationRaw[] };
+type ListResponseNested = { ok: boolean; data: ListResponseFlat };
+
+// Нормализаторы
+export const mapRegion   = (r: LocationRaw) => ({ id: r.id, nameUz: r.nameUz, nameRu: r.nameRu });
+export const mapDistrict = (r: LocationRaw) => ({ id: r.id, nameUz: r.nameUz, nameRu: r.nameRu, parent: r.parent as number });
+export const mapVillage  = (r: LocationRaw) => ({ id: r.id, nameUz: r.nameUz, nameRu: r.nameRu, parent: r.parent as number });
 /** Вспомогалка: выбрать имя по языку */
+
+
+const extractList = (payload: any): LocationRaw[] => {
+  // axios: resp.data === payload
+  // Вариант 1: { ok, data: [] }
+  if (Array.isArray(payload?.data)) return payload.data as LocationRaw[];
+  // Вариант 2: { ok, data: { ok, data: [] } }
+  if (Array.isArray(payload?.data?.data)) return payload.data.data as LocationRaw[];
+  // На всякий случай: если вдруг пришёл сразу массив
+  if (Array.isArray(payload)) return payload as LocationRaw[];
+  return [];
+};
+
 export const pickName = (
   item: { nameRu: string; nameUz: string },
   lng: string | undefined
@@ -59,22 +61,21 @@ export const pickName = (
 
 /** API */
 export const locationApi = {
-  getRegions: async (): Promise<Region[]> => {
-    const { data } = await api.get<ListResponse>("/opt/location/regions");
-    return (data.data || []).map(mapRegion);
+  getRegions: async () => {
+    const { data } = await api.get<ListResponseFlat | ListResponseNested>("/opt/location/regions");
+    const list = extractList(data);
+    return list.map(mapRegion);
   },
 
-  getDistricts: async (regionId: number): Promise<District[]> => {
-    const { data } = await api.get<ListResponse>(
-      `/opt/location/districts/${regionId}`
-    );
-    return (data.data || []).map(mapDistrict);
+  getDistricts: async (regionId: number) => {
+    const { data } = await api.get<ListResponseFlat | ListResponseNested>(`/opt/location/districts/${regionId}`);
+    const list = extractList(data);
+    return list.map(mapDistrict);
   },
 
-  getVillages: async (districtId: number): Promise<Village[]> => {
-    const { data } = await api.get<ListResponse>(
-      `/opt/location/villages/${districtId}`
-    );
-    return (data.data || []).map(mapVillage);
+  getVillages: async (districtId: number) => {
+    const { data } = await api.get<ListResponseFlat | ListResponseNested>(`/opt/location/villages/${districtId}`);
+    const list = extractList(data);
+    return list.map(mapVillage);
   },
 };

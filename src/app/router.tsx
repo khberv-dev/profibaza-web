@@ -19,6 +19,10 @@ import NewOrderPage from "../features/orders/pages/NewOrderPage";
 import MyOrdersPage from "../features/orders/pages/MyOrdersPage";
 import CompanyProfilePage from "../features/profile/pages/CompanyProfilePage";
 import MastersSearchPage from "../features/search/pages/MasterCard";
+import { WorkerSearchPage } from "../pages/worker-search/WorkerSearchPage";
+import CreateOrderPage from "../pages/worker-search/create-order/CreateOrderPage";
+import ClientOrdersPage from "../features/orders/pages/client/ClientOrdersPage";
+import NewWorkerOrdersPage from "../features/orders/pages/worker/NewWorkerOrdersPage";
 
 export const router = createBrowserRouter([
   // Публичные
@@ -39,8 +43,9 @@ export const router = createBrowserRouter([
           { path: "profile", element: <ProfilePage /> }, // /app/profile
           { path: "settings", element: <SettingsPage /> }, // /app/settings
           { path: "orders/new", element: <NewOrderPage /> }, // /app/orders/new
-          { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my
-          { path: "find", element: <MastersSearchPage /> },
+          { path: "orders/my", element: <MyOrdersPage /> }, // /app/orders/my // /app/orders/my
+          // { path: "find", element: <MastersSearchPage /> },
+          { path: "find", element: <WorkerSearchPage /> },
 
           // Раздел только для LEGAL (компании)
           {
@@ -51,14 +56,17 @@ export const router = createBrowserRouter([
           },
 
           // при необходимости добавим блоки для CLIENT/WORKER
-          // {
-          //   element: <RoleGuard allow={["CLIENT"]} />,
-          //   children: [{ path: "client/dashboard", element: <ClientDashboardPage /> }],
-          // },
-          // {
-          //   element: <RoleGuard allow={["WORKER"]} />,
-          //   children: [{ path: "worker/jobs", element: <WorkerJobsPage /> }],
-          // },
+          {
+            element: <RoleGuard allow={["CLIENT"]} />,
+            children: [
+              { path: "client/create-order", element: <CreateOrderPage /> },
+              { path: "client/orders", element: <ClientOrdersPage /> },
+            ],
+          },
+          {
+            element: <RoleGuard allow={["WORKER"]} />,
+            children: [{ path: "worker/jobs", element: <NewWorkerOrdersPage /> }],
+          },
         ],
       },
     ],

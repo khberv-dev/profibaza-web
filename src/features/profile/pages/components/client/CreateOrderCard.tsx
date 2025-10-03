@@ -7,14 +7,6 @@ import {
   Textarea,
   PrimaryBtn,
   GhostBtn,
-  ProfPickerWrap,
-  TagList,
-  Tag,
-  InputBase,
-  GroupLabel,
-  Dropdown,
-  OptionRow,
-  OptionCheck,
 } from "../../../pro-profile-section.style";
 
 import {
@@ -33,14 +25,19 @@ import {
   Actions,
   SummaryList,
   SoftBar,
-  Small,
-  DropdownScroll,
 } from "./create-order.style";
 import CustomSelect, {
   SelectOption,
 } from "../../../../../components/custom-select/CustomSelect";
 import { useCreateOrder } from "../../../api";
 import { CustomInput } from "../../../../../components/custom-input";
+import { DatePopoverInput } from "../../../../../components/custom-date-input/DatePopoverInput";
+import { useDistricts, useRegions, useVillages } from "../../../../../shared/modules/location";
+import { pickName } from "../../../../../shared/endpoints/location";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getWorkerById } from "../../../../../shared/endpoints/client";
+import { Rate } from "antd";
 
 type Props = { initialWorkerProfessionId?: string | null };
 
@@ -50,6 +47,7 @@ type FormValues = {
   addr2: string;
   addr3: string;
   phone: string; // CustomInput(type="phone") кладёт только цифры ("998..."), если нужно
+  deadline: string;
 };
 
 const AREAS = [
@@ -62,14 +60,6 @@ const AREAS = [
 ];
 const QUICK_BUDGETS = [300_000, 500_000, 1_000_000, 2_000_000, 5_000_000];
 
-const PROF_GROUPS: Array<{ name: string; items: string[] }> = [
-  {
-    name: "Ommabop",
-    items: ["Elektrik", "Santexnik", "Quruvchi", "Payvandchi"],
-  },
-  { name: "Ichki ta’mir", items: ["Malyar", "Duradgor", "Parketchi"] },
-  { name: "Montaj / ishlab chiqarish", items: ["GKL usta", "Yog‘och ustasi"] },
-];
 
 export const CreateOrderCard: React.FC<Props> = ({
   initialWorkerProfessionId,
@@ -82,32 +72,84 @@ export const CreateOrderCard: React.FC<Props> = ({
       addr2: "",
       addr3: "",
       phone: "",
+      deadline: dayjs().add(7, "day").format("YYYY-MM-DD"), // ← ДОБАВИЛИ
     },
-    mode: "onBlur",
+    mode: "onChange",            // ← чтобы ошибка убиралась сразу после выбора
   });
 
   // ==== Остальной локальный стейт ====
   const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState(
-    dayjs().add(7, "day").format("YYYY-MM-DD")
-  );
+  const deadline = watch("deadline");
 
   const [addr1, setAddr1] = useState("Toshkent");
   const [areas, setAreas] = useState<string[]>(addr1 ? [addr1] : []);
-  const areaOptions: SelectOption[] = useMemo(
-    () => AREAS.map((a) => ({ value: a, label: a })),
-    []
+
+  const lng = (typeof window !== "undefined" ? localStorage.getItem("i18nextLng") : "ru") || "ru";
+
+  // выбранные локации
+  const [regionId, setRegionId] = useState<number | null>(null);
+  const [districtId, setDistrictId] = useState<number | null>(null);
+  const [villageId, setVillageId] = useState<number | null>(null);
+  
+  // запросы
+  const { data: regions = [], isLoading: regionsLoading } = useRegions();
+  const { data: districts = [], isLoading: districtsLoading } = useDistricts(regionId ?? undefined);
+  const { data: villages = [], isLoading: villagesLoading } = useVillages(districtId ?? undefined);
+  
+  // options
+  const regionOptions: SelectOption[] = useMemo(
+    () => regions.map(r => ({ value: r.id, label: pickName(r, lng) })),
+    [regions, lng]
+  );
+  const districtOptions: SelectOption[] = useMemo(
+    () => districts.map(d => ({ value: d.id, label: pickName(d, lng) })),
+    [districts, lng]
+  );
+  const villageOptions: SelectOption[] = useMemo(
+    () => villages.map(v => ({ value: v.id, label: pickName(v, lng) })),
+    [villages, lng]
   );
 
-  const [prof, setProf] = useState<string[]>([]);
-  const [profQuery, setProfQuery] = useState("");
-  const [open, setOpen] = useState(false);
+
+  const fio = (u?: { name?: string; surname?: string }) =>
+    [u?.surname, u?.name].filter(Boolean).join(" ") || "—";
+  
+  const initials = (u?: { name?: string; surname?: string }) =>
+    ((u?.surname?.[0] ?? "") + (u?.name?.[0] ?? "")).toUpperCase() || "M";
+  
+  const fmtMoney = (n?: number) =>
+    typeof n === "number" ? n.toLocaleString("ru-RU") + " сум" : "—";
+  
+  // хэндлеры
+  const onRegionChange = (v: string | number | null) => {
+    const id = v == null ? null : Number(v);
+    setRegionId(id);
+    setDistrictId(null);
+    setVillageId(null);
+  };
+  const onDistrictChange = (v: string | number | null) => {
+    const id = v == null ? null : Number(v);
+    setDistrictId(id);
+    setVillageId(null);
+  };
+  const onVillageChange = (v: string | number | null) => {
+    const id = v == null ? null : Number(v);
+    setVillageId(id);
+  };
 
   const toggleArea = (a: string) =>
     setAreas((s) => (s.includes(a) ? s.filter((x) => x !== a) : [...s, a]));
 
   // значения из RHF
   const workerProfessionId = watch("workerProfessionId");
+
+  const { data: workerBrief, isLoading: workerLoading } = useQuery({
+    queryKey: ["worker-brief", workerProfessionId],
+    enabled: !!workerProfessionId,
+    queryFn: ({ signal }) => getWorkerById(workerProfessionId!, signal),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const budgetStr = watch("budget");
   const addr2 = watch("addr2");
   const addr3 = watch("addr3");
@@ -126,6 +168,7 @@ export const CreateOrderCard: React.FC<Props> = ({
 
   const fmtSum = (n?: number) => (n ? n.toLocaleString("ru-RU") + " сум" : "—");
 
+  const navigate = useNavigate();
   const handleSubmit = async () => {
     if (!canSubmit) {
       toast.error(
@@ -134,18 +177,23 @@ export const CreateOrderCard: React.FC<Props> = ({
       return;
     }
     try {
+      const regionName  = regionId   ? pickName(regions.find(r => r.id === regionId)!, lng)   : null;
+      const districtName= districtId ? pickName(districts.find(d => d.id === districtId)!, lng): null;
+      const villageName = villageId  ? pickName(villages.find(v => v.id === villageId)!, lng)  : null;
+      
       const dto = {
         workerProfessionId: workerProfessionId.trim(),
         description: description.trim(),
         deadline,
         budget: budgetNum,
-        address1: addr1 || null,
-        address2: addr2 || null,
-        address3: addr3 || null,
+        address1: regionName,      // ← регион
+        address2: districtName,    // ← район
+        address3: villageName,     // ← махалля/посёлок
       };
       const res = await mutateAsync(dto);
       if (res?.ok) {
-        toast.success("Заявка создана");
+        toast.success("Buyurtma yaratildi va ustaga jo'natildi");
+        navigate('/app/client/orders')
         reset({
           workerProfessionId: initialWorkerProfessionId || "",
           budget: "",
@@ -170,34 +218,84 @@ export const CreateOrderCard: React.FC<Props> = ({
       <CardWrap>
         <CardHeader>
           <CardTitle>Создание заявки</CardTitle>
-          <Small>Светлый стиль, аккуратный как в hh</Small>
         </CardHeader>
 
         <CardBody>
           {/* Срок + ID мастера */}
+
+          {workerProfessionId ? (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "56px 1fr auto",
+        gap: 12,
+        alignItems: "center",
+        padding: 12,
+        border: "1px solid #e7ecf3",
+        borderRadius: 12,
+        background: "#fff",
+        marginBottom: 12,
+      }}
+    >
+      {/* Аватар */}
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: 12,
+          border: "1px solid #e7ecf3",
+          background: workerBrief?.worker?.user?.avatar
+            ? `url(https://pointer.uz/public/avatar/${workerBrief.worker.user.avatar}) center/cover no-repeat`
+            : "linear-gradient(180deg,#eef2ff,#f8fafc)",
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 800,
+          color: "#1e40af",
+        }}
+        aria-label="Аватар мастера"
+      >
+        {!workerBrief?.worker?.user?.avatar &&
+          initials(workerBrief?.worker?.user)}
+      </div>
+
+      {/* ФИО + рейтинг */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontWeight: 900, color: "#0f172a" }}>
+          {workerLoading ? "Загрузка…" : fio(workerBrief?.worker?.user)}
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+          <Rate allowHalf disabled value={workerBrief?.rating ?? 0} style={{ fontSize: 16 }} />
+          <span style={{ fontWeight: 700, color: "#12284a" }}>
+            {(workerBrief?.rating ?? 0).toFixed(1)}
+          </span>
+        </div>
+      </div>
+
+      {/* Вилка цены */}
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontWeight: 800, color: "#12284a" }}>
+          {fmtMoney(workerBrief?.minPrice)} — {fmtMoney(workerBrief?.maxPrice)}
+        </div>
+        <div style={{ color: "#6b7a90", fontSize: 12 }}>вилка мастера</div>
+      </div>
+    </div>
+  ) : null}
+
           <Row>
             <TwoCol>
               <div>
                 <SectionLabel>Срок выполнения</SectionLabel>
-                <input
-                  type="date"
-                  value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  min={dayjs().format("YYYY-MM-DD")}
-                  style={{
-                    height: 38,
-                    width: "100%",
-                    padding: "0 12px",
-                    borderRadius: 10,
-                    border: "1px solid #e7ecf3",
-                    background: "#fff",
-                    color: "#0f172a",
-                  }}
-                />
-                <Hint>Укажите крайнюю дату — мастеру проще планировать.</Hint>
+                <DatePopoverInput
+  control={control}
+  name="deadline"
+  placeholder="ГГГГ-ММ-ДД"
+  min={dayjs().format("YYYY-MM-DD")}
+  rules={{ required: "Выберите дату" }}
+  description="Укажите крайнюю дату — мастеру проще планировать."
+/>
               </div>
 
-              <div>
+              {/* <div>
                 <SectionLabel>ID профиля мастера</SectionLabel>
                 <CustomInput
                   control={control}
@@ -208,93 +306,8 @@ export const CreateOrderCard: React.FC<Props> = ({
                 <Hint>
                   Подставляется автоматически при заявке из карточки мастера.
                 </Hint>
-              </div>
+              </div> */}
             </TwoCol>
-          </Row>
-
-          {/* Теги профессий */}
-          <Row>
-            <SectionLabel>Кого ищете (теги)</SectionLabel>
-            <ProfPickerWrap>
-              <TagList>
-                {prof.map((p) => (
-                  <Tag key={p}>
-                    <span>{p}</span>
-                    <button
-                      type="button"
-                      aria-label="remove"
-                      onClick={() => setProf((s) => s.filter((x) => x !== p))}
-                    >
-                      ×
-                    </button>
-                  </Tag>
-                ))}
-                <InputBase
-                  placeholder={
-                    prof.length ? "Добавить ещё…" : "Например: Elektrik"
-                  }
-                  value={profQuery}
-                  onChange={(e) => setProfQuery(e.target.value)}
-                  onFocus={() => setOpen(true)}
-                  onClick={() => setOpen(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const val = profQuery.trim();
-                      if (!val) return;
-                      setProf((s) => (s.includes(val) ? s : [...s, val]));
-                      setProfQuery("");
-                      setOpen(false);
-                    }
-                    if (e.key === "Backspace" && !profQuery && prof.length) {
-                      setProf((s) => s.slice(0, -1));
-                    }
-                  }}
-                />
-              </TagList>
-
-              {open && (
-                <Dropdown onMouseDown={(e) => e.preventDefault()}>
-                  <DropdownScroll>
-                    {PROF_GROUPS.map((g) => {
-                      const items = g.items.filter((x) =>
-                        x.toLowerCase().includes(profQuery.trim().toLowerCase())
-                      );
-                      if (!items.length) return null;
-                      return (
-                        <div key={g.name}>
-                          <GroupLabel>{g.name}</GroupLabel>
-                          {items.map((opt) => {
-                            const active = prof.includes(opt);
-                            return (
-                              <OptionRow
-                                key={opt}
-                                aria-checked={active}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  setProf((s) =>
-                                    active
-                                      ? s.filter((x) => x !== opt)
-                                      : [...s, opt]
-                                  );
-                                  setProfQuery("");
-                                  setOpen(false);
-                                }}
-                              >
-                                <OptionCheck data-active={active} />
-                                <span>{opt}</span>
-                              </OptionRow>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                  </DropdownScroll>
-                </Dropdown>
-              )}
-            </ProfPickerWrap>
-            <Hint>
-              Теги помогают подобрать мастеров — в API не отправляются.
-            </Hint>
           </Row>
 
           {/* Бюджет + пресеты */}
@@ -327,61 +340,41 @@ export const CreateOrderCard: React.FC<Props> = ({
 
           {/* Регионы: селект + чипсы */}
           <Row>
-            <SectionLabel>Локация работ (регионы)</SectionLabel>
-            <TwoCol>
-              <CustomSelect
-                id="area-select"
-                options={areaOptions}
-                value={addr1}
-                onChange={(v) => {
-                  const val = String(v || "");
-                  setAddr1(val);
-                  if (val && !areas.includes(val)) setAreas((s) => [...s, val]);
-                }}
-                placeholder="Выберите регион"
-                width="100%"
-              />
-              <Chips>
-                {AREAS.map((a) => (
-                  <BudgetChip
-                    as="button"
-                    key={a}
-                    active={areas.includes(a)}
-                    onClick={() => toggleArea(a)}
-                  >
-                    {a}
-                  </BudgetChip>
-                ))}
-              </Chips>
-            </TwoCol>
-            <Hint>Выберите 1–3 приоритетных региона.</Hint>
-          </Row>
+  <SectionLabel>Локация работ</SectionLabel>
+  <ThreeCol>
+    <CustomSelect
+      id="region-select"
+      options={regionOptions}
+      value={regionId}
+      onChange={onRegionChange}
+      placeholder={regionsLoading ? "Загрузка…" : "Регион"}
+      loading={regionsLoading}
+      width="100%"
+    />
+    <CustomSelect
+      id="district-select"
+      options={districtOptions}
+      value={districtId}
+      onChange={onDistrictChange}
+      placeholder={regionId ? (districtsLoading ? "Загрузка…" : "Район") : "Сначала выберите регион"}
+      loading={districtsLoading}
+      disabled={!regionId}
+      width="100%"
+    />
+    <CustomSelect
+      id="village-select"
+      options={villageOptions}
+      value={villageId}
+      onChange={onVillageChange}
+      placeholder={districtId ? (villagesLoading ? "Загрузка…" : "Посёлок/махалля (необязательно)") : "Выберите район"}
+      loading={villagesLoading}
+      disabled={!districtId}
+      width="100%"
+    />
+  </ThreeCol>
+  <Hint>Сначала выберите регион, затем район. Посёлок/махалля — по желанию.</Hint>
+</Row>
 
-          {/* Адрес-детализация + телефон */}
-          <Row>
-            <SectionLabel>Адрес (детализация)</SectionLabel>
-            <ThreeCol>
-              <CustomInput
-                control={control}
-                name="addr2"
-                placeholder="Район/посёлок"
-              />
-              <CustomInput
-                control={control}
-                name="addr3"
-                placeholder="Улица/ориентир"
-              />
-              <CustomInput
-                control={control}
-                name="phone"
-                type="phone"
-                placeholder="+998 (__) ___-__-__"
-              />
-            </ThreeCol>
-            <Hint>
-              Можно указать частично — главное, чтобы мастер понимал логистику.
-            </Hint>
-          </Row>
 
           {/* Описание */}
           <Row>
@@ -409,10 +402,15 @@ export const CreateOrderCard: React.FC<Props> = ({
           </Actions>
 
           <SoftBar>
-            <b>Предпросмотр:</b> Дедлайн {dayjs(deadline).format("DD.MM.YYYY")},
-            бюджет {fmtSum(budgetNum)}, регион(ы):{" "}
-            {areas.length ? areas.join(", ") : "—"}.
-          </SoftBar>
+  <b>Предпросмотр:</b> Дедлайн {dayjs(deadline).format("DD.MM.YYYY")},
+  бюджет {fmtSum(budgetNum)}, локация: {
+    [
+      regionId   ? pickName(regions.find(r => r.id === regionId)!, lng)   : null,
+      districtId ? pickName(districts.find(d => d.id === districtId)!, lng): null,
+      villageId  ? pickName(villages.find(v => v.id === villageId)!, lng)  : null,
+    ].filter(Boolean).join(", ")
+  }.
+</SoftBar>
         </CardBody>
       </CardWrap>
 
@@ -423,14 +421,14 @@ export const CreateOrderCard: React.FC<Props> = ({
         </CardHeader>
         <CardBody>
           <SummaryList>
-            <li>
+            {/* <li>
               <span>ID мастера</span>
               <b>
                 {workerProfessionId
                   ? workerProfessionId.slice(0, 10) + "…"
                   : "—"}
               </b>
-            </li>
+            </li> */}
             <li>
               <span>Срок</span>
               <b>{dayjs(deadline).format("DD.MM.YYYY")}</b>
@@ -440,13 +438,21 @@ export const CreateOrderCard: React.FC<Props> = ({
               <b>{fmtSum(budgetNum)}</b>
             </li>
             <li>
-              <span>Регион(ы)</span>
-              <b>{areas.length ? areas.join(", ") : "—"}</b>
-            </li>
-            <li>
-              <span>Адрес</span>
-              <b>{[addr1, addr2, addr3].filter(Boolean).join(", ") || "—"}</b>
-            </li>
+    <span>Регион</span>
+    <b>{regionId ? pickName(regions.find(r => r.id === regionId)!, lng) : "—"}</b>
+  </li>
+  <li>
+    <span>Регион</span>
+    <b>{regionId ? pickName(regions.find(r => r.id === regionId)!, lng) : "—"}</b>
+  </li>
+  <li>
+    <span>Район</span>
+    <b>{districtId ? pickName(districts.find(d => d.id === districtId)!, lng) : "—"}</b>
+  </li>
+  <li>
+    <span>Махалля / посёлок</span>
+    <b>{villageId ? pickName(villages.find(v => v.id === villageId)!, lng) : "—"}</b>
+  </li>
             <li>
               <span>Описание</span>
               <b>

@@ -60,6 +60,66 @@ export type CreateOrderResp = {
   };
 };
 
+
+export type Profession = {
+  id: string;
+  nameUz: string;
+  nameRu: string;
+};
+
+export type SearchWorkerUser = {
+  name: string;
+  surname: string;
+  middleName?: string | null;
+  avatar?: string | null;
+};
+
+export type SearchWorker = {
+  id: string;                         // row id (workerProfessionId)
+  minPrice: number;
+  maxPrice: number;
+  rating: number;
+  hasTeam: boolean;
+  teamMemberCount: number;
+  readyForHugeProject: boolean;
+  inventory?: string | null;
+  competitions?: "YES" | "NO";
+  jobType?: "SOLO" | "COMPANY";
+  professionId: string;
+  updatedAt?: string;
+  worker?: {
+    id: string;
+    user?: SearchWorkerUser;
+  };
+};
+
+/* === API === */
+export async function searchWorkers(
+  params: { professions: string; minPrice: number; maxPrice: number },
+  signal?: AbortSignal
+): Promise<SearchWorker[]> {
+  const { professions, minPrice, maxPrice } = params;
+  // обязательные 3 query: professions, minPrice, maxPrice
+  const { data } = await api.get<{ ok: boolean; data: SearchWorker[] }>(
+    "/opt/order/search",
+    { params: { professions, minPrice, maxPrice }, signal }
+  );
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+export async function getWorkerById(
+  id: string,
+  signal?: AbortSignal
+): Promise<SearchWorker | null> {
+  const { data } = await api.get<{ ok: boolean; data: SearchWorker | SearchWorker[] }>(
+    `/opt/order/search/${id}`,
+    { signal }
+  );
+  // Бэки иногда шлют объект, иногда массив — аккуратно достанем
+  if (Array.isArray(data?.data)) return data.data[0] ?? null;
+  return (data && (data as any).data) || null;
+}
+
 /* ---------- api ---------- */
 export const clientApi = {
   updateAddress: async (dto: UpdateAddressDto): Promise<boolean> => {
