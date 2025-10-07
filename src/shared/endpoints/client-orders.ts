@@ -1,7 +1,7 @@
 import { api } from "../api/client";
 
 /** ===== Types ===== */
-export type OrderStatus = "NEW" | "IN_PROGRESS" | "DONE" | "CANCELLED";
+export type OrderStatus = "NEW" | "PROGRESS" | "DONE" | "CANCELLED";
 
 export type ClientOrder = {
   id: string;
@@ -39,16 +39,52 @@ type Resp =
   | { ok: boolean; data: ClientOrder[] }
   | { ok: boolean; data: { ok: boolean; data: ClientOrder[] } };
 
+export type ClientCommentPayload = {
+  comment: string;
+  rate: number;
+};
+
+type CommentResp =
+  | { ok: boolean; data?: unknown; message?: unknown }
+  | { ok: boolean; data: { ok: boolean; data?: unknown; message?: unknown } };
+
+const takeOk = (payload: CommentResp): boolean => {
+  // Универсальная распаковка на случай двойной обёртки
+  // @ts-ignore
+  if (typeof payload?.ok === "boolean" && payload.ok) return true;
+  // @ts-ignore
+  if (typeof payload?.data?.ok === "boolean" && payload.data.ok) return true;
+  return false;
+};
+
+export async function postClientComment(
+  orderId: string,
+  body: ClientCommentPayload,
+  signal?: AbortSignal
+): Promise<void> {
+  const { data } = await api.post<CommentResp>(
+    `/client/comment/${encodeURIComponent(orderId)}`,
+    body,
+    { signal }
+  );
+  if (!takeOk(data)) {
+    throw new Error("Не удалось отправить отзыв");
+  }
+}
+
 /** Универсальная распаковка, если вдруг обёртка двойная */
 const takeList = (payload: Resp): ClientOrder[] => {
   // @ts-ignore
   if (Array.isArray(payload?.data)) return payload.data as ClientOrder[];
   // @ts-ignore
-  if (Array.isArray(payload?.data?.data)) return payload.data.data as ClientOrder[];
+  if (Array.isArray(payload?.data?.data))
+    return payload.data.data as ClientOrder[];
   return [];
 };
 
-export const getClientOrders = async (signal?: AbortSignal): Promise<ClientOrder[]> => {
+export const getClientOrders = async (
+  signal?: AbortSignal
+): Promise<ClientOrder[]> => {
   const { data } = await api.get<Resp>("/client/orders", { signal });
   return takeList(data);
 };

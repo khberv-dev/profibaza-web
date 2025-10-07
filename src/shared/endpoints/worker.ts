@@ -32,7 +32,27 @@ export type WorkerNewOrder = {
   legal: unknown | null;
 };
 
-export async function getWorkerNewOrders(signal?: AbortSignal): Promise<WorkerNewOrder[]> {
+type OkResp =
+  | { ok: boolean; data?: unknown }
+  | { ok?: boolean; data?: { ok?: boolean } };
+
+const isOk = (p: OkResp) => Boolean(p?.ok) || Boolean((p as any)?.data?.ok);
+
+/** Принять заказ (POST /worker/accept-order/:orderId) */
+export async function acceptWorkerOrder(
+  orderId: string,
+  signal?: AbortSignal
+): Promise<void> {
+  const { data } = await api.post<OkResp>(
+    `/worker/accept-order/${encodeURIComponent(orderId)}`,
+    { signal }
+  );
+  if (!isOk(data)) throw new Error("Не удалось принять заказ");
+}
+
+export async function getWorkerNewOrders(
+  signal?: AbortSignal
+): Promise<WorkerNewOrder[]> {
   const { data } = await api.get<{ ok: boolean; data: WorkerNewOrder[] }>(
     "/worker/new-orders",
     { signal }
