@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { MapPin, CalendarDays, Wallet } from "lucide-react";
 import dayjs from "dayjs";
@@ -25,12 +26,24 @@ import {
   WODanger,
   WOEmpty,
   WOSkel,
+  WOTabs,
+  WOTab,
 } from "./worker-new-orders.style";
 import {
-  getWorkerNewOrders,
+  getWorkerOrders,
   WorkerNewOrder,
   acceptWorkerOrder,
+  rejectWorkerOrder,
 } from "../../../../shared/endpoints/worker";
+
+const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
+  { key: "ALL", label: "Все" },
+  { key: "NEW", label: "Новые" },
+  { key: "ACCEPTED", label: "Принятые" },
+  { key: "IN_PROGRESS", label: "В работе" },
+  { key: "DONE", label: "Завершённые" },
+  { key: "REJECTED", label: "Отклонённые" },
+];
 
 const fmtMoney = (n?: number | null) =>
   typeof n === "number" ? n.toLocaleString("ru-RU") + " сум" : "—";
@@ -74,37 +87,133 @@ const statusLabel = (s: WorkerNewOrder["status"]) =>
     : "Отклонён";
 
 export default function NewWorkerOrdersPage() {
+  const [active, setActive] = useState<(typeof TABS)[number]["key"]>("NEW");
   const queryClient = useQueryClient();
 
   const { data = [], isLoading } = useQuery({
-    queryKey: ["worker", "new-orders"],
-    queryFn: ({ signal }) => getWorkerNewOrders(signal),
+    queryKey: ["worker", "orders", active],
+    queryFn: ({ signal }) => getWorkerOrders({ status: active }, signal),
     staleTime: 60_000,
   });
 
+  /** Хелперы оптимистичных апдейтов для всех табов */
+  const moveOrderBetweenTabs = (
+    orderId: string,
+    nextStatus: WorkerNewOrder["status"],
+    mutate: (list: WorkerNewOrder[]) => WorkerNewOrder[]
+  ) => {
+    // Пройдём по всем табам и аккуратно обновим кэш
+    const keys = TABS.map((t) => ["worker", "orders", t.key] as const);
+    keys.forEach((key) => {
+      const prev = queryClient.getQueryData<WorkerNewOrder[]>(key);
+      if (!prev) return;
+      const isSourceTab =
+        key[2] === "ALL" || key[2] === undefined
+          ? true
+          : key[2] === "NEW" ||
+            key[2] === "ACCEPTED" ||
+            key[2] === "IN_PROGRESS" ||
+            key[2] === "DONE" ||
+            key[2] === "REJECTED";
+
+      // Для таба, где элемент сейчас мог быть — меняем/удаляем
+      const updated = mutate(prev);
+      queryClient.setQueryData<WorkerNewOrder[]>(key, updated);
+    });
+  };
+
+  const removeFromSpecificTabAndAddToTarget = (
+    orderId: string,
+    nextStatus: WorkerNewOrder["status"],
+    snapshot: Map<string, WorkerNewOrder[]>
+  ) => {
+    // Сохраним снапшоты
+    TABS.forEach((t) => {
+      const key = JSON.stringify(["worker", "orders", t.key]);
+      snapshot.set(
+        key,
+        queryClient.getQueryData<WorkerNewOrder[]>([
+          "worker",
+          "orders",
+          t.key,
+        ]) ?? []
+      );
+    });
+
+    // Удалим из источников и добавим в целевые
+    TABS.forEach((t) => {
+      const key = ["worker", "orders", t.key] as const;
+      const list = queryClient.getQueryData<WorkerNewOrder[]>(key) ?? [];
+      // если таб = ALL: просто меняем статус и перемещаем вверх
+      if (t.key === "ALL") {
+        const idx = list.findIndex((o) => o.id === orderId);
+        if (idx !== -1) {
+          const item = { ...list[idx], status: nextStatus };
+          const next = [item, ...list.filter((o) => o.id !== orderId)];
+          queryClient.setQueryData(key, next);
+        }
+        return;
+      }
+      // инакше: если это таб NEW — удаляем; если таб nextStatus — добавляем в начало
+      if (t.key === "NEW") {
+        const next = list.filter((o) => o.id !== orderId);
+        queryClient.setQueryData(key, next);
+      }
+      if (t.key === nextStatus) {
+        const allKey = ["worker", "orders", "ALL"] as const;
+        const all = queryClient.getQueryData<WorkerNewOrder[]>(allKey) ?? [];
+        const fromAll = all.find((o) => o.id === orderId);
+        const item = fromAll
+          ? { ...fromAll, status: nextStatus }
+          : ({ id: orderId, status: nextStatus } as any);
+        const unique = [item, ...list.filter((o) => o.id !== orderId)];
+        queryClient.setQueryData(key, unique);
+      }
+    });
+  };
+
+  /** --- Принятие заказа --- */
   const { mutate: accept, isPending: isAccepting } = useMutation({
     mutationFn: (orderId: string) => acceptWorkerOrder(orderId),
-    /** оптимистично отмечаем заказ как ACCEPTED */
     onMutate: async (orderId) => {
-      await queryClient.cancelQueries({ queryKey: ["worker", "new-orders"] });
-      const prev = queryClient.getQueryData<WorkerNewOrder[]>([
-        "worker",
-        "new-orders",
-      ]);
-      queryClient.setQueryData<WorkerNewOrder[]>(
-        ["worker", "new-orders"],
-        (old = []) =>
-          old.map((o) => (o.id === orderId ? { ...o, status: "ACCEPTED" } : o))
-      );
-      return { prev };
+      await queryClient.cancelQueries({ queryKey: ["worker", "orders"] });
+      const snapshot = new Map<string, WorkerNewOrder[]>();
+      removeFromSpecificTabAndAddToTarget(orderId, "ACCEPTED", snapshot);
+      return { snapshot };
     },
     onError: (_err, _orderId, ctx) => {
-      if (ctx?.prev)
-        queryClient.setQueryData(["worker", "new-orders"], ctx.prev);
+      // откат снапшотов
+      if (ctx?.snapshot) {
+        for (const [k, v] of ctx.snapshot.entries()) {
+          queryClient.setQueryData(JSON.parse(k), v);
+        }
+      }
       alert("Не удалось принять заказ. Попробуйте ещё раз.");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["worker", "new-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["worker", "orders"] });
+    },
+  });
+
+  /** --- Отклонение заказа --- */
+  const { mutate: reject, isPending: isRejecting } = useMutation({
+    mutationFn: (orderId: string) => rejectWorkerOrder(orderId),
+    onMutate: async (orderId) => {
+      await queryClient.cancelQueries({ queryKey: ["worker", "orders"] });
+      const snapshot = new Map<string, WorkerNewOrder[]>();
+      removeFromSpecificTabAndAddToTarget(orderId, "REJECTED", snapshot);
+      return { snapshot };
+    },
+    onError: (_err, _orderId, ctx) => {
+      if (ctx?.snapshot) {
+        for (const [k, v] of ctx.snapshot.entries()) {
+          queryClient.setQueryData(JSON.parse(k), v);
+        }
+      }
+      alert("Не удалось отклонить заказ. Попробуйте ещё раз.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["worker", "orders"] });
     },
   });
 
@@ -112,10 +221,24 @@ export default function NewWorkerOrdersPage() {
     <WOPage>
       <WOToolbar>
         <div>
-          <WOTitle>Новые заказы</WOTitle>
-          <WOSub>Актуальные заявки от клиентов — принимайте подходящие.</WOSub>
+          <WOTitle>Заказы</WOTitle>
+          <WOSub>Просматривайте и управляйте заказами по статусам.</WOSub>
         </div>
       </WOToolbar>
+
+      <WOTabs role="tablist" aria-label="Статусы заказов">
+        {TABS.map((t) => (
+          <WOTab
+            key={t.key}
+            role="tab"
+            aria-selected={active === t.key}
+            $active={active === t.key}
+            onClick={() => setActive(t.key)}
+          >
+            {t.label}
+          </WOTab>
+        ))}
+      </WOTabs>
 
       {isLoading ? (
         <WOList>
@@ -124,9 +247,7 @@ export default function NewWorkerOrdersPage() {
           <WOSkel />
         </WOList>
       ) : !data.length ? (
-        <WOEmpty>
-          Пока пусто. Как только появятся заявки — вы увидите их здесь.
-        </WOEmpty>
+        <WOEmpty>Пока пусто для выбранного статуса.</WOEmpty>
       ) : (
         <WOList>
           {data.map((row) => {
@@ -138,7 +259,10 @@ export default function NewWorkerOrdersPage() {
               .filter(Boolean)
               .join(", ");
             const tone = statusTone(row.status);
-            const canAccept = row.status === "NEW" && !isAccepting;
+            const canAccept =
+              row.status === "NEW" && !isAccepting && !isRejecting;
+            const canReject =
+              row.status === "NEW" && !isRejecting && !isAccepting;
 
             return (
               <WOCard
@@ -208,9 +332,11 @@ export default function NewWorkerOrdersPage() {
                   </WOPrimary>
                   <WODanger
                     type="button"
-                    onClick={() => console.log("reject", row.id)}
+                    onClick={() => reject(row.id)}
+                    disabled={!canReject}
+                    title={canReject ? "Отклонить заказ" : "Недоступно"}
                   >
-                    Отклонить
+                    {isRejecting ? "…" : "Отклонить"}
                   </WODanger>
                 </WORight>
               </WOCard>

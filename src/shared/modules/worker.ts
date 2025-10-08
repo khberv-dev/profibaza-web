@@ -7,6 +7,14 @@ export type Profession = {
   nameUz: string;
 };
 
+export type JobType = "SOLO" | "EMPLOYEE" | "ABROAD";
+
+export type ServiceLocation = {
+  longitude: number; // 65.0009
+  latitude: number; // 38.9020
+  radius: number; // км или м — как на бэке (ниже в форме подпишем)
+};
+
 export async function getProfessions(
   signal?: AbortSignal
 ): Promise<Profession[]> {
@@ -26,6 +34,10 @@ export type WorkerProfessionPayload = {
   teamMemberCount: number;
   readyForHugeProject: boolean;
   // доп. поля
+
+  jobType: JobType;
+  locations: ServiceLocation[];
+
   competitions?: "YES" | "NO";
   inventory?: string;
 };
@@ -44,6 +56,10 @@ export type WorkerProfessionRow = {
   updatedAt: string;
   // доп. поля
   competitions?: "YES" | "NO";
+
+  jobType?: JobType | null;
+  locations?: ServiceLocation[] | null;
+
   inventory?: string;
 };
 

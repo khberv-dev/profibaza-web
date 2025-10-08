@@ -67,13 +67,20 @@ type DemoMap = Record<
   string,
   import("../../../../../shared/modules/worker").ProfessionDemo[]
 >;
-import type { ProfessionDemo } from "../../../../../shared/modules/worker";
+import type {
+  JobType,
+  ProfessionDemo,
+} from "../../../../../shared/modules/worker";
 import CustomSelect, {
   SelectOption,
 } from "../../../../../components/custom-select/CustomSelect";
 import axios from "axios";
 import { Modal } from "../../../../../components/modal/Modal";
 import { useTranslation } from "react-i18next";
+import {
+  MapLocation,
+  MapYandexLocations,
+} from "../../../../../components/map/MapYandexLocations";
 
 type Mode = "list" | "create" | "edit";
 type RawDemo = {
@@ -96,6 +103,10 @@ export const WorkerProfile: React.FC = () => {
   const [demoUploadErr, setDemoUploadErr] = useState<string | null>(null);
   const demoFileInputRef = useRef<HTMLInputElement | null>(null);
   const demoAbortRef = useRef<AbortController | null>(null);
+  const [jobType, setJobType] = useState<JobType>("SOLO");
+  const [locations, setLocations] = useState<
+    { longitude: string; latitude: string; radius: string }[]
+  >([{ longitude: "65.0009", latitude: "38.9020", radius: "10" }]);
 
   // id профессий, уже созданных у пользователя
   const [createdIds, setCreatedIds] = useState<Set<string>>(new Set());
@@ -241,6 +252,9 @@ export const WorkerProfile: React.FC = () => {
     setInventory("");
     setSaveErr(null);
     setSavedOk(false);
+    // >>> NEW: сброс jobType/locations
+    setJobType("SOLO");
+    setLocations([{ longitude: "65.0009", latitude: "38.9020", radius: "10" }]);
   };
 
   const openCreateFor = (prefillId?: string) => {
@@ -267,7 +281,23 @@ export const WorkerProfile: React.FC = () => {
     const comp = (row as any)?.competitions;
     setCompetitions(comp === "YES" || comp === "NO" ? comp : "NO");
     setInventory(((row as any)?.inventory as string) ?? "");
-    // демо уже есть в demosByRowId из buildDemoMap
+
+    // >>> NEW: подставляем jobType/locations из строки (если есть)
+    setJobType((row.jobType as JobType) || "SOLO");
+    const locs = (row.locations || []) as any[];
+    if (Array.isArray(locs) && locs.length) {
+      setLocations(
+        locs.map((l) => ({
+          longitude: String(l?.longitude ?? ""),
+          latitude: String(l?.latitude ?? ""),
+          radius: String(l?.radius ?? ""),
+        }))
+      );
+    } else {
+      setLocations([
+        { longitude: "65.0009", latitude: "38.9020", radius: "10" },
+      ]);
+    }
   };
 
   const closeForm = () => {
@@ -314,6 +344,19 @@ export const WorkerProfile: React.FC = () => {
     try {
       if (!professionId) throw new Error("Выберите профессию");
 
+      const parsedLocations = locations
+        .map((l) => ({
+          longitude: Number(l.longitude),
+          latitude: Number(l.latitude),
+          radius: Number(l.radius),
+        }))
+        .filter(
+          (l) =>
+            Number.isFinite(l.longitude) &&
+            Number.isFinite(l.latitude) &&
+            Number.isFinite(l.radius)
+        );
+
       const payload: UpsertPayload = {
         professionId,
         minPrice: Number(minPrice) || 0,
@@ -322,6 +365,8 @@ export const WorkerProfile: React.FC = () => {
         teamMemberCount: Number(teamMemberCount) || 0,
         readyForHugeProject,
         competitions,
+        jobType,
+        locations: parsedLocations,
         inventory: inventory?.trim() || "",
       };
 
@@ -349,6 +394,21 @@ export const WorkerProfile: React.FC = () => {
       setSaving(false);
     }
   };
+
+  const addLocation = () =>
+    setLocations((s) => [...s, { longitude: "", latitude: "", radius: "10" }]);
+
+  const removeLocation = (idx: number) =>
+    setLocations((s) => s.filter((_, i) => i !== idx));
+
+  const changeLocation = (
+    idx: number,
+    key: "longitude" | "latitude" | "radius",
+    value: string
+  ) =>
+    setLocations((s) =>
+      s.map((item, i) => (i === idx ? { ...item, [key]: value } : item))
+    );
 
   // форматирование для карточек
   const fmtMoney = (n: number | string | null | undefined) => {
@@ -469,6 +529,12 @@ export const WorkerProfile: React.FC = () => {
     }
     openCreateFor();
   };
+
+  const normalizeLoc = (x: any) => ({
+    latitude: String(x?.latitude ?? x?.lat ?? ""),
+    longitude: String(x?.longitude ?? x?.lng ?? ""),
+    radius: String(x?.radius ?? 10),
+  });
 
   return (
     <Page>
@@ -790,6 +856,140 @@ export const WorkerProfile: React.FC = () => {
             </Inline>
           </Field>
 
+          <Field style={{ gridColumn: "1 / -1" }}>
+            <Label>Зоны обслуживания</Label>
+            <Help>
+              Клик по карте добавляет новую зону. Перетащи пин — чтобы сменить
+              центр. Радиус меняется ползунком/инпутом ниже.
+            </Help>
+
+            <div style={{ marginTop: 10 }}>
+              <MapYandexLocations
+                apiKey={import.meta.env.VITE_YMAPS_API_KEY as string} // ← положи ключ в .env
+                locations={locations.map<MapLocation>((l) => ({
+                  latitude: Number(l.latitude) || 0,
+                  longitude: Number(l.longitude) || 0,
+                  radius: Number(l.radius) || 0, // км
+                }))}
+                onAdd={(loc) => {
+                  setLocations((s) => [...s, normalizeLoc(loc)]);
+                }}
+                onChange={(index, loc) => {
+                  changeLocation(index, "latitude", String(loc.latitude));
+                  changeLocation(index, "longitude", String(loc.longitude));
+                  // радиус правится внизу контролами
+                }}
+                onRemove={(index) => removeLocation(index)}
+              />
+            </div>
+
+            {/* Контролы радиусов и точный ввод координат */}
+            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+              {locations.map((l, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr auto",
+                    gap: 8,
+                    alignItems: "center",
+                  }}
+                >
+                  <Input
+                    placeholder="Широта"
+                    inputMode="decimal"
+                    value={l.latitude}
+                    onChange={(e) =>
+                      changeLocation(idx, "latitude", e.target.value)
+                    }
+                  />
+                  <Input
+                    placeholder="Долгота"
+                    inputMode="decimal"
+                    value={l.longitude}
+                    onChange={(e) =>
+                      changeLocation(idx, "longitude", e.target.value)
+                    }
+                  />
+
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <label style={{ fontSize: 12, color: "#6b7a90" }}>
+                        Радиус, км
+                      </label>
+                      <Input
+                        placeholder="км"
+                        inputMode="decimal"
+                        value={l.radius}
+                        onChange={(e) =>
+                          changeLocation(idx, "radius", e.target.value)
+                        }
+                        style={{ width: 90 }}
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={100}
+                      step={1}
+                      value={Number(l.radius) || 0}
+                      onChange={(e) =>
+                        changeLocation(idx, "radius", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <GhostBtn
+                    type="button"
+                    onClick={() => removeLocation(idx)}
+                    disabled={locations.length === 1}
+                    title={
+                      locations.length === 1
+                        ? "Нужна хотя бы одна зона"
+                        : "Удалить"
+                    }
+                  >
+                    Удалить
+                  </GhostBtn>
+                </div>
+              ))}
+              <div>
+                <GhostBtn type="button" onClick={addLocation}>
+                  + Добавить зону
+                </GhostBtn>
+              </div>
+            </div>
+          </Field>
+
+          <Field>
+            <Label>Формат работы</Label>
+            <ToggleGroup>
+              <Toggle
+                active={jobType === "SOLO"}
+                onClick={() => setJobType("SOLO")}
+                title="Самозанятый/фрилансер"
+              >
+                Yakka
+              </Toggle>
+              <Toggle
+                active={jobType === "EMPLOYEE"}
+                onClick={() => setJobType("EMPLOYEE")}
+                title="Работа по найму"
+              >
+                Ishchi
+              </Toggle>
+              <Toggle
+                active={jobType === "ABROAD"}
+                onClick={() => setJobType("ABROAD")}
+                title="Готов к работе за рубежом"
+              >
+                Xorijda
+              </Toggle>
+            </ToggleGroup>
+          </Field>
+
           <Field>
             <Label>{t("worker.contestsParticipation")}</Label>
             <ToggleGroup>
@@ -979,8 +1179,6 @@ export const WorkerProfile: React.FC = () => {
           </Notice>
         )}
       </Modal>
-
-
     </Page>
   );
 };

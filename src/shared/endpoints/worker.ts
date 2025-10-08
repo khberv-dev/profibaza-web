@@ -38,11 +38,8 @@ type OkResp =
 
 const isOk = (p: OkResp) => Boolean(p?.ok) || Boolean((p as any)?.data?.ok);
 
-/** Принять заказ (POST /worker/accept-order/:orderId) */
-export async function acceptWorkerOrder(
-  orderId: string,
-  signal?: AbortSignal
-): Promise<void> {
+/** Принять заказ */
+export async function acceptWorkerOrder(orderId: string, signal?: AbortSignal) {
   const { data } = await api.post<OkResp>(
     `/worker/accept-order/${encodeURIComponent(orderId)}`,
     { signal }
@@ -50,9 +47,34 @@ export async function acceptWorkerOrder(
   if (!isOk(data)) throw new Error("Не удалось принять заказ");
 }
 
-export async function getWorkerNewOrders(
+/** Отклонить заказ */
+export async function rejectWorkerOrder(orderId: string, signal?: AbortSignal) {
+  const { data } = await api.post<OkResp>(
+    `/worker/reject-order/${encodeURIComponent(orderId)}`,
+    { signal }
+  );
+  if (!isOk(data)) throw new Error("Не удалось отклонить заказ");
+}
+
+/** Получить заказы с фильтром по статусу (GET /worker/orders?status=...) */
+export async function getWorkerOrders(
+  params?: { status?: WorkerNewOrder["status"] | "ALL"; search?: string },
   signal?: AbortSignal
 ): Promise<WorkerNewOrder[]> {
+  const q = new URLSearchParams();
+  if (params?.status && params.status !== "ALL") q.set("status", params.status);
+  if (params?.search) q.set("search", params.search);
+  const path = q.toString() ? `/worker/orders?${q}` : "/worker/orders";
+
+  const { data } = await api.get<{ ok: boolean; data: WorkerNewOrder[] }>(
+    path,
+    { signal }
+  );
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+/** Старый список «только новые» при желании оставить */
+export async function getWorkerNewOrders(signal?: AbortSignal) {
   const { data } = await api.get<{ ok: boolean; data: WorkerNewOrder[] }>(
     "/worker/new-orders",
     { signal }
