@@ -39,8 +39,7 @@ import {
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
   { key: "NEW", label: "Новые" },
-  { key: "ACCEPTED", label: "Принятые" },
-  { key: "IN_PROGRESS", label: "В работе" },
+  { key: "PROGRESS", label: "В работе" },
   { key: "DONE", label: "Завершённые" },
   { key: "REJECTED", label: "Отклонённые" },
 ];
@@ -63,9 +62,7 @@ const statusTone = (
   switch (s) {
     case "NEW":
       return "blue";
-    case "ACCEPTED":
-      return "green";
-    case "IN_PROGRESS":
+    case "PROGRESS":
       return "amber";
     case "DONE":
       return "gray";
@@ -78,9 +75,7 @@ const statusTone = (
 const statusLabel = (s: WorkerNewOrder["status"]) =>
   s === "NEW"
     ? "Новый"
-    : s === "ACCEPTED"
-    ? "Принят"
-    : s === "IN_PROGRESS"
+    : s === "PROGRESS"
     ? "В работе"
     : s === "DONE"
     ? "Завершён"
@@ -111,8 +106,7 @@ export default function NewWorkerOrdersPage() {
         key[2] === "ALL" || key[2] === undefined
           ? true
           : key[2] === "NEW" ||
-            key[2] === "ACCEPTED" ||
-            key[2] === "IN_PROGRESS" ||
+            key[2] === "PROGRESS" ||
             key[2] === "DONE" ||
             key[2] === "REJECTED";
 
@@ -178,7 +172,7 @@ export default function NewWorkerOrdersPage() {
     onMutate: async (orderId) => {
       await queryClient.cancelQueries({ queryKey: ["worker", "orders"] });
       const snapshot = new Map<string, WorkerNewOrder[]>();
-      removeFromSpecificTabAndAddToTarget(orderId, "ACCEPTED", snapshot);
+      // removeFromSpecificTabAndAddToTarget(orderId, "ACCEPTED", snapshot);
       return { snapshot };
     },
     onError: (_err, _orderId, ctx) => {

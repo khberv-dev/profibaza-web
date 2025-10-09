@@ -10,10 +10,18 @@ export type Profession = {
 export type JobType = "SOLO" | "EMPLOYEE" | "ABROAD";
 
 export type ServiceLocation = {
-  longitude: number; // 65.0009
-  latitude: number; // 38.9020
-  radius: number; // км или м — как на бэке (ниже в форме подпишем)
+  longitude: number;
+  latitude: number;
+  radius: number;
 };
+
+// 🔹 новое: "проводной" тип для отправки на бэкенд (все строки)
+export type ServiceLocationWire = {
+  longitude: string;
+  latitude: string;
+  radius: number;
+};
+
 
 export async function getProfessions(
   signal?: AbortSignal
@@ -40,7 +48,13 @@ export type WorkerProfessionPayload = {
 
   competitions?: "YES" | "NO";
   inventory?: string;
+  schedule: WeekSchedule;
 };
+
+export type WorkerProfessionWirePayload =
+  Omit<WorkerProfessionPayload, "locations"> & {
+    locations: ServiceLocationWire[];
+  };
 
 export type WorkerProfessionRow = {
   id: string;
@@ -56,7 +70,7 @@ export type WorkerProfessionRow = {
   updatedAt: string;
   // доп. поля
   competitions?: "YES" | "NO";
-
+  schedule?: WeekSchedule | null;
   jobType?: JobType | null;
   locations?: ServiceLocation[] | null;
 
@@ -81,6 +95,17 @@ export type ProfessionDemo = {
   comment?: string | null;
   fileId: string;
   workerProfessionId: string;
+};
+
+
+export type WeekSchedule = {
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
 };
 
 // Сформировать прямую ссылку на файл демо по fileId.
@@ -192,21 +217,20 @@ export async function uploadProfessionDemo(
 
 // POST /worker/profession  (создать)
 export async function saveWorkerProfession(
-  payload: WorkerProfessionPayload,
+  payload: WorkerProfessionWirePayload,
   signal?: AbortSignal
-): Promise<void> {
-  await api.post("/worker/profession", payload, { signal });
+) {
+  const { data } = await api.post("/worker/profession", payload, { signal });
+  return data;
 }
 
-// PUT /worker/profession/:id  (обновить)
 export async function updateWorkerProfession(
   id: string,
-  payload: WorkerProfessionPayload,
+  payload: WorkerProfessionWirePayload,
   signal?: AbortSignal
-): Promise<void> {
-  await api.put(`/worker/profession/${encodeURIComponent(id)}`, payload, {
-    signal,
-  });
+) {
+  const { data } = await api.put(`/worker/profession/${encodeURIComponent(id)}`, payload, { signal });
+  return data;
 }
 
 export async function getWorkerProfessions(

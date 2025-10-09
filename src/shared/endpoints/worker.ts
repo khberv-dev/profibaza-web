@@ -7,7 +7,7 @@ export type WorkerNewOrder = {
   rejectedAt: string | null;
   deadline: string; // ISO
   description: string;
-  status: "NEW" | "ACCEPTED" | "IN_PROGRESS" | "DONE" | "REJECTED";
+  status: "NEW" | "PROGRESS" | "DONE" | "REJECTED";
   budget: number | null;
   address1: string | null;
   address2: string | null;

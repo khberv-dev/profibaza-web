@@ -70,6 +70,7 @@ type DemoMap = Record<
 import type {
   JobType,
   ProfessionDemo,
+  WeekSchedule,
 } from "../../../../../shared/modules/worker";
 import CustomSelect, {
   SelectOption,
@@ -81,6 +82,17 @@ import {
   MapLocation,
   MapYandexLocations,
 } from "../../../../../components/map/MapYandexLocations";
+
+const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule = {
+  monday: true,
+  tuesday: false,
+  wednesday: true,
+  thursday: false,
+  friday: true,
+  saturday: false,
+  sunday: false,
+};
+
 
 type Mode = "list" | "create" | "edit";
 type RawDemo = {
@@ -100,6 +112,7 @@ export const WorkerProfile: React.FC = () => {
   const [currentRowId, setCurrentRowId] = useState<string | null>(null);
   const [demosByRowId, setDemosByRowId] = useState<DemoMap>({});
   const [demoUploadPct, setDemoUploadPct] = useState<number | null>(null);
+  const [schedule, setSchedule] = useState(defaultSchedule);
   const [demoUploadErr, setDemoUploadErr] = useState<string | null>(null);
   const demoFileInputRef = useRef<HTMLInputElement | null>(null);
   const demoAbortRef = useRef<AbortController | null>(null);
@@ -126,6 +139,25 @@ export const WorkerProfile: React.FC = () => {
   const [readyForHugeProject, setReadyForHugeProject] = useState(false);
   const [competitions, setCompetitions] = useState<"YES" | "NO">("NO");
   const [inventory, setInventory] = useState<string>("");
+
+const dayDefs = useMemo(
+  () =>
+    ([
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+      "sunday",
+    ] as (keyof WeekSchedule)[]).map((key) => ({
+      key,
+      short: t(`daysShort.${key}`),
+      long: t(`daysLong.${key}`)
+    })),
+  [t]
+);
+
 
   // async state
   const [saving, setSaving] = useState(false);
@@ -254,6 +286,7 @@ export const WorkerProfile: React.FC = () => {
     setSavedOk(false);
     // >>> NEW: сброс jobType/locations
     setJobType("SOLO");
+    setSchedule(defaultSchedule);
     setLocations([{ longitude: "65.0009", latitude: "38.9020", radius: "10" }]);
   };
 
@@ -281,7 +314,11 @@ export const WorkerProfile: React.FC = () => {
     const comp = (row as any)?.competitions;
     setCompetitions(comp === "YES" || comp === "NO" ? comp : "NO");
     setInventory(((row as any)?.inventory as string) ?? "");
-
+    setSchedule(
+      (row as any)?.schedule && typeof (row as any).schedule === "object"
+        ? (row as any).schedule
+        : defaultSchedule
+    );
     // >>> NEW: подставляем jobType/locations из строки (если есть)
     setJobType((row.jobType as JobType) || "SOLO");
     const locs = (row.locations || []) as any[];
@@ -344,31 +381,34 @@ export const WorkerProfile: React.FC = () => {
     try {
       if (!professionId) throw new Error("Выберите профессию");
 
+      const isDec = (s: string) => /^-?\d+(\.\d+)?$/.test(s);
       const parsedLocations = locations
-        .map((l) => ({
-          longitude: Number(l.longitude),
-          latitude: Number(l.latitude),
-          radius: Number(l.radius),
-        }))
-        .filter(
-          (l) =>
-            Number.isFinite(l.longitude) &&
-            Number.isFinite(l.latitude) &&
-            Number.isFinite(l.radius)
-        );
-
-      const payload: UpsertPayload = {
-        professionId,
-        minPrice: Number(minPrice) || 0,
-        maxPrice: Number(maxPrice) || 0,
-        hasTeam,
-        teamMemberCount: Number(teamMemberCount) || 0,
-        readyForHugeProject,
-        competitions,
-        jobType,
-        locations: parsedLocations,
-        inventory: inventory?.trim() || "",
-      };
+      .map((l) => {
+        const lon = normalizeDecimal(l.longitude);
+        const lat = normalizeDecimal(l.latitude);
+        const radNum = Number(normalizeDecimal(l.radius));
+        return {
+          longitude: lon,          // string
+          latitude:  lat,          // string
+          radius:    radNum,       // number
+        };
+      })
+      .filter((l) => isDec(l.longitude) && isDec(l.latitude) && Number.isFinite(l.radius));
+        const payload: UpsertPayload & {
+          locations: { longitude: string; latitude: string; radius: number }[];
+        } = {
+          professionId,
+          minPrice: Number(minPrice) || 0,
+          maxPrice: Number(maxPrice) || 0,
+          hasTeam,
+          teamMemberCount: Number(teamMemberCount) || 0,
+          readyForHugeProject,
+          competitions,
+          jobType,
+          locations: parsedLocations, // ← строки!
+          schedule,
+          inventory: inventory?.trim() || "",
+        };
 
       if (mode === "edit" && currentRowId) {
         await updateWorkerProfession(currentRowId, payload);
@@ -535,6 +575,11 @@ export const WorkerProfile: React.FC = () => {
     longitude: String(x?.longitude ?? x?.lng ?? ""),
     radius: String(x?.radius ?? 10),
   });
+
+  const normalizeDecimal = (v: string | number | null | undefined) =>
+    String(v ?? "").replace(",", ".").trim();
+  
+  const isDec = (s: string) => /^-?\d+(\.\d+)?$/.test(s);
 
   return (
     <Page>
@@ -833,6 +878,27 @@ export const WorkerProfile: React.FC = () => {
               </Toggle>
             </ToggleGroup>
           </Field>
+
+          <Field style={{ gridColumn: "1 / -1" }}>
+  <Label>{t("scheduleLabel")}</Label>
+
+  <Inline style={{ flexWrap: "wrap", gap: 8 }}>
+    {dayDefs.map(({ key, short, long }) => (
+      <Toggle
+        key={key}
+        active={schedule[key]}
+        onClick={() => setSchedule((s) => ({ ...s, [key]: !s[key] }))}
+        title={long}
+      >
+        {short}
+      </Toggle>
+    ))}
+  </Inline>
+
+  <Help>{t("scheduleHelp")}</Help>
+</Field>
+
+
 
           <Field>
             <Label>{t("worker.teamPresence")}</Label>
