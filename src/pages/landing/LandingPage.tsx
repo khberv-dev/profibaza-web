@@ -89,6 +89,7 @@ import {
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, Variants, Transition } from "framer-motion";
+import OnboardingModal from "./OnboardingModal";
 
 /* ====== motion variants (с типами) ====== */
 const easeOutBezier: Transition["ease"] = [0.22, 1, 0.36, 1] as const;
@@ -160,6 +161,25 @@ export default function LandingPage() {
   const [openMobile, setOpenMobile] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
+  const [showIntro, setShowIntro] = useState(false);
+  const DISMISS_KEY = "pb.onboarding.dismissUntil"; // timestamp ms
+
+  useEffect(() => {
+    // не показывать, если пользователь «отложил»
+    const until = localStorage.getItem(DISMISS_KEY);
+    if (until && Date.now() < Number(until)) return;
+
+    const t = setTimeout(() => setShowIntro(true), 5000); // показать через 5 сек
+    return () => clearTimeout(t);
+  }, []);
+
+  const closeIntro = () => setShowIntro(false);
+  const snooze7d = () => {
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(DISMISS_KEY, String(Date.now() + sevenDays));
+    setShowIntro(false);
+  };
+
   // текущий язык RU/UZ/EN
   const currentLang = useMemo(
     () => (i18n.language?.split("-")[0] || "ru").toUpperCase(),
@@ -203,6 +223,7 @@ export default function LandingPage() {
 
   return (
     <Shell>
+      <OnboardingModal open={showIntro} onClose={closeIntro} onSnooze7d={snooze7d} />
       <Topbar>
         <TopbarInner>
           <Link to="/" style={{ textDecoration: "none" }}>
