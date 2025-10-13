@@ -64,7 +64,7 @@ export async function getWorkerOrders(
   const q = new URLSearchParams();
   if (params?.status && params.status !== "ALL") q.set("status", params.status);
   if (params?.search) q.set("search", params.search);
-  const path = q.toString() ? `/worker/orders?${q}` : "/worker/orders";
+  const path = q.toString() ? `/worker/orders?${q}` : "/worker/new-orders";
 
   const { data } = await api.get<{ ok: boolean; data: WorkerNewOrder[] }>(
     path,

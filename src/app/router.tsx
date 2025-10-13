@@ -23,6 +23,7 @@ import { WorkerSearchPage } from "../pages/worker-search/WorkerSearchPage";
 import CreateOrderPage from "../pages/worker-search/create-order/CreateOrderPage";
 import ClientOrdersPage from "../features/orders/pages/client/ClientOrdersPage";
 import NewWorkerOrdersPage from "../features/orders/pages/worker/NewWorkerOrdersPage";
+import WorkerProfessionFormPage from "../features/profile/pages/components/worker/WorkerProfessionFormPage";
 
 export const router = createBrowserRouter([
   // Публичные
@@ -65,7 +66,17 @@ export const router = createBrowserRouter([
           },
           {
             element: <RoleGuard allow={["WORKER"]} />,
-            children: [{ path: "worker/jobs", element: <NewWorkerOrdersPage /> }],
+            children: [
+              { path: "worker/jobs", element: <NewWorkerOrdersPage /> },
+              {
+                path: "worker/profile/:rowId/edit",
+                element: <WorkerProfessionFormPage mode="edit" />,
+              },
+              {
+                path: "worker/profile/new",
+                element: <WorkerProfessionFormPage mode="create" />,
+              },
+            ],
           },
         ],
       },

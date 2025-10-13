@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { use, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Pencil,
   Clock,
@@ -82,17 +82,18 @@ import {
   MapLocation,
   MapYandexLocations,
 } from "../../../../../components/map/MapYandexLocations";
+import { useNavigate } from "react-router-dom";
 
-const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule = {
-  monday: true,
-  tuesday: false,
-  wednesday: true,
-  thursday: false,
-  friday: true,
-  saturday: false,
-  sunday: false,
-};
-
+const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule =
+  {
+    monday: true,
+    tuesday: false,
+    wednesday: true,
+    thursday: false,
+    friday: true,
+    saturday: false,
+    sunday: false,
+  };
 
 type Mode = "list" | "create" | "edit";
 type RawDemo = {
@@ -140,30 +141,31 @@ export const WorkerProfile: React.FC = () => {
   const [competitions, setCompetitions] = useState<"YES" | "NO">("NO");
   const [inventory, setInventory] = useState<string>("");
 
-const dayDefs = useMemo(
-  () =>
-    ([
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ] as (keyof WeekSchedule)[]).map((key) => ({
-      key,
-      short: t(`daysShort.${key}`),
-      long: t(`daysLong.${key}`)
-    })),
-  [t]
-);
-
+  const dayDefs = useMemo(
+    () =>
+      (
+        [
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+          "sunday",
+        ] as (keyof WeekSchedule)[]
+      ).map((key) => ({
+        key,
+        short: t(`daysShort.${key}`),
+        long: t(`daysLong.${key}`),
+      })),
+    [t]
+  );
 
   // async state
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
-
+  const navigate = useNavigate();
   // документы
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
@@ -383,32 +385,35 @@ const dayDefs = useMemo(
 
       const isDec = (s: string) => /^-?\d+(\.\d+)?$/.test(s);
       const parsedLocations = locations
-      .map((l) => {
-        const lon = normalizeDecimal(l.longitude);
-        const lat = normalizeDecimal(l.latitude);
-        const radNum = Number(normalizeDecimal(l.radius));
-        return {
-          longitude: lon,          // string
-          latitude:  lat,          // string
-          radius:    radNum,       // number
-        };
-      })
-      .filter((l) => isDec(l.longitude) && isDec(l.latitude) && Number.isFinite(l.radius));
-        const payload: UpsertPayload & {
-          locations: { longitude: string; latitude: string; radius: number }[];
-        } = {
-          professionId,
-          minPrice: Number(minPrice) || 0,
-          maxPrice: Number(maxPrice) || 0,
-          hasTeam,
-          teamMemberCount: Number(teamMemberCount) || 0,
-          readyForHugeProject,
-          competitions,
-          jobType,
-          locations: parsedLocations, // ← строки!
-          schedule,
-          inventory: inventory?.trim() || "",
-        };
+        .map((l) => {
+          const lon = normalizeDecimal(l.longitude);
+          const lat = normalizeDecimal(l.latitude);
+          const radNum = Number(normalizeDecimal(l.radius));
+          return {
+            longitude: lon, // string
+            latitude: lat, // string
+            radius: radNum, // number
+          };
+        })
+        .filter(
+          (l) =>
+            isDec(l.longitude) && isDec(l.latitude) && Number.isFinite(l.radius)
+        );
+      const payload: UpsertPayload & {
+        locations: { longitude: string; latitude: string; radius: number }[];
+      } = {
+        professionId,
+        minPrice: Number(minPrice) || 0,
+        maxPrice: Number(maxPrice) || 0,
+        hasTeam,
+        teamMemberCount: Number(teamMemberCount) || 0,
+        readyForHugeProject,
+        competitions,
+        jobType,
+        locations: parsedLocations, // ← строки!
+        schedule,
+        inventory: inventory?.trim() || "",
+      };
 
       if (mode === "edit" && currentRowId) {
         await updateWorkerProfession(currentRowId, payload);
@@ -567,7 +572,7 @@ const dayDefs = useMemo(
       toast.error("Доступные профессии уже созданы");
       return;
     }
-    openCreateFor();
+    navigate("/app/worker/profile/new");
   };
 
   const normalizeLoc = (x: any) => ({
@@ -577,8 +582,10 @@ const dayDefs = useMemo(
   });
 
   const normalizeDecimal = (v: string | number | null | undefined) =>
-    String(v ?? "").replace(",", ".").trim();
-  
+    String(v ?? "")
+      .replace(",", ".")
+      .trim();
+
   const isDec = (s: string) => /^-?\d+(\.\d+)?$/.test(s);
 
   return (
@@ -636,7 +643,9 @@ const dayDefs = useMemo(
 
                           <PrimaryBtn
                             type="button"
-                            onClick={() => openEditFor(row)}
+                            onClick={() =>
+                              navigate(`/app/worker/profile/${row.id}/edit`)
+                            }
                           >
                             <Pencil size={14} className="icon" />
                             {t("worker.edit")}
@@ -880,25 +889,23 @@ const dayDefs = useMemo(
           </Field>
 
           <Field style={{ gridColumn: "1 / -1" }}>
-  <Label>{t("scheduleLabel")}</Label>
+            <Label>{t("scheduleLabel")}</Label>
 
-  <Inline style={{ flexWrap: "wrap", gap: 8 }}>
-    {dayDefs.map(({ key, short, long }) => (
-      <Toggle
-        key={key}
-        active={schedule[key]}
-        onClick={() => setSchedule((s) => ({ ...s, [key]: !s[key] }))}
-        title={long}
-      >
-        {short}
-      </Toggle>
-    ))}
-  </Inline>
+            <Inline style={{ flexWrap: "wrap", gap: 8 }}>
+              {dayDefs.map(({ key, short, long }) => (
+                <Toggle
+                  key={key}
+                  active={schedule[key]}
+                  onClick={() => setSchedule((s) => ({ ...s, [key]: !s[key] }))}
+                  title={long}
+                >
+                  {short}
+                </Toggle>
+              ))}
+            </Inline>
 
-  <Help>{t("scheduleHelp")}</Help>
-</Field>
-
-
+            <Help>{t("scheduleHelp")}</Help>
+          </Field>
 
           <Field>
             <Label>{t("worker.teamPresence")}</Label>

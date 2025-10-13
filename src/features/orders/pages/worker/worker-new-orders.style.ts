@@ -35,7 +35,7 @@ export const WOList = styled.div`
 /* Карточка заказа */
 export const WOCard = styled.article`
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) 180px; /* ← mid сжимается корректно */
+  grid-template-columns: 100px minmax(0, 1fr) 180px; /* ← mid сжимается корректно */
   grid-template-areas: "left mid right"; /* ← явные области на десктопе */
   gap: 16px;
   padding: 16px 18px;
@@ -66,9 +66,9 @@ export const WOLeft = styled.div`
   justify-items: center; /* чтобы аватар не «лип» к левому краю */
 `;
 export const WOAvatar = styled.div<{ $src?: string | null }>`
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+  border-radius: 24px;
+  height: 96px;
+  width: 96px;
   background: ${({ $src }) =>
     $src
       ? `url(${$src}) center/cover no-repeat`
@@ -172,7 +172,7 @@ export const WOMeta = styled.ul`
     font-size: 14px;
   }
   .k {
-    color: #7b8ba5;
+    color: #768694;
   }
   .v {
     color: #12284a;

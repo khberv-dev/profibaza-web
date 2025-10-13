@@ -297,9 +297,9 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
             placeholder="Zo'r ish, malades…"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            maxLength={500}
+            maxLength={400}
             style={{
-              width: "100%",
+              width: "450px",
               minHeight: 96,
               resize: "vertical",
               padding: "10px 12px",
@@ -655,4 +655,17 @@ const SkeletonCard = styled.div`
       background-position: 120px 0;
     }
   }
+`;
+
+const ModalScroll = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* ключевые ограничения */
+  max-height: min(70vh, 560px);
+  overflow: auto;
+
+  /* важно для корректной работы flex + overflow */
+  min-height: 0;
 `;

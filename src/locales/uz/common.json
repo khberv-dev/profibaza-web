@@ -138,6 +138,12 @@
   "loginFailed": "Kirishda xatolik. Raqam va parolni tekshiring.",
   "worker": {
     "title": "Mutaxassis profili",
+    "addZone": "Zona qo‘shish",
+    "fillForm": "Formani to‘ldiring",
+    "back": "Orqaga",
+    "serviceZones": "Xizmat ko‘rsatish zonalari",
+    "jobFormat": "Ish formati",
+    "mapHint": "Xaritaga bosish yangi zonani qo‘shadi. Markazni o‘zgartirish uchun pinni suring. Radiusni pastdagi slayder yoki maydonda o‘zgartiring.",
     "myProfs": "Mening kasblarim",
     "createNew": "+ Yangi yaratish",
     "canCreateHint": "Yangi kasb qo‘shish",
