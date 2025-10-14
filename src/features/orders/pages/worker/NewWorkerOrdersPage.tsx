@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MapPin, CalendarDays, Wallet } from "lucide-react";
+import {
+  MapPin,
+  CalendarDays,
+  Wallet,
+  MessageSquare,
+  Smile,
+  Meh,
+  Frown,
+  Star,
+  LucideMessageCircleQuestionMark,
+} from "lucide-react";
 import dayjs from "dayjs";
 import {
   WOPage,
@@ -28,6 +38,11 @@ import {
   WOSkel,
   WOTabs,
   WOTab,
+  CommentBlock,
+  CommentForm,
+  CommentToggle,
+  StarsRow,
+  StarBtn,
 } from "./worker-new-orders.style";
 import {
   getWorkerOrders,
@@ -81,10 +96,18 @@ const statusLabel = (s: WorkerNewOrder["status"]) =>
     ? "Завершён"
     : "Отклонён";
 
-export default function NewWorkerOrdersPage() {
-  const [active, setActive] = useState<(typeof TABS)[number]["key"]>("NEW");
-  const queryClient = useQueryClient();
+type CommentUIState = Record<
+  string,
+  { open: boolean; text: string; rating: number }
+>;
 
+export default function NewWorkerOrdersPage() {
+  const [active, setActive] = useState<(typeof TABS)[number]["key"]>("ALL");
+  const queryClient = useQueryClient();
+  const [commentUI, setCommentUI] = useState<CommentUIState>({});
+  const getUI = (id: string) =>
+    commentUI[id] ?? { open: false, text: "", rating: 0 };
+  const [refresh, setRefresh] = useState(false);
   const { data = [], isLoading } = useQuery({
     queryKey: ["worker", "orders", active],
     queryFn: ({ signal }) => getWorkerOrders({ status: active }, signal),
@@ -211,6 +234,53 @@ export default function NewWorkerOrdersPage() {
     },
   });
 
+  function formatPhone(phone?: string | null): string {
+    if (!phone) return "Телефон не указан";
+
+    // Удаляем всё, кроме цифр
+    const digits = phone.replace(/\D/g, "");
+
+    // Приводим к виду +998 (xx) xxx-xx-xx
+    const match = digits.match(/^998(\d{2})(\d{3})(\d{2})(\d{2})$/);
+    if (match) {
+      return `+998 (${match[1]}) ${match[2]}-${match[3]}-${match[4]}`;
+    }
+
+    // fallback для номеров с кодом страны и без
+    if (digits.startsWith("998") && digits.length > 3) {
+      const rest = digits.slice(3);
+      return `+998 ${rest}`;
+    }
+
+    return `+${digits}`;
+  }
+
+  const openComment = (id: string) =>
+    setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), open: true } }));
+
+  const closeComment = (id: string) =>
+    setCommentUI((s) => ({ ...s, [id]: { open: false, text: "", rating: 0 } }));
+
+  const changeText = (id: string, text: string) =>
+    setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), text } }));
+
+  const setRating = (id: string, rating: number) =>
+    setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), rating } }));
+
+  const saveComment = (id: string) => {
+    const { text, rating } = getUI(id);
+    // TODO: postWorkerOrderComment(id, { text, rating })
+    console.log("save", { id, text, rating });
+    closeComment(id);
+  };
+
+  const RatingIcon = ({ rating }: { rating: number }) => {
+    if (rating >= 4) return <Smile size={16} />;
+    if (rating === 3) return <Meh size={16} />;
+    if (rating >= 1) return <Frown size={16} />;
+    return; // без оценки
+  };
+
   return (
     <WOPage>
       <WOToolbar>
@@ -246,6 +316,7 @@ export default function NewWorkerOrdersPage() {
         <WOList>
           {data.map((row) => {
             const u = row.client?.user || undefined;
+            const ui = getUI(row.id);
             const avatar = u?.avatar
               ? `https://pointer.uz/public/avatar/${u.avatar}`
               : null;
@@ -264,75 +335,188 @@ export default function NewWorkerOrdersPage() {
                 role="article"
                 aria-label={`Заказ от ${fio(u)}`}
               >
-                <WOLeft>
-                  <WOAvatar $src={avatar}>{!avatar && initials(u)}</WOAvatar>
-                </WOLeft>
+                <div className="inner">
+                  <WOLeft>
+                    <WOAvatar $src={avatar}>{!avatar && initials(u)}</WOAvatar>
+                  </WOLeft>
 
-                <WOMid>
-                  <WOHead>
-                    <div>
-                      <WOName>{fio(u)}</WOName>
-                      <WOSubline>
-                        {u?.phone ? `+${u.phone}` : "Телефон не указан"}
-                      </WOSubline>
-                    </div>
-                    <WOChips>
-                      <WOStatus $tone={tone}>
-                        {statusLabel(row.status)}
-                      </WOStatus>
-                    </WOChips>
-                  </WOHead>
+                  <WOMid>
+                    <WOHead>
+                      <div>
+                        <WOName>{fio(u)}</WOName>
+                        <WOSubline>{formatPhone(u?.phone)}</WOSubline>
+                      </div>
+                      <WOChips>
+                        <WOStatus $tone={tone}>
+                          {statusLabel(row.status)}
+                        </WOStatus>
+                      </WOChips>
+                    </WOHead>
 
-                  <WOMeta>
-                    <li>
-                      <CalendarDays size={16} />
-                      <span className="k">Срок:</span>
-                      <span className="v">
-                        {dayjs(row.deadline).format("DD.MM.YYYY")}
-                      </span>
-                    </li>
-                    <li>
-                      <Wallet size={16} />
-                      <span className="k">Бюджет:</span>
-                      <span className="v">{fmtMoney(row.budget)}</span>
-                    </li>
-                    <li>
-                      <MapPin size={16} />
-                      <span className="k">Адрес:</span>
-                      <span className="v">{addr || "—"}</span>
-                    </li>
-                  </WOMeta>
+                    <WOMeta>
+                      <li>
+                        <CalendarDays size={16} />
+                        <div>
+                          <span className="k">Срок:</span>
+                          <span className="v">
+                            {dayjs(row.deadline).format("DD.MM.YYYY")}
+                          </span>
+                        </div>
+                      </li>
 
-                  <WODivider />
-                  <WODesc>{row.description}</WODesc>
-                </WOMid>
+                      <li>
+                        <Wallet size={16} />
+                        <div>
+                          <span className="k">Бюджет:</span>
+                          <span className="v">{fmtMoney(row.budget)}</span>
+                        </div>
+                      </li>
 
-                <WORight>
-                  <WOGhost
-                    type="button"
-                    onClick={() =>
-                      (window.location.href = `/worker/order/${row.id}`)
-                    }
-                  >
-                    Подробнее
-                  </WOGhost>
-                  <WOPrimary
-                    type="button"
-                    onClick={() => accept(row.id)}
-                    disabled={!canAccept}
-                    title={canAccept ? "Принять заказ" : "Недоступно"}
-                  >
-                    {isAccepting ? "…" : "Принять"}
-                  </WOPrimary>
-                  <WODanger
-                    type="button"
-                    onClick={() => reject(row.id)}
-                    disabled={!canReject}
-                    title={canReject ? "Отклонить заказ" : "Недоступно"}
-                  >
-                    {isRejecting ? "…" : "Отклонить"}
-                  </WODanger>
-                </WORight>
+                      <li>
+                        <MapPin size={16} />
+                        <div>
+                          <span className="k">Адрес:</span>
+                          <span className="v">{addr || "—"}</span>
+                        </div>
+                      </li>
+                    </WOMeta>
+                    <WODivider />
+                    <WODesc>{row.description}</WODesc>
+                  </WOMid>
+
+                  <WORight>
+                    <WOGhost
+                      type="button"
+                      onClick={() =>
+                        (window.location.href = `/worker/order/${row.id}`)
+                      }
+                    >
+                      Подробнее <img src="/forward.svg" alt="" />
+                    </WOGhost>
+
+                    {/* Кнопку "Принять" показываем ТОЛЬКО когда можно принять */}
+                    {row.status === "NEW" && !isAccepting && !isRejecting && (
+                      <WOPrimary
+                        type="button"
+                        onClick={() => accept(row.id)}
+                        title="Принять заказ"
+                      >
+                        {isAccepting ? "…" : "Принять"}
+                      </WOPrimary>
+                    )}
+
+                    {/* Кнопку "Отклонить" показываем ТОЛЬКО когда можно отклонить */}
+                    {row.status === "NEW" && !isRejecting && !isAccepting && (
+                      <WODanger
+                        type="button"
+                        onClick={() => reject(row.id)}
+                        title="Отклонить заказ"
+                      >
+                        {isRejecting ? "…" : "Отклонить"}
+                      </WODanger>
+                    )}
+
+                    <CommentBlock>
+                      {!ui.open ? (
+                        <CommentToggle onClick={() => openComment(row.id)}>
+                          <span>Комментарии</span>
+                          <MessageSquare />
+                        </CommentToggle>
+                      ) : (
+                        <CommentForm>
+                          {/* Рейтинг */}
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                marginLeft: 8,
+                                color:
+                                  ui.rating >= 4
+                                    ? "#10b981" // зелёный
+                                    : ui.rating === 3
+                                    ? "#f59e0b" // янтарный
+                                    : ui.rating >= 1
+                                    ? "#ef4444" // красный
+                                    : "#9aa5b2", // серый, нет оценки
+                              }}
+                              title={
+                                ui.rating
+                                  ? `Оценка: ${ui.rating}/5`
+                                  : "Оценка не выбрана"
+                              }
+                            >
+                              <RatingIcon rating={ui.rating} />
+                              {ui.rating > 0 && (
+                                <span
+                                  style={{
+                                    marginLeft: 6,
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {ui.rating}/5
+                                </span>
+                              )}
+                            </span>
+                            <StarsRow aria-label="Оценка">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <StarBtn
+                                  key={star}
+                                  type="button"
+                                  onClick={() => setRating(row.id, star)}
+                                  data-active={star <= ui.rating}
+                                  aria-label={`${star} из 5`}
+                                  title={`${star} из 5`}
+                                >
+                                  {/* заполняем звезду цветом когда активна */}
+                                  <Star
+                                    style={{
+                                      fill:
+                                        star <= ui.rating
+                                          ? "currentColor"
+                                          : "transparent",
+                                    }}
+                                  />
+                                </StarBtn>
+                              ))}
+                            </StarsRow>
+                          </div>
+
+                          {/* Текст комментария */}
+                          <textarea
+                            placeholder="Напишите комментарий..."
+                            value={ui.text}
+                            onChange={(e) => changeText(row.id, e.target.value)}
+                          />
+
+                          <div className="actions">
+                            <button
+                              className="save"
+                              onClick={() => saveComment(row.id)}
+                            >
+                              Сохранить
+                            </button>
+                            <button
+                              className="cancel"
+                              onClick={() => closeComment(row.id)}
+                            >
+                              Отменить
+                            </button>
+                          </div>
+                        </CommentForm>
+                      )}
+                    </CommentBlock>
+                  </WORight>
+                </div>
               </WOCard>
             );
           })}

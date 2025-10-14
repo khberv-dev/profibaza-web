@@ -13,6 +13,10 @@ import {
   Clock,
   User,
   Star,
+  MessageSquare,
+  Smile,
+  Meh,
+  Frown,
 } from "lucide-react";
 import {
   ClientOrder,
@@ -126,7 +130,14 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     ACCEPTED: { text: "Принята", tone: "green" },
     REJECTED: { text: "Отклонено", tone: "red" },
   };
+  const [open, setOpen] = useState(false);
 
+  const RatingIcon: React.FC<{ rating: number }> = ({ rating }) => {
+    if (rating >= 4) return <Smile size={16} />;
+    if (rating === 3) return <Meh size={16} />;
+    if (rating >= 1) return <Frown size={16} />;
+    return <MessageSquare size={16} />; // без оценки
+  };
   const getStatusView = (status?: string) =>
     statusViewMap[status ?? ""] ?? {
       text: status ?? "—",
@@ -197,8 +208,6 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
           <Status $tone={s.tone}>{s.text}</Status>
         </Head>
 
-        <Desc title={order.description}>{order.description}</Desc>
-
         <Meta>
           <li>
             <CalendarDays size={16} /> <span className="k">Дедлайн:</span>
@@ -220,6 +229,8 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
           </li>
         </Meta>
 
+        <Desc title={order.description}>{order.description}</Desc>
+
         <Actions>
           {tel && (
             <Ghost as="a" title={`Позвонить ${fio(u)}`}>
@@ -229,16 +240,89 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
           )}
 
           {canRate && (
-            <Primary
-              type="button"
-              onClick={() => setRateOpen(true)}
-              title="Оценить работу"
-            >
-              <Star size={16} />
-              Оценить
-            </Primary>
+            <CommentToggle type="button" onClick={() => setOpen((v) => !v)}>
+              <span>{open ? "Скрыть отзыв" : "Оставить отзыв"}</span>
+              <RatingIcon rating={rate} />
+            </CommentToggle>
           )}
         </Actions>
+
+        {canRate && (
+          <CommentBlock>
+            {open && (
+              <CommentForm>
+                {/* Рейтинг */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color:
+                        rate >= 4
+                          ? "#10b981"
+                          : rate === 3
+                          ? "#f59e0b"
+                          : rate >= 1
+                          ? "#ef4444"
+                          : "#9aa5b2",
+                    }}
+                  >
+                    <RatingIcon rating={rate} />
+                    {rate > 0 && <b style={{ fontSize: 12 }}>{rate}/5</b>}
+                  </span>
+
+                  <StarsRow aria-label="Оценка">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <StarBtn
+                        key={n}
+                        type="button"
+                        data-active={n <= rate}
+                        onClick={() => setRate(n)}
+                        aria-label={`${n} из 5`}
+                        title={`${n} из 5`}
+                      >
+                        <Star
+                          style={{
+                            fill: n <= rate ? "currentColor" : "transparent",
+                          }}
+                        />
+                      </StarBtn>
+                    ))}
+                  </StarsRow>
+                </div>
+
+                {/* Комментарий */}
+                <textarea
+                  placeholder="Zo'r ish, malades…"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  maxLength={400}
+                />
+
+                <div className="actions">
+                  <button
+                    className="save"
+                    disabled={isPending || rate < 1}
+                    onClick={() => sendComment({ rate, comment })}
+                  >
+                    {isPending ? "Отправляем…" : "Отправить"}
+                  </button>
+                  <button
+                    className="cancel"
+                    onClick={() => {
+                      setOpen(false);
+                      setRate(0);
+                      setComment("");
+                    }}
+                  >
+                    Отменить
+                  </button>
+                </div>
+              </CommentForm>
+            )}
+          </CommentBlock>
+        )}
       </Mid>
 
       <Modal
@@ -366,7 +450,7 @@ const List = styled.div`
 const Card = styled.article`
   position: relative;
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 92px 1fr;
   gap: 24px;
   padding: 16px;
   border-radius: 16px;
@@ -386,9 +470,9 @@ const Left = styled.div`
 `;
 
 const Avatar = styled.div<{ $src?: string | null }>`
-  width: 76px;
-  height: 76px;
-  border-radius: 10%;
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
   background: ${({ $src }) =>
     $src
       ? `url(${$src}) center/cover no-repeat`
@@ -468,14 +552,11 @@ export const Status = styled.span<{
   border-radius: 999px;
 
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
   color: var(--c);
 
   background: linear-gradient(180deg, var(--bg1), var(--bg2));
-  border: 1px solid var(--bd);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 8px 18px rgba(var(--halo), 0.08);
 
   position: relative;
   transform: translateZ(0); /* для чёткой рендерной */
@@ -489,25 +570,17 @@ export const Status = styled.span<{
     background: var(--c);
     box-shadow: 0 0 0 3px rgba(var(--halo), 0.12);
   }
-
-  /* деликатные интеракции */
-  @media (hover: hover) {
-    &:hover {
-      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
-        0 10px 22px rgba(var(--halo), 0.12);
-      transform: translateY(-1px);
-    }
-  }
 `;
 const Desc = styled.p`
-  margin: 0;
-  color: #0f172a;
-  font-size: 15px;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  margin: 6px 0 0;
+  color: #1f2937;
+  background: #f1f4f9;
+  border-radius: 12px;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.55;
 `;
 
 const Meta = styled.ul`
@@ -515,6 +588,7 @@ const Meta = styled.ul`
   margin: 0;
   padding: 0;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 10px 16px;
   li {
@@ -529,7 +603,7 @@ const Meta = styled.ul`
   }
   .v {
     color: #12284a;
-    font-weight: 700;
+    font-weight: 500;
   }
 `;
 
@@ -564,6 +638,9 @@ const Primary = styled(Btn)`
 `;
 const Ghost = styled(Btn)`
   border: 1px solid #e7ecf3;
+  min-height: 42px;
+  font-size: 15px;
+  line-height: 1.25;
   background: #fff;
   color: #0f172a;
   text-decoration: none;
@@ -668,4 +745,124 @@ const ModalScroll = styled.div`
 
   /* важно для корректной работы flex + overflow */
   min-height: 0;
+`;
+
+// ==== Комментарии / рейтинг ====
+const CommentBlock = styled.div`
+  margin-top: 10px;
+  border-radius: 8px;
+`;
+
+const CommentToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 600;
+  background: #f1f4f9;
+  border: none;
+  color: #111827;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const CommentForm = styled.div`
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 10px;
+
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    padding: 10px 12px;
+    resize: vertical;
+    font-size: 14px;
+    color: #0f172a;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: #c7ced6;
+    }
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    button {
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .save {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+    }
+    .cancel {
+      background: #fff;
+      border: 1px solid #d1d5db;
+    }
+  }
+`;
+
+const StarsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const StarBtn = styled.button`
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #9aa5b2; /* неактивная */
+  transition: color 0.12s ease, transform 0.12s ease;
+
+  &[data-active="true"] {
+    color: #f59e0b;
+  } /* активная (amber) */
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  &:active {
+    transform: scale(0.96);
+  }
 `;

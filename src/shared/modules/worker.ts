@@ -22,7 +22,6 @@ export type ServiceLocationWire = {
   radius: number;
 };
 
-
 export async function getProfessions(
   signal?: AbortSignal
 ): Promise<Profession[]> {
@@ -51,10 +50,12 @@ export type WorkerProfessionPayload = {
   schedule: WeekSchedule;
 };
 
-export type WorkerProfessionWirePayload =
-  Omit<WorkerProfessionPayload, "locations"> & {
-    locations: ServiceLocationWire[];
-  };
+export type WorkerProfessionWirePayload = Omit<
+  WorkerProfessionPayload,
+  "locations"
+> & {
+  locations: ServiceLocationWire[];
+};
 
 export type WorkerProfessionRow = {
   id: string;
@@ -96,7 +97,6 @@ export type ProfessionDemo = {
   fileId: string;
   workerProfessionId: string;
 };
-
 
 export type WeekSchedule = {
   monday: boolean;
@@ -224,15 +224,62 @@ export async function saveWorkerProfession(
   return data;
 }
 
+type CleanWeekSchedule = Pick<
+  WeekSchedule,
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday"
+>;
+
+function sanitizeSchedule(input: unknown): CleanWeekSchedule | undefined {
+  if (!input || typeof input !== "object") return undefined;
+  const src = input as Record<string, unknown>;
+
+  const out: Partial<CleanWeekSchedule> = {
+    monday: typeof src.monday === "boolean" ? src.monday : undefined,
+    tuesday: typeof src.tuesday === "boolean" ? src.tuesday : undefined,
+    wednesday: typeof src.wednesday === "boolean" ? src.wednesday : undefined,
+    thursday: typeof src.thursday === "boolean" ? src.thursday : undefined,
+    friday: typeof src.friday === "boolean" ? src.friday : undefined,
+    saturday: typeof src.saturday === "boolean" ? src.saturday : undefined,
+    sunday: typeof src.sunday === "boolean" ? src.sunday : undefined,
+  };
+
+  // если ни одного валидного ключа не осталось — не отправляем schedule вовсе
+  return Object.values(out).some((v) => typeof v === "boolean")
+    ? (out as CleanWeekSchedule)
+    : undefined;
+}
+
 export async function updateWorkerProfession(
   id: string,
   payload: WorkerProfessionWirePayload,
   signal?: AbortSignal
 ) {
-  const { data } = await api.put(`/worker/profession/${encodeURIComponent(id)}`, payload, { signal });
+  // 1) убираем locations полностью
+  const {
+    locations: _omitLocations,
+    schedule,
+    ...rest
+  } = (payload ?? {}) as WorkerProfessionWirePayload;
+
+  // 2) чистим schedule — оставляем только boolean-дни недели
+  const safeSchedule = sanitizeSchedule(schedule);
+
+  // 3) собираем тело без locations и без лишних полей в schedule
+  const body = safeSchedule ? { ...rest, schedule: safeSchedule } : { ...rest };
+
+  const { data } = await api.put(
+    `/worker/profession/${encodeURIComponent(id)}`,
+    body,
+    { signal }
+  );
   return data;
 }
-
 export async function getWorkerProfessions(
   signal?: AbortSignal
 ): Promise<WorkerProfessionRow[]> {

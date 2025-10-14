@@ -225,7 +225,8 @@ export const Burger = styled.button`
 
 export const Main = styled.div`
   flex: 1;
-  background: #f7f8fc;
+  // background: #f7f8fc;
+  background: #fff;
 `;
 
 export const Content = styled.main`

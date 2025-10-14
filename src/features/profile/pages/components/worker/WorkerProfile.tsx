@@ -647,7 +647,13 @@ export const WorkerProfile: React.FC = () => {
                               navigate(`/app/worker/profile/${row.id}/edit`)
                             }
                           >
-                            <Pencil size={14} className="icon" />
+                            <img
+                              src="/pen.svg"
+                              style={{
+                                filter: "brightness(0) invert(1)",
+                                width: 18,
+                              }}
+                            />
                             {t("worker.edit")}
                           </PrimaryBtn>
                         </HeadRow>

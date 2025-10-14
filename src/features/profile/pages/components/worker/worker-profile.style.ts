@@ -1,10 +1,8 @@
 import styled from "@emotion/styled";
-
 const iconCss = `
   & .icon {
-    width: 16px;
-    height: 16px;
-    opacity: .9;
+width: 18px; height: 18px; opacity: .9;
+   
   }
 `;
 
@@ -30,7 +28,7 @@ export const UI = {
 
 export const JobItem = styled.div`
   border: 1px solid ${UI.line};
-  border-radius: ${UI.rLg}px;
+  border-radius: 21px;
   background: ${UI.bg};
   padding: 16px;
   transition: box-shadow 0.15s ease, transform 0.05s ease,
@@ -66,9 +64,9 @@ export const StatPill = styled.div`
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid ${UI.line};
-  border-radius: 10px;
-  background: ${UI.bgSoft};
+  // border: 1px solid ${UI.line};
+  border-radius: 12px;
+  background: #f1f4f9;
   > b {
     font-size: 14px;
     font-weight: 800;
@@ -94,8 +92,8 @@ export const SoftPill = styled.span`
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-radius: 999px;
-  background: ${UI.bgSoft};
+  border-radius: 122px;
+  // background: #f1f4f9;
   border: 1px solid ${UI.line};
   font-weight: 700;
   font-size: 12px;
@@ -128,8 +126,8 @@ export const MutedBar = styled.div`
   align-items: center;
   gap: 5px;
   border-radius: ${UI.rMd}px;
-  background: ${UI.bgSoft};
-  border: 1px solid ${UI.lineSoft};
+  background: #f1f4f9;
+  // border: 1px solid ${UI.lineSoft};
   color: ${UI.textMuted};
   font-size: 13px;
 `;

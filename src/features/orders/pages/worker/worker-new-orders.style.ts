@@ -34,19 +34,24 @@ export const WOList = styled.div`
 
 /* Карточка заказа */
 export const WOCard = styled.article`
-  display: grid;
-  grid-template-columns: 100px minmax(0, 1fr) 180px; /* ← mid сжимается корректно */
-  grid-template-areas: "left mid right"; /* ← явные области на десктопе */
-  gap: 16px;
-  padding: 16px 18px;
-  border-radius: 16px;
+  padding: 20px 22px;
+  border-radius: 20px;
   background: #fff;
-  border: 1px solid #e7effc;
-  box-shadow: 0 6px 18px rgba(2, 32, 71, 0.05);
+  border: 1px solid #e9eef6; /* тонкая светлая рамка */
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04),
+    /* верхний hairline */ 0 8px 24px rgba(2, 32, 71, 0.05);
   transition: box-shadow 0.2s ease, transform 0.1s ease;
-  overflow: hidden;
+
+  .inner {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) 250px;
+    grid-template-areas: "left mid right";
+    gap: 16px 20px;
+  }
+
   &:hover {
-    box-shadow: 0 12px 28px rgba(2, 32, 71, 0.08);
+    box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04),
+      0 12px 28px rgba(2, 32, 71, 0.08);
     transform: translateY(-1px);
   }
 
@@ -55,6 +60,7 @@ export const WOCard = styled.article`
     grid-template-areas:
       "left mid"
       "right right";
+    padding: 16px;
   }
 `;
 
@@ -66,6 +72,7 @@ export const WOLeft = styled.div`
   justify-items: center; /* чтобы аватар не «лип» к левому краю */
 `;
 export const WOAvatar = styled.div<{ $src?: string | null }>`
+  grid-area: left;
   border-radius: 24px;
   height: 96px;
   width: 96px;
@@ -73,12 +80,12 @@ export const WOAvatar = styled.div<{ $src?: string | null }>`
     $src
       ? `url(${$src}) center/cover no-repeat`
       : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
-  border: 1px solid #e7ecf3;
+  border: 1px solid #e6ebf2;
   display: grid;
   place-items: center;
-  font-weight: 900;
-  color: #1e40af;
-  font-size: 18px;
+  font-weight: 800;
+  color: #95a3b5; /* мягкий серый для инициалов */
+  font-size: 32px;
 `;
 
 /* Центр */
@@ -90,7 +97,7 @@ export const WOMid = styled.div`
 `;
 export const WOHead = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   align-items: flex-start;
   @media (max-width: 920px) {
@@ -99,15 +106,15 @@ export const WOHead = styled.div`
   }
 `;
 export const WOName = styled.div`
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #12284a;
-  word-break: break-word;
+  color: #0f1f3f; /* темнее, ближе к HH */
+  line-height: 1.2;
 `;
 export const WOSubline = styled.div`
   font-size: 13px;
-  color: #6b7a90;
-  margin-top: 2px;
+  color: #7c8aa0;
+  margin-top: 6px;
 `;
 
 /* Статус/чипсы */
@@ -121,79 +128,117 @@ export const WOStatus = styled.span<{
 }>`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  user-select: none;
+  transition: all 0.15s ease-in-out;
+
   ${({ $tone }) =>
     ({
       blue: {
-        color: "#0b3b8f",
-        background: "#eff6ff",
-        border: "1px solid #dbeafe",
+        background: "#e8f1ff",
+        color: "#0057d9",
       },
       green: {
-        color: "#14532d",
-        background: "#ecfdf5",
-        border: "1px solid #a7f3d0",
+        background: "#e6f6ec",
+        color: "#218739",
       },
       amber: {
-        color: "#92400e",
-        background: "#fff7ed",
-        border: "1px solid #fed7aa",
+        background: "#fff3e0",
+        color: "#b76e00",
       },
       gray: {
-        color: "#475467",
-        background: "#f2f4f7",
-        border: "1px solid #e7ecf3",
+        background: "#f3f4f6",
+        color: "#4b5563",
       },
       red: {
-        color: "#991b1b",
-        background: "#fef2f2",
-        border: "1px solid #fecaca",
+        background: "#fdeaea",
+        color: "#d32f2f",
       },
     }[$tone])};
+
+  /* Эффект HH: лёгкий приподнятый hover */
+  &:hover {
+    filter: brightness(1.03);
+    transform: translateY(-1px);
+  }
 `;
 
 /* Метаданные */
 export const WOMeta = styled.ul`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 16px;
+  display: grid;
+  grid-auto-rows: min-content;
+  gap: 10px;
   list-style: none;
-  margin: 2px 0 0;
+  margin: 8px 0 0;
   padding: 0;
+
   li {
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 18px auto; /* ← иконка + текстовая колонка */
+    align-items: start;
+    column-gap: 10px;
+    min-height: 20px;
     color: #334155;
     font-size: 14px;
+    line-height: 1.35;
   }
-  .k {
-    color: #768694;
-  }
-  .v {
-    color: #12284a;
-    font-weight: 700;
-    max-width: clamp(160px, 44vw, 640px); /* ← длинные адреса не ломают сетку */
+
+  /* Внутри текстовой колонки: ключ и значение в строку, не ломаются */
+  li > div {
+    display: inline-flex;
+    gap: 6px;
+    align-items: baseline;
+    min-width: 0; /* ← важно для ellipsis */
     white-space: nowrap;
+  }
+
+  .k {
+    color: #8a96a8;
+    flex: 0 0 auto;
+    font-weight: 500;
+  }
+
+  .v {
+    color: #0f1f3f;
+    font-weight: 500;
+    flex: 1 1 auto;
+    min-width: 0; /* ← чтобы работал ellipsis */
     overflow: hidden;
     text-overflow: ellipsis;
-    display: inline-block;
+    font-variant-numeric: tabular-nums; /* ровные цифры */
+    -moz-font-feature-settings: "tnum" 1;
+    -webkit-font-feature-settings: "tnum" 1;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Иконки чуть приглушим */
+  svg {
+    opacity: 0.75;
   }
 `;
+
 export const WODivider = styled.div`
   height: 1px;
-  background: #eef3fb;
-  margin-top: 4px;
+  background: #eef2f7;
+  margin: 10px 0 0;
 `;
 export const WODesc = styled.p`
-  margin: 0;
-  color: #0f172a;
+  margin: 6px 0 0;
+  color: #1f2937;
+  background: #f1f4f9;
+  border-radius: 12px;
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 10px 14px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
 `;
 
 /* Правая колонка (кнопки) */
@@ -202,35 +247,40 @@ export const WORight = styled.aside`
   display: grid;
   gap: 8px;
   align-content: start;
-  justify-items: stretch; /* ← кнопки одинаковой ширины */
+  justify-items: end;
   grid-auto-rows: min-content;
-  width: 180px; /* ← стабильно держим третий столбец */
+
   @media (max-width: 920px) {
     width: auto;
-    grid-auto-flow: column;
     justify-items: start;
-    align-items: center;
+    grid-auto-flow: column;
   }
 `;
+
 const btnBase = `
   height: 36px; padding: 0 12px; border-radius: 12px; cursor: pointer;
   transition: box-shadow .15s ease, transform .06s ease, color .12s ease, border-color .12s ease;
   width: 100%;
 `;
-export const WOGhost = styled.button`
-  ${btnBase};
+const iconBtn = `
+  height: 36px; min-width: 36px;
+  padding: 0 12px;
+  display: inline-flex; align-items:center; justify-content:center;
+  gap:8px;
+  border-radius: 12px;
+  border: 1px solid #e6ebf2;
   background: #fff;
-  border: 1px solid #e7ecf3;
-  color: #12284a;
+  color: #0f1f3f;
   font-weight: 600;
-  &:hover {
-    box-shadow: 0 8px 20px rgba(2, 32, 71, 0.08);
-    color: #1e5cfb;
-    border-color: #d0dcfb;
-  }
-  &:active {
-    transform: translateY(1px);
-  }
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .06s ease, border-color .12s ease, color .12s ease;
+  // &:hover { box-shadow: 0 8px 20px rgba(16,24,40,.08); border-color:#d7deea; }
+  &:active { transform: translateY(1px); }
+  &:disabled { opacity:.6; cursor: default; box-shadow:none; transform:none; }
+`;
+
+export const WOGhost = styled.button`
+  ${iconBtn}
 `;
 export const WOPrimary = styled.button`
   ${btnBase};
@@ -272,6 +322,131 @@ export const WOEmpty = styled.div`
   border-radius: 16px;
   color: #6b7a90;
 `;
+
+export const CommentBlock = styled.div`
+  border-radius: 8px;
+`;
+
+export const StarsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+export const StarBtn = styled.button`
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #9aa5b2; /* неактивная */
+  transition: color 0.12s ease, transform 0.12s ease;
+
+  &[data-active="true"],
+  &[data-hover="true"] {
+    color: #f59e0b; /* активная (amber) */
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  &:active {
+    transform: scale(0.96);
+  }
+`;
+
+export const CommentToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 42px; /* было 44 */
+  padding: 10px 16px; /* было 12px 16px */
+  border-radius: 12px; /* было 12 */
+  font-size: 15px; /* было 16 */
+  line-height: 1.25;
+  font-weight: 600;
+
+  background: #f1f4f9;
+  border: none;
+  color: #111827;
+  cursor: pointer;
+
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+  &:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  } /* было 20 */
+`;
+export const CommentForm = styled.div`
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 10px;
+
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 8px;
+    resize: vertical;
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      border-color: #c7ced6;
+    }
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      border-color: #2563eb; /* синий */
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); /* мягкое свечение */
+    }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    button {
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .save {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+    }
+
+    .cancel {
+      background: #fff;
+      border: 1px solid #d1d5db;
+    }
+  }
+`;
+
 export const WOSkel = styled.div`
   height: 132px;
   border-radius: 16px;
@@ -296,18 +471,18 @@ export const WOTabs = styled.div`
 `;
 
 export const WOTab = styled.button<{ $active?: boolean }>`
-  height: 34px;
+  height: 32px;
   padding: 0 12px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  border: 1px solid ${({ $active }) => ($active ? "#bcd0ff" : "#e7ecf3")};
-  color: ${({ $active }) => ($active ? "#1e5cfb" : "#12284a")};
-  background: ${({ $active }) => ($active ? "#eff6ff" : "#fff")};
+  border: 1px solid ${({ $active }) => ($active ? "#cfe0ff" : "#e6ebf2")};
+  color: ${({ $active }) => ($active ? "#155eef" : "#0f1f3f")};
+  background: ${({ $active }) => ($active ? "#f4f8ff" : "#fff")};
   transition: all 0.15s ease;
   &:hover {
-    border-color: #d0dcfb;
-    box-shadow: 0 6px 16px rgba(2, 32, 71, 0.06);
+    border-color: #d7deea;
+    box-shadow: 0 6px 16px rgba(16, 24, 40, 0.06);
   }
 `;
