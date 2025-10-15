@@ -3,6 +3,14 @@ import { api } from "../api/client";
 /** ===== Types ===== */
 export type OrderStatus = "NEW" | "PROGRESS" | "DONE" | "CANCELLED";
 
+export type ClientOrderComment = {
+  id: string;
+  text: string | null;      // текст клиента
+  rating: number | null;    // 1..5
+  feedback: string | null;  // ответ мастера (реплай)
+  createdAt: string;        // ISO
+};
+
 export type ClientOrder = {
   id: string;
   deadline: string | null;
@@ -14,6 +22,7 @@ export type ClientOrder = {
   address3: string | null; // Махалля
   workerProfessionId: string;
   createdAt: string;
+  comments?: ClientOrderComment[];
   updatedAt: string;
   workerProfession?: {
     id: string;

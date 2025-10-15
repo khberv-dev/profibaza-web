@@ -50,6 +50,7 @@ import {
   acceptWorkerOrder,
   rejectWorkerOrder,
 } from "../../../../shared/endpoints/worker";
+import { CommentsThread } from "../client/CommentsThread";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
@@ -417,6 +418,7 @@ export default function NewWorkerOrdersPage() {
                     )}
 
                     <CommentBlock>
+                             
                       {!ui.open ? (
                         <CommentToggle onClick={() => openComment(row.id)}>
                           <span>Комментарии</span>
@@ -425,7 +427,9 @@ export default function NewWorkerOrdersPage() {
                       ) : (
                         <CommentForm>
                           {/* Рейтинг */}
-
+                          <CommentsThread
+                        comments={row.comments ?? []}
+                      />
                           <div
                             style={{
                               display: "flex",
@@ -497,7 +501,7 @@ export default function NewWorkerOrdersPage() {
                             value={ui.text}
                             onChange={(e) => changeText(row.id, e.target.value)}
                           />
-
+                          
                           <div className="actions">
                             <button
                               className="save"

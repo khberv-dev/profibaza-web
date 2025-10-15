@@ -24,6 +24,7 @@ import {
   postClientComment,
 } from "../../../../shared/endpoints/client-orders";
 import { Modal } from "../../../../components/modal/Modal";
+import { CommentsThread } from "./CommentsThread";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ru");
@@ -57,6 +58,8 @@ const statusView: Record<
   DONE: { text: "Завершено", tone: "green" },
   CANCELLED: { text: "Отменено", tone: "red" },
 };
+
+
 
 /* ================ Page ================ */
 export default function ClientOrdersPage() {
@@ -249,6 +252,10 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
         {canRate && (
           <CommentBlock>
+            <CommentsThread
+  comments={order.comments ?? []}
+/>
+
             {open && (
               <CommentForm>
                 {/* Рейтинг */}

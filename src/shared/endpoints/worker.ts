@@ -1,4 +1,16 @@
+// src/shared/endpoints/worker-orders.ts
 import { api } from "../api/client";
+
+export type OrderComment = {
+  id: string;
+  text: string | null;
+  rating: number | null;          // 1..5
+  feedback: string | null;        // если появится ответ мастера и т.п.
+  orderId: string;
+  clientId: string | null;
+  legalId: string | null;
+  createdAt: string;              // ISO
+};
 
 export type WorkerNewOrder = {
   id: string;
@@ -17,6 +29,7 @@ export type WorkerNewOrder = {
   workerProfessionId: string;
   createdAt: string;
   updatedAt: string;
+
   client: {
     address1: string | null;
     address2: string | null;
@@ -29,7 +42,11 @@ export type WorkerNewOrder = {
       avatar?: string | null;
     };
   } | null;
+
   legal: unknown | null;
+
+  /** НОВОЕ: массив комментариев клиента к этому заказу */
+  comments?: OrderComment[];      // может отсутствовать у старых ответов
 };
 
 type OkResp =
@@ -56,7 +73,7 @@ export async function rejectWorkerOrder(orderId: string, signal?: AbortSignal) {
   if (!isOk(data)) throw new Error("Не удалось отклонить заказ");
 }
 
-/** Получить заказы с фильтром по статусу (GET /worker/orders?status=...) */
+/** Список заказов мастера (с фильтром по статусу) */
 export async function getWorkerOrders(
   params?: { status?: WorkerNewOrder["status"] | "ALL"; search?: string },
   signal?: AbortSignal
@@ -70,14 +87,18 @@ export async function getWorkerOrders(
     path,
     { signal }
   );
-  return Array.isArray(data?.data) ? data.data : [];
+
+  // Всегда возвращаем массив и гарантируем наличие comments
+  const arr = Array.isArray(data?.data) ? data!.data : [];
+  return arr.map((o) => ({ ...o, comments: o.comments ?? [] }));
 }
 
-/** Старый список «только новые» при желании оставить */
+/** Старый список «только новые» — оставляем как есть */
 export async function getWorkerNewOrders(signal?: AbortSignal) {
   const { data } = await api.get<{ ok: boolean; data: WorkerNewOrder[] }>(
     "/worker/new-orders",
     { signal }
   );
-  return Array.isArray(data?.data) ? data.data : [];
+  const arr = Array.isArray(data?.data) ? data!.data : [];
+  return arr.map((o) => ({ ...o, comments: o.comments ?? [] }));
 }
