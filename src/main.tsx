@@ -8,11 +8,15 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router.tsx";
 import { queryClient } from "./app/queryClient.ts";
 import { Toaster } from "react-hot-toast";
+import ActivationGate from "./components/ActivationGate.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <AppTheme>
-      <RouterProvider router={router} />
+      <ActivationGate>
+        <RouterProvider router={router} />
+      </ActivationGate>
+
       <Toaster
         position="bottom-right"
         reverseOrder={false}

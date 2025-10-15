@@ -401,7 +401,7 @@ export const CommentForm = styled.div`
   padding: 2px 10px;
 
   textarea {
-    width: 100%;
+    max-width: 100%;
     min-height: 80px;
     border-radius: 8px;
     border: 1px solid #d1d5db;

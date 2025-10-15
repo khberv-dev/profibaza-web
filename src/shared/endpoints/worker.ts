@@ -4,12 +4,12 @@ import { api } from "../api/client";
 export type OrderComment = {
   id: string;
   text: string | null;
-  rating: number | null;          // 1..5
-  feedback: string | null;        // если появится ответ мастера и т.п.
+  rating: number | null; // 1..5
+  feedback: string | null; // если появится ответ мастера и т.п.
   orderId: string;
   clientId: string | null;
   legalId: string | null;
-  createdAt: string;              // ISO
+  createdAt: string; // ISO
 };
 
 export type WorkerNewOrder = {
@@ -46,7 +46,7 @@ export type WorkerNewOrder = {
   legal: unknown | null;
 
   /** НОВОЕ: массив комментариев клиента к этому заказу */
-  comments?: OrderComment[];      // может отсутствовать у старых ответов
+  comments?: OrderComment[]; // может отсутствовать у старых ответов
 };
 
 type OkResp =
@@ -101,4 +101,20 @@ export async function getWorkerNewOrders(signal?: AbortSignal) {
   );
   const arr = Array.isArray(data?.data) ? data!.data : [];
   return arr.map((o) => ({ ...o, comments: o.comments ?? [] }));
+}
+
+export async function postWorkerFeedback(
+  commentId: string,
+  body: { feedback: string },
+  signal?: AbortSignal
+): Promise<void> {
+  const { data } = await api.post<{ ok: boolean; message?: string }>(
+    `/worker/feedback/${encodeURIComponent(commentId)}`,
+    body,
+    { signal }
+  );
+
+  if (!data?.ok) {
+    throw new Error(data?.message || "Не удалось отправить ответ");
+  }
 }

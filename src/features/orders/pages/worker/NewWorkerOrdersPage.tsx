@@ -10,6 +10,7 @@ import {
   Frown,
   Star,
   LucideMessageCircleQuestionMark,
+  Phone,
 } from "lucide-react";
 import dayjs from "dayjs";
 import {
@@ -49,8 +50,10 @@ import {
   WorkerNewOrder,
   acceptWorkerOrder,
   rejectWorkerOrder,
+  postWorkerFeedback,
 } from "../../../../shared/endpoints/worker";
 import { CommentsThread } from "../client/CommentsThread";
+import ReplyBar from "./ReplyBar";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
@@ -97,17 +100,22 @@ const statusLabel = (s: WorkerNewOrder["status"]) =>
     ? "Завершён"
     : "Отклонён";
 
-type CommentUIState = Record<
-  string,
-  { open: boolean; text: string; rating: number }
->;
+type UI = {
+  open: boolean;
+  text: string;
+  rating: number;
+  replyTarget?: { id: string; author: string; text: string | null };
+};
+
+type CommentUIState = Record<string, UI>;
 
 export default function NewWorkerOrdersPage() {
   const [active, setActive] = useState<(typeof TABS)[number]["key"]>("ALL");
   const queryClient = useQueryClient();
   const [commentUI, setCommentUI] = useState<CommentUIState>({});
-  const getUI = (id: string) =>
+  const getUI = (id: string): UI =>
     commentUI[id] ?? { open: false, text: "", rating: 0 };
+
   const [refresh, setRefresh] = useState(false);
   const { data = [], isLoading } = useQuery({
     queryKey: ["worker", "orders", active],
@@ -268,11 +276,39 @@ export default function NewWorkerOrdersPage() {
   const setRating = (id: string, rating: number) =>
     setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), rating } }));
 
+  const setReplyTarget = (id: string, t: UI["replyTarget"]) =>
+    setCommentUI((s) => ({
+      ...s,
+      [id]: { ...getUI(id), replyTarget: t, open: true },
+    }));
+
+  const clearReplyTarget = (id: string) =>
+    setCommentUI((s) => ({
+      ...s,
+      [id]: { ...getUI(id), replyTarget: undefined },
+    }));
+
+  const { mutate: replyFeedback, isPending: isReplying } = useMutation({
+    mutationFn: ({ commentId, text }: { commentId: string; text: string }) =>
+      postWorkerFeedback(commentId, { feedback: text }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["worker", "orders"] });
+    },
+    onError: (err) => {
+      console.error(err);
+      alert("Ошибка при отправке ответа");
+    },
+  });
+
   const saveComment = (id: string) => {
-    const { text, rating } = getUI(id);
-    // TODO: postWorkerOrderComment(id, { text, rating })
-    console.log("save", { id, text, rating });
-    closeComment(id);
+    const { text, replyTarget } = getUI(id);
+    if (!replyTarget || !text.trim()) return;
+
+    replyFeedback({ commentId: replyTarget.id, text });
+    setCommentUI((s) => ({
+      ...s,
+      [id]: { open: false, text: "", rating: 0, replyTarget: undefined },
+    }));
   };
 
   const RatingIcon = ({ rating }: { rating: number }) => {
@@ -383,18 +419,104 @@ export default function NewWorkerOrdersPage() {
                     </WOMeta>
                     <WODivider />
                     <WODesc>{row.description}</WODesc>
+                    <WODivider />
+                    <CommentBlock>
+                      {!ui.open ? (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 10,
+                            alignItems: "center",
+                          }}
+                        >
+                          <CommentToggle onClick={() => openComment(row.id)}>
+                            <span>Комментарии</span>
+                            <MessageSquare />
+                          </CommentToggle>
+
+                          <WOGhost
+                            type="button"
+                            onClick={() =>
+                              (window.location.href = `/worker/order/${row.id}`)
+                            }
+                          >
+                            Позвонить <Phone size={16} />
+                          </WOGhost>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "center",
+                            }}
+                          >
+                            <CommentToggle onClick={() => closeComment(row.id)}>
+                              <span>Комментарии</span>
+                              <MessageSquare />
+                            </CommentToggle>
+
+                            <WOGhost
+                              type="button"
+                              onClick={() =>
+                                (window.location.href = `/worker/order/${row.id}`)
+                              }
+                            >
+                              Позвонить <Phone size={16} />
+                            </WOGhost>
+                          </div>
+
+                          <CommentForm>
+                            {/* список комментариев + кнопки Ответить */}
+                            <CommentsThread
+                              comments={row.comments ?? []}
+                              onReply={(t) => setReplyTarget(row.id, t)}
+                            />
+
+                            {/* бар реплая как в ТГ */}
+                            <ReplyBar
+                              target={ui.replyTarget ?? null}
+                              onClear={() => clearReplyTarget(row.id)}
+                            />
+
+                            {/* ⬇️ textarea и действия показываем ТОЛЬКО когда выбран реплай */}
+
+                            <>
+                              {ui.replyTarget && (
+                                <textarea
+                                  placeholder="Напишите ответ…"
+                                  value={ui.text}
+                                  onChange={(e) =>
+                                    changeText(row.id, e.target.value)
+                                  }
+                                />
+                              )}
+                              <div className="actions">
+                                {ui.replyTarget && (
+                                  <button
+                                    className="save"
+                                    disabled={isReplying}
+                                    onClick={() => saveComment(row.id)}
+                                  >
+                                    {isReplying ? "Отправка..." : "Сохранить"}
+                                  </button>
+                                )}
+                                <button
+                                  className="cancel"
+                                  onClick={() => closeComment(row.id)}
+                                >
+                                  Отменить
+                                </button>
+                              </div>
+                            </>
+                          </CommentForm>
+                        </>
+                      )}
+                    </CommentBlock>
                   </WOMid>
 
                   <WORight>
-                    <WOGhost
-                      type="button"
-                      onClick={() =>
-                        (window.location.href = `/worker/order/${row.id}`)
-                      }
-                    >
-                      Подробнее <img src="/forward.svg" alt="" />
-                    </WOGhost>
-
                     {/* Кнопку "Принять" показываем ТОЛЬКО когда можно принять */}
                     {row.status === "NEW" && !isAccepting && !isRejecting && (
                       <WOPrimary
@@ -416,109 +538,6 @@ export default function NewWorkerOrdersPage() {
                         {isRejecting ? "…" : "Отклонить"}
                       </WODanger>
                     )}
-
-                    <CommentBlock>
-                             
-                      {!ui.open ? (
-                        <CommentToggle onClick={() => openComment(row.id)}>
-                          <span>Комментарии</span>
-                          <MessageSquare />
-                        </CommentToggle>
-                      ) : (
-                        <CommentForm>
-                          {/* Рейтинг */}
-                          <CommentsThread
-                        comments={row.comments ?? []}
-                      />
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              marginBottom: "8px",
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                marginLeft: 8,
-                                color:
-                                  ui.rating >= 4
-                                    ? "#10b981" // зелёный
-                                    : ui.rating === 3
-                                    ? "#f59e0b" // янтарный
-                                    : ui.rating >= 1
-                                    ? "#ef4444" // красный
-                                    : "#9aa5b2", // серый, нет оценки
-                              }}
-                              title={
-                                ui.rating
-                                  ? `Оценка: ${ui.rating}/5`
-                                  : "Оценка не выбрана"
-                              }
-                            >
-                              <RatingIcon rating={ui.rating} />
-                              {ui.rating > 0 && (
-                                <span
-                                  style={{
-                                    marginLeft: 6,
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {ui.rating}/5
-                                </span>
-                              )}
-                            </span>
-                            <StarsRow aria-label="Оценка">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <StarBtn
-                                  key={star}
-                                  type="button"
-                                  onClick={() => setRating(row.id, star)}
-                                  data-active={star <= ui.rating}
-                                  aria-label={`${star} из 5`}
-                                  title={`${star} из 5`}
-                                >
-                                  {/* заполняем звезду цветом когда активна */}
-                                  <Star
-                                    style={{
-                                      fill:
-                                        star <= ui.rating
-                                          ? "currentColor"
-                                          : "transparent",
-                                    }}
-                                  />
-                                </StarBtn>
-                              ))}
-                            </StarsRow>
-                          </div>
-
-                          {/* Текст комментария */}
-                          <textarea
-                            placeholder="Напишите комментарий..."
-                            value={ui.text}
-                            onChange={(e) => changeText(row.id, e.target.value)}
-                          />
-                          
-                          <div className="actions">
-                            <button
-                              className="save"
-                              onClick={() => saveComment(row.id)}
-                            >
-                              Сохранить
-                            </button>
-                            <button
-                              className="cancel"
-                              onClick={() => closeComment(row.id)}
-                            >
-                              Отменить
-                            </button>
-                          </div>
-                        </CommentForm>
-                      )}
-                    </CommentBlock>
                   </WORight>
                 </div>
               </WOCard>
