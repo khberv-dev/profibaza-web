@@ -12,13 +12,10 @@ import {
   verifyCard,
   processActivation,
 } from "../shared/endpoints/activation";
+import { useNavigate } from "react-router-dom";
 
-export default function ActivationGate({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { data: meApi } = useMe();
+export default function ActivationGate() {
+  const { data: meApi, isLoading } = useMe();
   const setMe = useAuthStore((s) => s.setMe);
   const me = useAuthStore((s) => s.me);
   const qc = useQueryClient();
@@ -27,8 +24,11 @@ export default function ActivationGate({
     if (meApi) setMe(meApi as any);
   }, [meApi, setMe]);
 
-  if (!me) return <>{children}</>;
-  if (me.active) return <>{children}</>;
+  // Лоадер, пока не знаем статус (чтобы не мигало приложение)
+  if (isLoading && !me) return <Splash>Загружаем статус…</Splash>;
+
+  // Если вдруг активен — ничего не рендерим (гейт не нужен)
+  if (me?.active) return null;
 
   return (
     <Page role="document" aria-labelledby="activation-title">
@@ -101,6 +101,12 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [cardToken, setCardToken] = useState<string | null>(null);
 
+  
+  const qc = useQueryClient();                               // 👈 возьми тут тоже
+  const navigate = useNavigate();                            // 👈 навигация
+  const setActive = useAuthStore((s) => s.setActive);        // 👈 экшен из стора
+  const setMe = useAuthStore((s) => s.setMe);   
+
   const formatCard = (v: string) =>
     v
       .replace(/\D/g, "")
@@ -159,13 +165,28 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
       setStage("verifying");
       await verifyCard({ invoice: transactionId, token: cardToken, code: otp });
       await processActivation();
+  
+      // ✅ 1. Берём текущее me из стора
+      const currentMe = useAuthStore.getState().me;
+  
+      // ✅ 2. Обновляем active и сохраняем
+      if (currentMe) {
+        setMe({ ...currentMe, active: true });
+      }
+      setActive(true);
+  
+      // ✅ 3. Обновляем /me и переходим в профиль
+      await qc.invalidateQueries({ queryKey: USER_QUERY_KEY });
       setStage("done");
-      onSuccess();
+      onSuccess?.();
+  
+      setTimeout(() => navigate("/app/profile"), 300);
     } catch (e: any) {
       setError(e?.message || "Не удалось подтвердить код");
-      setStage("otp"); // оставить на вводе кода
+      setStage("otp");
     }
   };
+  
 
   return (
     <Box>
@@ -543,4 +564,11 @@ const PayBtn = styled.button`
   &:active {
     transform: translateY(1px);
   }
+`;
+const Splash = styled.div`
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #cbd5ff;
+  background: #0b0f19;
 `;

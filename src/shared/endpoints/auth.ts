@@ -9,6 +9,7 @@ export type LoginDto = { phone: string; password: string };
 export type LoginResponse = {
   token: string;
   role?: UserRole;           // ← опционально, если вдруг нет — можно запросить /me
+  active?: boolean;
   roleUID?: string;          // если понадобится — сохраним позже отдельно
 };
 
@@ -25,22 +26,19 @@ export const authApi = {
   login: async (body: LoginDto): Promise<LoginResponse> => {
     const { data } = await api.post<LoginResponse>("/auth/login", body);
 
-    // если роль пришла в ответе — кладём её сразу
+
     if (data?.token && data?.role) {
-      useAuthStore.getState().setAuth({ token: data.token, role: data.role });
-    } else if (data?.token) {
-      // запасной план: токен есть, роль подтянем отдельным запросом /me (если нужен)
-      useAuthStore.getState().setAuth({ token: data.token, role: null as any });
-      try {
-        const me = await api.get<{ role: UserRole }>("/me"); // или /client/me для клиента
-        if (me?.data?.role) {
-          useAuthStore.getState().setAuth({
-            token: data.token,
-            role: me.data.role,
-          });
-        }
-      } catch {
-        /* игнор, роль можно проставить позже */
+      // сохраняем токен и роль
+      useAuthStore
+        .getState()
+        .setAuth({ token: data.token, role: data.role ?? null });
+
+      // сохраняем active, если пришёл
+      if (typeof data.active === "boolean") {
+        const current = useAuthStore.getState().me;
+        useAuthStore
+          .getState()
+          .setMe({ ...(current ?? {}), active: data.active } as any);
       }
     }
     return data;
