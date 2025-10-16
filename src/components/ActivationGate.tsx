@@ -19,13 +19,18 @@ export default function ActivationGate() {
   const setMe = useAuthStore((s) => s.setMe);
   const me = useAuthStore((s) => s.me);
   const qc = useQueryClient();
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     if (meApi) setMe(meApi as any);
   }, [meApi, setMe]);
-
+  
+  const token = useAuthStore((s) => s.token);
   // Лоадер, пока не знаем статус (чтобы не мигало приложение)
-  if (isLoading && !me) return <Splash>Загружаем статус…</Splash>;
+if (!token) {
+    navigate("/login", { replace: true });
+    return null;
+  }
 
   // Если вдруг активен — ничего не рендерим (гейт не нужен)
   if (me?.active) return null;
