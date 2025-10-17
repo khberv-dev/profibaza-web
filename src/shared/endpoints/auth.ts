@@ -26,21 +26,14 @@ export const authApi = {
   login: async (body: LoginDto): Promise<LoginResponse> => {
     const { data } = await api.post<LoginResponse>("/auth/login", body);
 
-
     if (data?.token && data?.role) {
-      // сохраняем токен и роль
-      useAuthStore
-        .getState()
-        .setAuth({ token: data.token, role: data.role ?? null });
-
-      // сохраняем active, если пришёл
-      if (typeof data.active === "boolean") {
-        const current = useAuthStore.getState().me;
-        useAuthStore
-          .getState()
-          .setMe({ ...(current ?? {}), active: data.active } as any);
-      }
+      useAuthStore.getState().setAuth({ token: data.token, role: data.role });
     }
+
+    if (typeof data.active === "boolean") {
+      useAuthStore.getState().setActive(data.active); // ← только актив
+    }
+
     return data;
   },
 

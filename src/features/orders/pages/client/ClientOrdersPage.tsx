@@ -252,11 +252,15 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
         {canRate && (
           <CommentBlock>
-            <CommentsThread
-  comments={order.comments ?? []}
-/>
+
 
             {open && (
+<div>
+
+<CommentsThread
+                          comments={order.comments ?? []}
+                        />
+                        
               <CommentForm>
                 {/* Рейтинг */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -327,6 +331,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
                   </button>
                 </div>
               </CommentForm>
+</div>
             )}
           </CommentBlock>
         )}
