@@ -8,6 +8,22 @@
   "resetCta": "Parolni tiklash",
   "changePhone": "Рақамни ўзгартириш",
   "demoCodeHint": "Синов коди: 00000",
+  "companyTypes": {
+    "label": "Korxona turi",
+    "MCHJ": "MCHJ — Mas’uliyati cheklangan jamiyat",
+    "IP": "YTT — Yakka tartibdagi tadbirkor",
+    "XK": "XK — Xususiy korxona",
+    "AJ": "AJ — Aksiyadorlik jamiyati",
+    "FERX": "Fermer xo‘jaligi",
+    "OTHER": "Boshqa"
+  },
+  "placeholders2": {
+    "select": "Tanlang"
+  },
+  "company": {
+    "orgNameLabel": "Tashkilot nomi",
+    "orgNamePlaceholder": "Mas.: ProfiBaza Group"
+  },
   "clientKindHint": "Mijoz turini tanlang",
   "workerKindPerson": "Jismoniy shaxs",
   "workerKindLegal": "Yuridik shaxs",

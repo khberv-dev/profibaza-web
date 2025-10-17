@@ -8,6 +8,18 @@
   "backToCode": "Вернуться к вводу кода",
   "forgotSend": "Отправить код",
   "remembered": "Вспомнили пароль?",
+  "companyTypes": {
+    "label": "Тип предприятия",
+    "MCHJ": "МЧЖ — Масъулияти чекланган жамият",
+    "IP": "ИП — Индивидуал тадбиркор",
+    "XK": "ХК — Хусусий корхона",
+    "AJ": "АЖ — Акциядорлик жамияти",
+    "FERX": "Фермер хўжалиги",
+    "OTHER": "Другое"
+  },
+  "placeholders2": {
+    "select": "Выберите"
+  },
   "wrongCode": "Неверный код",
   "continue": "Продолжить",
   "newPassword": "Новый пароль",
@@ -21,6 +33,10 @@
     "friday": "Пт",
     "saturday": "Сб",
     "sunday": "Вс"
+  },
+  "company": {
+    "orgNameLabel": "Название организации",
+    "orgNamePlaceholder": "Напр.: ProfiBaza Group"
   },
   "daysLong": {
     "monday": "Понедельник",

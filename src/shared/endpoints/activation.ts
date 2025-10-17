@@ -1,4 +1,5 @@
 // src/shared/endpoints/activation.ts
+import { pickMessage } from "../../lib/pickMessage";
 import { api } from "../api/client";
 
 /** универсальные «распаковщики» */
@@ -42,7 +43,15 @@ export async function verifyCard(
   signal?: AbortSignal
 ): Promise<{ ok: true }> {
   const { data } = await api.post<any>("/pay/verify-card", payload, { signal });
-  if (!getOk(data)) throw new Error("Неверный код");
+
+  const ok = data?.ok === true || data?.data?.ok === true;
+  if (!ok) {
+    const msg =
+      pickMessage(data?.message) ||
+      pickMessage(data) ||
+      "Не удалось подтвердить код";
+    throw new Error(msg);
+  }
   return { ok: true };
 }
 

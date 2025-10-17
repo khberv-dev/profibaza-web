@@ -13,21 +13,22 @@ import {
   processActivation,
 } from "../shared/endpoints/activation";
 import { useNavigate } from "react-router-dom";
+import { pickMessage } from "../lib/pickMessage";
 
 export default function ActivationGate() {
   const { data: meApi, isLoading } = useMe();
   const setMe = useAuthStore((s) => s.setMe);
   const me = useAuthStore((s) => s.me);
   const qc = useQueryClient();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (meApi) setMe(meApi as any);
   }, [meApi, setMe]);
-  
+
   const token = useAuthStore((s) => s.token);
   // Лоадер, пока не знаем статус (чтобы не мигало приложение)
-if (!token) {
+  if (!token) {
     navigate("/login", { replace: true });
     return null;
   }
@@ -106,11 +107,10 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [cardToken, setCardToken] = useState<string | null>(null);
 
-  
-  const qc = useQueryClient();                               // 👈 возьми тут тоже
-  const navigate = useNavigate();                            // 👈 навигация
-  const setActive = useAuthStore((s) => s.setActive);        // 👈 экшен из стора
-  const setMe = useAuthStore((s) => s.setMe);   
+  const qc = useQueryClient(); // 👈 возьми тут тоже
+  const navigate = useNavigate(); // 👈 навигация
+  const setActive = useAuthStore((s) => s.setActive); // 👈 экшен из стора
+  const setMe = useAuthStore((s) => s.setMe);
 
   const formatCard = (v: string) =>
     v
@@ -170,28 +170,31 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
       setStage("verifying");
       await verifyCard({ invoice: transactionId, token: cardToken, code: otp });
       await processActivation();
-  
+
       // ✅ 1. Берём текущее me из стора
       const currentMe = useAuthStore.getState().me;
-  
+
       // ✅ 2. Обновляем active и сохраняем
       if (currentMe) {
         setMe({ ...currentMe, active: true });
       }
       setActive(true);
-  
+
       // ✅ 3. Обновляем /me и переходим в профиль
       await qc.invalidateQueries({ queryKey: USER_QUERY_KEY });
       setStage("done");
       onSuccess?.();
-  
+
       setTimeout(() => navigate("/app/profile"), 300);
     } catch (e: any) {
-      setError(e?.message || "Не удалось подтвердить код");
+      const msg =
+        pickMessage(e?.response?.data?.message) || // если axios-ошибка
+        pickMessage(e?.message) ||
+        "Не удалось подтвердить код";
+      setError(msg); // <- всегда строка
       setStage("otp");
     }
   };
-  
 
   return (
     <Box>
@@ -256,7 +259,7 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
           </Field>
         ) : null}
 
-        {error ? <ErrorText role="alert">{error}</ErrorText> : null}
+        {error ? <ErrorText role="alert">{String(error)}</ErrorText> : null}
       </Fields>
 
       <FooterRow>

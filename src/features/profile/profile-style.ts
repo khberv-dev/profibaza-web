@@ -85,6 +85,30 @@ export const Name = styled.h1`
   }
 `;
 
+export const NameRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+`;
+
+export const CompanyBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f2f6ff; /* нежно-синий фон */
+  color: #1e3a8a; /* тёмно-синий текст */
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  // border: 1px solid #e2e8ff; /* тонкая рамка */
+  // box-shadow: 0 6px 18px rgba(30, 92, 251, 0.12); /* мягкая тень как у hh */
+  line-height: 1;
+`;
+
 export const Subline = styled.div`
   color: ${sub};
   font-size: 14px;

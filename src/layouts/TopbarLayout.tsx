@@ -29,7 +29,7 @@ const getOrdersPath = (role?: UserRole | null) => {
     case "WORKER":
       return "/app/worker/jobs";
     case "LEGAL":
-      return "/admin/orders";
+      return "/app/legal/orders";
     default:
       return "/app/orders";
   }
@@ -50,17 +50,27 @@ export function TopbarLayout() {
       { to: ORDERS_TO, label: t("nav.orders") }, // ← динамический маршрут
       // jobs добавляем только если он не совпал с ORDERS_TO
       ...(ORDERS_TO !== "/app/worker/jobs"
-        ? [{ to: "/app/worker/jobs", label: t("nav.jobs"), roles: ["WORKER", "ADMIN"] } as NavDef]
+        ? [
+            {
+              to: "/app/worker/jobs",
+              label: t("nav.jobs"),
+              roles: ["WORKER", "ADMIN"],
+            } as NavDef,
+          ]
         : []),
       { to: "/app/forMasters", label: t("nav.forMasters") },
       { to: "/app/help", label: t("nav.help") },
     ];
 
     // фильтр по ролям (если roles не указан — доступно всем)
-    const byRole = items.filter((it) => (it.roles ? !!role && it.roles.includes(role) : true));
+    const byRole = items.filter((it) =>
+      it.roles ? !!role && it.roles.includes(role) : true
+    );
 
     // защита от случайных дублей по to
-    return byRole.filter((it, i, arr) => arr.findIndex((x) => x.to === it.to) === i);
+    return byRole.filter(
+      (it, i, arr) => arr.findIndex((x) => x.to === it.to) === i
+    );
   }, [i18n.language, t, role, ORDERS_TO]);
 
   const activePath = useMemo(() => {
@@ -73,7 +83,12 @@ export function TopbarLayout() {
       <Topbar>
         <Link
           to="/app/profile"
-          style={{ display: "flex", gap: 10, alignItems: "center", textDecoration: "none" }}
+          style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+            textDecoration: "none",
+          }}
           aria-label={t("topbar.goProfile")}
         >
           <Brand>
@@ -100,7 +115,11 @@ export function TopbarLayout() {
             <span className="label">{t("topbar.search")}</span>
           </GhostBtn>
 
-          <GhostBtn title={t("topbar.notifications")} data-badge="1" aria-label={t("topbar.notifications")}>
+          <GhostBtn
+            title={t("topbar.notifications")}
+            data-badge="1"
+            aria-label={t("topbar.notifications")}
+          >
             <IconImg src="/bell.svg" alt="" />
           </GhostBtn>
 
@@ -108,7 +127,10 @@ export function TopbarLayout() {
             {t("topbar.profileBtn")}
           </PrimaryBtn>
 
-          <Burger onClick={() => setOpen((v) => !v)} aria-label={t("topbar.menu")}>
+          <Burger
+            onClick={() => setOpen((v) => !v)}
+            aria-label={t("topbar.menu")}
+          >
             <span />
             <span />
             <span />

@@ -24,7 +24,11 @@ import ClientOrdersPage from "../features/orders/pages/client/ClientOrdersPage";
 import NewWorkerOrdersPage from "../features/orders/pages/worker/NewWorkerOrdersPage";
 import WorkerProfessionFormPage from "../features/profile/pages/components/worker/WorkerProfessionFormPage";
 
-import { ActiveOnly, InactiveOnly, ActivationPage } from "../components/ActiveGuards";
+import {
+  ActiveOnly,
+  InactiveOnly,
+  ActivationPage,
+} from "../components/ActiveGuards";
 
 export const router = createBrowserRouter([
   /* ===== Публичные: доступны всегда, независимо от active ===== */
@@ -65,7 +69,11 @@ export const router = createBrowserRouter([
               // Раздел только для LEGAL (компании)
               {
                 element: <RoleGuard allow={["LEGAL", "WORKER"]} />,
-                children: [{ path: "company/profile", element: <CompanyProfilePage /> }],
+                children: [
+                  { path: "company/profile", element: <CompanyProfilePage /> },
+                  { path: "client/create-order", element: <CreateOrderPage /> },
+                  { path: "legal/orders", element: <ClientOrdersPage /> },
+                ],
               },
 
               // Блоки для CLIENT

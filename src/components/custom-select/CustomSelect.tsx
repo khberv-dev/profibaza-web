@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState, useId } from "react";
 import styled from "@emotion/styled";
 import { PiCaretDownBold, PiCheckBold } from "react-icons/pi";
 
-export type SelectOption = { value: string | number; label: string; disabled?: boolean };
+export type SelectOption = {
+  value: string | number;
+  label: string;
+  disabled?: boolean;
+};
 
 type Props = {
   options: SelectOption[];
@@ -22,7 +26,7 @@ const Wrap = styled.div<{ $w?: number | string }>`
 `;
 
 const Trigger = styled.button<{ disabled?: boolean }>`
-  height: 38px;
+  height: 42px;
   width: 100%;
   padding: 0 36px 0 12px;
   border-radius: 10px;
@@ -31,7 +35,8 @@ const Trigger = styled.button<{ disabled?: boolean }>`
   color: #0f172a;
   text-align: left;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.06s ease;
 
   &:hover {
     border-color: ${({ disabled }) => (disabled ? "#e7ecf3" : "#dfe7f1")};
@@ -71,7 +76,11 @@ const Menu = styled.div<{ $maxh: number }>`
   max-height: ${({ $maxh }) => `${$maxh}px`};
 `;
 
-const Item = styled.div<{ $active?: boolean; $selected?: boolean; $disabled?: boolean }>`
+const Item = styled.div<{
+  $active?: boolean;
+  $selected?: boolean;
+  $disabled?: boolean;
+}>`
   position: relative;
   display: grid;
   grid-template-columns: 1fr 20px;
@@ -145,7 +154,8 @@ export function CustomSelect({
       i = Math.min(options.length - 1, Math.max(0, i + dir));
       if (!isDisabledIdx(i)) return i;
       // если упёрлись в край — дальше нет вариантов
-      if ((dir === 1 && i === options.length - 1) || (dir === -1 && i === 0)) break;
+      if ((dir === 1 && i === options.length - 1) || (dir === -1 && i === 0))
+        break;
     }
     return -1;
   };
@@ -171,11 +181,24 @@ export function CustomSelect({
     }
   }, [open, selectedIndex, options]);
 
+  useEffect(() => {
+    if (open) setOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const choose = (idx: number) => {
     const opt = options[idx];
-    if (!opt || opt.disabled) return; // защита
+    if (!opt || opt.disabled) return;
+
     onChange(opt.value, opt);
     setOpen(false);
+
+    // снять фокус с триггера после закрытия
+    requestAnimationFrame(() => {
+      // ищем именно кнопку-триггер внутри компонента
+      const btn = wrapRef.current?.querySelector("button");
+      (btn as HTMLButtonElement | null)?.blur?.();
+    });
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -260,6 +283,11 @@ export function CustomSelect({
                 $selected={selectedIndex === idx}
                 $disabled={opt.disabled}
                 onMouseEnter={() => !opt.disabled && setHighlight(idx)}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  choose(idx);
+                }}
                 onClick={() => choose(idx)}
                 title={opt.disabled ? "Недоступно" : undefined}
               >
@@ -270,7 +298,9 @@ export function CustomSelect({
               </Item>
             ))}
           {!loading && options.length > 0 && <Divider />}
-          {!loading && <Hint style={{ fontSize: 12 }}>Esc — закрыть • ↑/↓ — выбор</Hint>}
+          {!loading && (
+            <Hint style={{ fontSize: 12 }}>Esc — закрыть • ↑/↓ — выбор</Hint>
+          )}
         </Menu>
       )}
     </Wrap>

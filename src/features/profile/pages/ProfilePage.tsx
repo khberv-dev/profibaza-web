@@ -32,12 +32,16 @@ import {
   AddLink,
   Notice,
   SkeletonLine,
+  NameRow,
+  CompanyBadge,
 } from "../profile-style";
 
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
 import EditProfileModal from "./components/EditProfileModal";
 
-import { useMe } from "../../../shared/modules/user";
+import { useMe, USER_QUERY_KEY } from "../../../shared/modules/user";
+import { CLIENT_ME_QK as CLIENT_ME_QUERY_KEY } from "../../../shared/modules/client";
+import { LEGAL_ME_QK as LEGAL_ME_QUERY_KEY } from "../../../shared/modules/legal";
 import { useAvatar, useUploadAvatar } from "../../../shared/modules/avatar";
 
 // Локации + имя по языку
@@ -47,6 +51,11 @@ import {
   useVillages,
 } from "../../../shared/modules/location";
 import { pickName } from "../../../shared/endpoints/location";
+
+import {
+  useLegalMe,
+  useUpdateLegalAddress,
+} from "../../../shared/modules/legal";
 
 // Клиентское API: адрес + /client/me
 import {
@@ -59,6 +68,7 @@ import CustomSelect, {
   SelectOption,
 } from "../../../components/custom-select/CustomSelect";
 import ProProfileSection from "./ProProfileSection";
+import { useQueryClient } from "@tanstack/react-query";
 
 /* — компактная сетка под селекты — */
 const SelectRow = styled.div`
@@ -207,6 +217,11 @@ export default function ProfilePage() {
   const isClient = data?.role === "CLIENT";
   const { data: clientMe } = useClientMe(!!isClient);
 
+  const isLegal = data?.role === "LEGAL";
+  const { data: legalMe } = useLegalMe(!!isLegal);
+
+  const activeProfile = isClient ? clientMe : isLegal ? legalMe : undefined;
+
   const [regionId, setRegionId] = useState<number | undefined>(undefined);
   const [districtId, setDistrictId] = useState<number | undefined>(undefined);
   const [villageId, setVillageId] = useState<number | undefined>(undefined);
@@ -240,6 +255,7 @@ export default function ProfilePage() {
     setVillageId(undefined);
     setHydrateStage(0);
   };
+
   const cancelAddressEditor = () => {
     setIsEditingAddress(false);
     setRegionId(undefined);
@@ -251,44 +267,60 @@ export default function ProfilePage() {
   };
 
   // Гидрация — только когда редактор открыт
+  // 1: region
   useEffect(() => {
     if (!isEditingAddress) return;
-    if (!isClient) return;
-    if (!clientMe) return;
+    if (!(isClient || isLegal)) return;
+    if (!activeProfile) return;
     if (!regions) return;
     if (hydrateStage !== 0) return;
 
-    const r = findByAnyName(regions, clientMe.address1);
+    const r = findByAnyName(regions, activeProfile.address1);
     if (r) {
       setRegionId(r.id);
       setHydrateStage(1);
     } else {
       setHydrateStage(3);
     }
-  }, [isEditingAddress, isClient, clientMe, regions, hydrateStage]);
+  }, [
+    isEditingAddress,
+    isClient,
+    isLegal,
+    activeProfile,
+    regions,
+    hydrateStage,
+  ]);
 
+  // 2: district
   useEffect(() => {
     if (!isEditingAddress) return;
     if (hydrateStage !== 1) return;
     if (!regionId) return;
     if (!districts) return;
 
-    const d = findByAnyName(districts, clientMe?.address2 || undefined);
+    const d = findByAnyName(districts, activeProfile?.address2 || undefined);
     if (d) {
       setDistrictId(d.id);
       setHydrateStage(2);
     } else {
       setHydrateStage(3);
     }
-  }, [isEditingAddress, hydrateStage, regionId, districts, clientMe?.address2]);
+  }, [
+    isEditingAddress,
+    hydrateStage,
+    regionId,
+    districts,
+    activeProfile?.address2,
+  ]);
 
+  // 3: village
   useEffect(() => {
     if (!isEditingAddress) return;
     if (hydrateStage !== 2) return;
     if (!districtId) return;
     if (!villages) return;
 
-    const v = findByAnyName(villages, clientMe?.address3 || undefined);
+    const v = findByAnyName(villages, activeProfile?.address3 || undefined);
     if (v) setVillageId(v.id);
     setHydrateStage(3);
   }, [
@@ -296,7 +328,7 @@ export default function ProfilePage() {
     hydrateStage,
     districtId,
     villages,
-    clientMe?.address3,
+    activeProfile?.address3,
   ]);
 
   const onRegionChange = (val: string | number | null) => {
@@ -315,9 +347,17 @@ export default function ProfilePage() {
     setVillageId(id);
   };
 
+  const qc = useQueryClient();
+
   // Сохранение
-  const { mutate: saveAddress, isPending: savingAddress } =
+  const { mutate: saveClientAddress, isPending: savingClientAddress } =
     useUpdateClientAddress();
+  const { mutate: saveLegalAddress, isPending: savingLegalAddress } =
+    useUpdateLegalAddress();
+  const savingAddress = (
+    isClient ? savingClientAddress : isLegal ? savingLegalAddress : false
+  ) as boolean;
+
   const [addrSaved, setAddrSaved] = useState<null | "ok" | "err">(null);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
@@ -338,14 +378,30 @@ export default function ProfilePage() {
     const address2 = pickName(district, i18n.language);
     const address3 = pickName(village, i18n.language);
 
-    saveAddress(
+    const mutate = isClient
+      ? saveClientAddress
+      : isLegal
+      ? saveLegalAddress
+      : null;
+    if (!mutate) return;
+
+    mutate(
       { address1, address2, address3 },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setAddrSaved("ok");
           setSaveMsg(t("profile.address.saved") || "Адрес сохранён");
           setIsEditingAddress(false);
-          // через 2.5 сек убираем сообщение
+
+          // 🔄 Жёстко обновляем кэш:
+          await Promise.allSettled([
+            qc.invalidateQueries({ queryKey: USER_QUERY_KEY }),
+            qc.invalidateQueries({
+              queryKey: isClient ? CLIENT_ME_QUERY_KEY : LEGAL_ME_QUERY_KEY,
+            }),
+          ]);
+
+          // убираем всплывашку через 2.5с
           setTimeout(() => setSaveMsg(null), 2500);
         },
         onError: (e: any) => {
@@ -362,12 +418,20 @@ export default function ProfilePage() {
 
   const currentAddressText = useMemo(() => {
     const parts = [
-      clientMe?.address1?.trim(),
-      clientMe?.address2?.trim(),
-      clientMe?.address3?.trim(),
+      activeProfile?.address1?.trim(),
+      activeProfile?.address2?.trim(),
+      activeProfile?.address3?.trim(),
     ].filter(Boolean);
     return parts.length ? parts.join(", ") : "—";
-  }, [clientMe?.address1, clientMe?.address2, clientMe?.address3]);
+  }, [
+    activeProfile?.address1,
+    activeProfile?.address2,
+    activeProfile?.address3,
+  ]);
+
+  const currentAddressDate = useMemo(() => {
+    return safeFormatDate(activeProfile?.updatedAt || activeProfile?.createdAt);
+  }, [activeProfile?.updatedAt, activeProfile?.createdAt]);
 
   return (
     <Wrap>
@@ -407,9 +471,39 @@ export default function ProfilePage() {
                 {isLoading ? (
                   <SkeletonLine w={220} />
                 ) : (
-                  <>
-                    {data?.name || "—"} {data?.surname || ""}
-                  </>
+                  <NameRow>
+                    <span>
+                      {(data?.name || "—") + " " + (data?.surname || "")}
+                    </span>
+
+                    {isLegal && legalMe?.name ? (
+                      <CompanyBadge title={legalMe.name}>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="#0070ff"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                          role="img"
+                          focusable="false"
+                          className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-accent___E3b-y_12-3-5"
+                        >
+                          <g>
+                            <g>
+                              <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M6.29443 14.8729C6.76051 15.4025 7.28287 15.996 7.998 15.996V15.988C8.72144 15.988 9.24393 15.394 9.70211 14.8643C9.9754 14.5433 10.2728 14.2062 10.53 14.1019C10.7973 13.9875 11.217 14.0107 11.6374 14.0339C11.6594 14.0352 11.6815 14.0364 11.7036 14.0376L11.7306 14.0391C12.4376 14.0788 13.1647 14.1197 13.6488 13.6363C14.1254 13.1605 14.084 12.4261 14.0442 11.7196L14.0427 11.694C14.0416 11.6747 14.0406 11.6553 14.0395 11.6358C14.016 11.2201 13.9918 10.7905 14.107 10.5222C14.2196 10.2653 14.5491 9.97647 14.8707 9.69555L14.8885 9.67992C15.4144 9.21853 15.996 8.7083 15.996 7.99403C15.996 7.27169 15.4012 6.75 14.8707 6.29251C14.5491 6.01962 14.2115 5.72263 14.107 5.4658C13.9925 5.19902 14.0158 4.78025 14.039 4.36068C14.0403 4.33846 14.0415 4.31623 14.0427 4.29403C14.091 3.57971 14.1392 2.84127 13.6488 2.35168C13.1722 1.86785 12.4365 1.90919 11.7288 1.94896L11.7036 1.95038C11.6841 1.95146 11.6646 1.95256 11.645 1.95366C11.2287 1.97704 10.7987 2.00119 10.53 1.8862C10.2728 1.77384 9.98344 1.44471 9.70211 1.12367L9.68644 1.10586C9.22435 0.580731 8.71334 0 7.998 0C7.27456 0 6.75208 0.593949 6.29391 1.12367C6.02061 1.44471 5.7232 1.78187 5.46597 1.8862C5.19885 2.00052 4.77953 1.97731 4.35942 1.95407C4.33707 1.95283 4.31472 1.95159 4.29239 1.95038C4.2834 1.94987 4.27439 1.94937 4.26539 1.94886C3.55843 1.90912 2.83131 1.86825 2.34715 2.35168C1.87101 2.83503 1.91194 3.5609 1.95173 4.26668C1.95225 4.2758 1.95276 4.28491 1.95328 4.29403C1.95443 4.31508 1.95559 4.33618 1.95676 4.35729C1.98011 4.7787 2.0038 5.20632 1.88898 5.47383C1.77645 5.73067 1.44687 6.01963 1.12534 6.30054L1.10753 6.31617C0.581598 6.77756 0 7.28779 0 8.00207C0 8.72441 0.594821 9.2461 1.12534 9.70359C1.44687 9.97648 1.78448 10.2734 1.88898 10.5302C2.00348 10.797 1.98024 11.2158 1.95696 11.6354C1.95572 11.6576 1.95449 11.6799 1.95328 11.7021C1.90505 12.4164 1.85682 13.1547 2.34715 13.6443C2.82377 14.1282 3.55945 14.0868 4.26715 14.047L4.29239 14.0456C4.31163 14.0446 4.33092 14.0435 4.35023 14.0424C4.76672 14.019 5.19711 13.9948 5.46597 14.1099C5.7232 14.2223 6.01309 14.5519 6.29443 14.8729ZM11.9872 5.99862L10.9972 5.00867L6.99825 9.00767L4.99875 7.00817L4.0088 7.99812L6.99825 10.9876L11.9872 5.99862Z"
+                                fill="currentColor"
+                              ></path>
+                            </g>
+                          </g>
+                        </svg>
+                        {legalMe.name}
+                      </CompanyBadge>
+                    ) : null}
+                  </NameRow>
                 )}
               </Name>
 
@@ -504,95 +598,124 @@ export default function ProfilePage() {
         </Grid2>
       </div>
 
-      {/* Адрес — только для CLIENT */}
-      {isClient && (
-        <>
-          <AddressCard>
-            <AddressHeader>
-              <AddressTitle>
-                {t("profile.address.title") || "Адрес"}
-              </AddressTitle>
-              {!isEditingAddress && (
-                <LinkBtn onClick={openAddressEditor}>
-                  {currentAddressText === "—"
-                    ? (t("profile.address.add") as string) || "Добавить"
-                    : (t("profile.edit") as string) || "Изменить"}
-                </LinkBtn>
-              )}
-            </AddressHeader>
-
-            {!isEditingAddress ? (
-              <>
-                <AddressLine>{currentAddressText}</AddressLine>
-                <AddressSub>
-                  {saveMsg
-                    ? saveMsg
-                    : clientMe
-                    ? safeFormatDate(clientMe.updatedAt || clientMe.createdAt)
-                    : ""}
-                </AddressSub>
-              </>
-            ) : (
-              <>
-                <SelectRow>
-                  <CustomSelect
-                    id="region"
-                    options={regionOptions}
-                    value={regionId ?? null}
-                    onChange={onRegionChange}
-                    placeholder={t("profile.address.selectRegion") as string}
-                    disabled={false}
-                    loading={regionsLoading}
-                    menuMaxHeight={300}
-                  />
-                  <CustomSelect
-                    id="district"
-                    options={districtOptions}
-                    value={districtId ?? null}
-                    onChange={onDistrictChange}
-                    placeholder={t("profile.address.selectDistrict") as string}
-                    disabled={!regionId}
-                    loading={districtsLoading}
-                    menuMaxHeight={300}
-                  />
-                  <CustomSelect
-                    id="village"
-                    options={villageOptions}
-                    value={villageId ?? null}
-                    onChange={onVillageChange}
-                    placeholder={t("profile.address.selectVillage") as string}
-                    disabled={!districtId}
-                    loading={villagesLoading}
-                    menuMaxHeight={300}
-                  />
-                </SelectRow>
-
-                <Row>
-                  <PrimaryBtn
-                    type="button"
-                    onClick={submitAddress}
-                    disabled={
-                      savingAddress ||
-                      !regionId ||
-                      !districtId ||
-                      !villageId ||
-                      regionsLoading ||
-                      districtsLoading ||
-                      villagesLoading
-                    }
-                  >
-                    {savingAddress
-                      ? (t("profile.address.saving") as string) || "Сохраняем…"
-                      : (t("profile.address.save") as string) || "Сохранить"}
-                  </PrimaryBtn>
-                  <LinkBtn onClick={cancelAddressEditor}>
-                    {t("cancel") || "Отмена"}
-                  </LinkBtn>
-                </Row>
-              </>
+      {(isClient || isLegal) && (
+        <AddressCard>
+          <AddressHeader>
+            <AddressTitle>{t("profile.address.title") || "Адрес"}</AddressTitle>
+            {!isEditingAddress && (
+              <LinkBtn onClick={openAddressEditor}>
+                {currentAddressText === "—"
+                  ? (t("profile.address.add") as string) || "Добавить"
+                  : (t("profile.edit") as string) || "Изменить"}
+              </LinkBtn>
             )}
-          </AddressCard>
-        </>
+          </AddressHeader>
+
+          {!isEditingAddress ? (
+            <>
+              <AddressLine>{currentAddressText}</AddressLine>
+              <AddressSub>{saveMsg ? saveMsg : currentAddressDate}</AddressSub>
+            </>
+          ) : (
+            <>
+              <AddressCard>
+                <AddressHeader>
+                  <AddressTitle>
+                    {t("profile.address.title") || "Адрес"}
+                  </AddressTitle>
+                  {!isEditingAddress && (
+                    <LinkBtn onClick={openAddressEditor}>
+                      {currentAddressText === "—"
+                        ? (t("profile.address.add") as string) || "Добавить"
+                        : (t("profile.edit") as string) || "Изменить"}
+                    </LinkBtn>
+                  )}
+                </AddressHeader>
+
+                {!isEditingAddress ? (
+                  <>
+                    <AddressLine>{currentAddressText}</AddressLine>
+                    <AddressSub>
+                      {saveMsg
+                        ? saveMsg
+                        : clientMe
+                        ? safeFormatDate(
+                            clientMe.updatedAt || clientMe.createdAt
+                          )
+                        : ""}
+                    </AddressSub>
+                  </>
+                ) : (
+                  <>
+                    <SelectRow>
+                      <CustomSelect
+                        id="region"
+                        options={regionOptions}
+                        value={regionId ?? null}
+                        onChange={onRegionChange}
+                        placeholder={
+                          t("profile.address.selectRegion") as string
+                        }
+                        disabled={false}
+                        loading={regionsLoading}
+                        menuMaxHeight={300}
+                      />
+                      <CustomSelect
+                        id="district"
+                        options={districtOptions}
+                        value={districtId ?? null}
+                        onChange={onDistrictChange}
+                        placeholder={
+                          t("profile.address.selectDistrict") as string
+                        }
+                        disabled={!regionId}
+                        loading={districtsLoading}
+                        menuMaxHeight={300}
+                      />
+                      <CustomSelect
+                        id="village"
+                        options={villageOptions}
+                        value={villageId ?? null}
+                        onChange={onVillageChange}
+                        placeholder={
+                          t("profile.address.selectVillage") as string
+                        }
+                        disabled={!districtId}
+                        loading={villagesLoading}
+                        menuMaxHeight={300}
+                      />
+                    </SelectRow>
+
+                    <Row>
+                      <PrimaryBtn
+                        type="button"
+                        onClick={submitAddress}
+                        disabled={
+                          savingAddress ||
+                          !regionId ||
+                          !districtId ||
+                          !villageId ||
+                          regionsLoading ||
+                          districtsLoading ||
+                          villagesLoading
+                        }
+                      >
+                        {savingAddress
+                          ? (t("profile.address.saving") as string) ||
+                            "Сохраняем…"
+                          : (t("profile.address.save") as string) ||
+                            "Сохранить"}
+                      </PrimaryBtn>
+                      <LinkBtn onClick={cancelAddressEditor}>
+                        {t("cancel") || "Отмена"}
+                      </LinkBtn>
+                    </Row>
+                  </>
+                )}
+              </AddressCard>
+            </>
+          )}
+        </AddressCard>
       )}
 
       {data?.role === "WORKER" && <ProProfileSection role="WORKER" />}

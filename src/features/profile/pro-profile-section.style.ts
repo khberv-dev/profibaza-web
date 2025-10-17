@@ -32,8 +32,8 @@ export const Card = styled.section`
   border-radius: 16px;
   background: #ffffff;
   margin-bottom: 28px;
+  margin-top: 14px;
   //   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  overflow: hidden; /* страховка от переполнений */
 `;
 
 /* padded content */

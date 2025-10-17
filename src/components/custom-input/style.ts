@@ -18,9 +18,13 @@ export const InputContainer = styled.div`
   min-width: 0; /* ✅ важно в грид/флекс */
 `;
 export const Label = styled.label`
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #3f3f46;
+  letter-spacing: 0.02em;
+  color: #0f172a;
+  margin-bottom: 6px;
+  text-transform: none;
+  overflow-wrap: anywhere;
 `;
 
 export const Description = styled.span`
@@ -71,10 +75,8 @@ export const StyledInput = styled.input<{ hasError?: boolean }>`
   width: 100%;
   box-sizing: border-box; /* ✅ чтобы паддинги учитывались */
   padding: 10px 40px 10px 12px; /* ✅ фиксированный внутренний отступ справа */
-  border-radius: 8px;
-  border: 1px solid
-    ${({ hasError }) =>
-      hasError ? "#ef4444" : "var(--color-gray-e5, #e5e5ea)"};
+  border-radius: 10px;
+  border: 1px solid ${({ hasError }) => (hasError ? "#ef4444" : "#e7ecf3")};
   background: #fff;
   color: #000;
   outline: none;

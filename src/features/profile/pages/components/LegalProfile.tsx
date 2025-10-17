@@ -1,179 +1,140 @@
 // src/features/profile/components/LegalProfile.tsx
-import React, { useState } from "react";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardBody,
   Row,
   Field,
   Label,
-  Input,
-  Small,
-  Notice,
   Divider,
   PrimaryBtn,
   GhostBtn,
-  Upload,
 } from "../../pro-profile-section.style";
+import CustomSelect, {
+  SelectOption,
+} from "../../../../components/custom-select/CustomSelect";
+import { CustomInput } from "../../../../components/custom-input/CustomInput";
+import { useUpdateLegalProfile } from "../../../../shared/modules/legal";
+import { useQueryClient } from "@tanstack/react-query";
+import { USER_QUERY_KEY } from "../../../../shared/modules/user";
+import { LEGAL_ME_QK as LEGAL_ME_QUERY_KEY } from "../../../../shared/modules/legal";
+
+type FormShape = {
+  companyName: string;
+  companyType: string | number | null;
+};
+
+const COMPANY_TYPE_VALUES = [
+  "MCHJ",
+  "IP",
+  "XK",
+  "AJ",
+  "FERX",
+  "OTHER",
+] as const;
 
 export const LegalProfile: React.FC = () => {
-  const [companyName, setCompanyName] = useState("");
-  const [contactPerson, setContactPerson] = useState("");
-  const [companyPhone, setCompanyPhone] = useState("");
-  const [companyEmail, setCompanyEmail] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
-  const [vacancies, setVacancies] = useState<
-    Array<{ title: string; city?: string; salary?: string }>
-  >([]);
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const { mutate: updateProfile, isPending } = useUpdateLegalProfile();
+
+  const { control, handleSubmit, watch, formState } = useForm<FormShape>({
+    defaultValues: { companyName: "", companyType: "MCHJ" },
+    mode: "onChange",
+  });
+
+  const COMPANY_TYPES: SelectOption[] = COMPANY_TYPE_VALUES.map((v) => ({
+    value: v,
+    label: t(`companyTypes.${v}`),
+  }));
+
+  const composeName = (name: string, type: string | number | null) => {
+    const base = (name || "").trim();
+    const suffix = String(type || "").toUpperCase();
+    if (!base) return "";
+    if (!suffix || suffix === "OTHER") return base;
+    return `${base} ${suffix}`.trim(); // "Korzinka MCHJ"
+  };
+
+  const onSubmit = (data: FormShape) => {
+    const name = composeName(data.companyName, data.companyType);
+    if (!name) return; // защита от пустого
+
+    updateProfile(
+      { name },
+      {
+        onSuccess: async () => {
+          await Promise.allSettled([
+            qc.invalidateQueries({ queryKey: USER_QUERY_KEY }),
+            qc.invalidateQueries({ queryKey: LEGAL_ME_QUERY_KEY }),
+          ]);
+        },
+        onError: (e: any) => {
+          alert(
+            e?.message || t("profile.loadFailed") || "Не удалось сохранить"
+          );
+        },
+      }
+    );
+  };
+
+  const nameVal = watch("companyName");
+  const typeVal = watch("companyType");
 
   return (
     <div style={{ gridColumn: "1 / -1" }}>
       <Card>
         <CardBody>
-          <Row>
-            <Field>
-              <Label>Название компании</Label>
-              <Input
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <Label>Контактное лицо</Label>
-              <Input
-                value={contactPerson}
-                onChange={(e) => setContactPerson(e.target.value)}
-              />
-            </Field>
-          </Row>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <Row style={{ gap: 10 }}>
+              <Field style={{ flex: 1, minWidth: 260 }}>
+                <Label>{t("companyTypes.label")}</Label>
+                <Controller
+                  control={control}
+                  name="companyType"
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <CustomSelect
+                      id="companyType"
+                      options={COMPANY_TYPES}
+                      value={field.value}
+                      onChange={(val) => field.onChange(val)}
+                      placeholder={t("placeholders2.select")}
+                      menuMaxHeight={300}
+                    />
+                  )}
+                />
+              </Field>
 
-          <Row>
-            <Field>
-              <Label>Телефон</Label>
-              <Input
-                value={companyPhone}
-                onChange={(e) => setCompanyPhone(e.target.value)}
-                inputMode="tel"
-              />
-            </Field>
-            <Field>
-              <Label>Email</Label>
-              <Input
-                value={companyEmail}
-                onChange={(e) => setCompanyEmail(e.target.value)}
-                type="email"
-              />
-            </Field>
-            <Field>
-              <Label>Адрес</Label>
-              <Input
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
-              />
-            </Field>
-          </Row>
-
-          <Divider />
-
-          <Row>
-            <Field>
-              <Label>Официальный документ (PDF)</Label>
-              <Upload>
-                <div>Перетащите PDF сюда или нажмите для выбора</div>
-                <Small>(демо — без загрузки)</Small>
-                <input type="file" accept="application/pdf" hidden />
-              </Upload>
-            </Field>
-          </Row>
-
-          <Divider />
-
-          <h3 style={{ fontSize: 18, fontWeight: 800, margin: "6px 0 14px" }}>
-            Вакансии
-          </h3>
-          <Row>
-            <Field>
-              <button
-                type="button"
-                style={{
-                  border: 0,
-                  background: "transparent",
-                  color: "#1e5cfb",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-                onClick={() =>
-                  setVacancies((v) => [
-                    ...v,
-                    {
-                      title: `Новая вакансия #${v.length + 1}`,
-                      city: "",
-                      salary: "",
+              <Field style={{ flex: 1.2, minWidth: 240 }}>
+                <CustomInput
+                  control={control}
+                  name="companyName"
+                  label={t("company.orgNameLabel")}
+                  placeholder={t("company.orgNamePlaceholder") || ""}
+                  required
+                  rules={{
+                    required: t("validation.required") || "Заполните поле",
+                    minLength: {
+                      value: 2,
+                      message: t("validation.min6") || "Минимум 6 символов",
                     },
-                  ])
-                }
+                  }}
+                />
+              </Field>
+            </Row>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+              <PrimaryBtn
+                type="submit"
+                disabled={isPending || !formState.isValid}
               >
-                Добавить вакансию
-              </button>
-              <Small>Позже подключим CRUD и таблицу</Small>
-            </Field>
-          </Row>
-
-          {vacancies.length === 0 ? (
-            <Notice tone="muted">Пока нет вакансий</Notice>
-          ) : (
-            vacancies.map((v, idx) => (
-              <Row key={idx}>
-                <Field>
-                  <Label>Должность</Label>
-                  <Input
-                    value={v.title}
-                    onChange={(e) =>
-                      setVacancies((all) =>
-                        all.map((x, i) =>
-                          i === idx ? { ...x, title: e.target.value } : x
-                        )
-                      )
-                    }
-                  />
-                </Field>
-                <Field>
-                  <Label>Город/страна</Label>
-                  <Input
-                    value={v.city || ""}
-                    onChange={(e) =>
-                      setVacancies((all) =>
-                        all.map((x, i) =>
-                          i === idx ? { ...x, city: e.target.value } : x
-                        )
-                      )
-                    }
-                  />
-                </Field>
-                <Field>
-                  <Label>Зарплата</Label>
-                  <Input
-                    value={v.salary || ""}
-                    onChange={(e) =>
-                      setVacancies((all) =>
-                        all.map((x, i) =>
-                          i === idx ? { ...x, salary: e.target.value } : x
-                        )
-                      )
-                    }
-                  />
-                </Field>
-              </Row>
-            ))
-          )}
-
-          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-            <PrimaryBtn type="button" disabled>
-              Сохранить
-            </PrimaryBtn>
-            <GhostBtn type="button" disabled>
-              Отмена
-            </GhostBtn>
-          </div>
+                {isPending ? t("common.saving") : t("common.save")}
+              </PrimaryBtn>
+            </div>
+          </form>
         </CardBody>
       </Card>
     </div>

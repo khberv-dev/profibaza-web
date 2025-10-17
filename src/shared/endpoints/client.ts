@@ -17,6 +17,7 @@ export type ClientMeRaw = {
   address1: string | null;
   address2: string | null;
   address3: string | null;
+  name: string | null;
   userId: string;
   createdAt: string;
   updated_at: string;
@@ -27,6 +28,7 @@ export type ClientMe = {
   address1: string | null;
   address2: string | null;
   address3: string | null;
+  name: string | null;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +40,7 @@ const mapClientMe = (r: ClientMeRaw): ClientMe => ({
   address1: r.address1,
   address2: r.address2,
   address3: r.address3,
+  name: r.name,
   userId: r.userId,
   createdAt: r.createdAt,
   updatedAt: r.updated_at,
@@ -60,7 +63,6 @@ export type CreateOrderResp = {
   };
 };
 
-
 export type Profession = {
   id: string;
   nameUz: string;
@@ -75,7 +77,7 @@ export type SearchWorkerUser = {
 };
 
 export type SearchWorker = {
-  id: string;                         // row id (workerProfessionId)
+  id: string; // row id (workerProfessionId)
   minPrice: number;
   maxPrice: number;
   rating: number;
@@ -111,10 +113,10 @@ export async function getWorkerById(
   id: string,
   signal?: AbortSignal
 ): Promise<SearchWorker | null> {
-  const { data } = await api.get<{ ok: boolean; data: SearchWorker | SearchWorker[] }>(
-    `/opt/order/search/${id}`,
-    { signal }
-  );
+  const { data } = await api.get<{
+    ok: boolean;
+    data: SearchWorker | SearchWorker[];
+  }>(`/opt/order/search/${id}`, { signal });
   // Бэки иногда шлют объект, иногда массив — аккуратно достанем
   if (Array.isArray(data?.data)) return data.data[0] ?? null;
   return (data && (data as any).data) || null;
@@ -139,11 +141,39 @@ export const clientApi = {
     return true;
   },
 
+  updateAddressLegal: async (dto: UpdateAddressDto): Promise<boolean> => {
+    const { data } = await api.put<UpdateAddressResp>(
+      "/legal/update-address",
+      dto
+    );
+    if (!data?.ok) {
+      let msg = "Не удалось сохранить адрес";
+      const m = data?.message;
+      if (typeof m === "string") msg = m;
+      else if (m && typeof m === "object") {
+        msg = (m as any).ru || (m as any).uz || Object.values(m)[0] || msg;
+      }
+      throw new Error(msg);
+    }
+    return true;
+  },
+
   /** Возвращает клиентский профиль; 404 -> null */
   me: async (): Promise<ClientMe | null> => {
     try {
       const { data } = await api.get<{ ok: boolean; data: ClientMeRaw }>(
         "/client/me"
+      );
+      return mapClientMe(data.data);
+    } catch (e: any) {
+      if (e?.response?.status === 404) return null;
+      throw e;
+    }
+  },
+  melegal: async (): Promise<ClientMe | null> => {
+    try {
+      const { data } = await api.get<{ ok: boolean; data: ClientMeRaw }>(
+        "/legal/me"
       );
       return mapClientMe(data.data);
     } catch (e: any) {
