@@ -36,6 +36,7 @@ import { getProfessions } from "../../shared/modules/worker";
 import { SearchWorker, searchWorkers } from "../../shared/endpoints/client";
 import { Heart, Share2 } from "lucide-react";
 import { Rate } from "antd";
+import { MapLocation, MapYandexLocations } from "../../components/map/MapYandexLocations";
 
 /* helpers */
 const fmtMoney = (n?: number) =>
@@ -54,6 +55,26 @@ const fmtUpdated = (d?: string) => {
 export const WorkerSearchPage: React.FC = () => {
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0] as "ru" | "uz";
 
+  const [locations, setLocations] = useState<MapLocation[]>([]); // держим массив, но будем использовать только [0]
+
+  const onAddLoc = (loc: MapLocation) => {
+    // разрешим только 1 зону — новая замещает старую
+    setLocations([loc]);
+  };
+  const onChangeLoc = (index: number, next: MapLocation) => {
+    setLocations((prev) => {
+      const cp = [...prev];
+      cp[index] = next;
+      return cp.slice(0, 1);
+    });
+  };
+  const onRemoveLoc = (index: number) => {
+    setLocations([]);
+  };
+
+  const DEFAULT_RADIUS = 10; // км (что удобно по UX)
+  const [useMyGeo, setUseMyGeo] = useState(true); // «использовать мою геолокацию»
+  const [geoStatus, setGeoStatus] = useState<"idle"|"ok"|"denied"|"error">("idle");
   /* обязательные фильтры */
   const [professionId, setProfessionId] = useState<string>("");
   const [minPrice, setMinPrice] = useState<string>("0");
@@ -86,12 +107,41 @@ const { control, getValues, setValue, watch } = useForm<PriceForm>({
   /* применённые фильтры */
   const [applied, setApplied] = useState<{ professions: string; minPrice: number; maxPrice: number } | null>(null);
 
-  const { data: results = [], isFetching } = useQuery<SearchWorker[]>({
-    queryKey: ["opt", "order-search", applied],
-    queryFn: ({ signal }) =>
-      applied ? searchWorkers({ professions: applied.professions, minPrice: applied.minPrice, maxPrice: applied.maxPrice }, signal) : Promise.resolve([]),
-    enabled: Boolean(applied),
-  });
+
+
+  useEffect(() => {
+    if (!useMyGeo) return;
+  
+    if (!("geolocation" in navigator)) {
+      setGeoStatus("error");
+      return;
+    }
+  
+    setGeoStatus("idle");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocations([{ latitude, longitude, radius: DEFAULT_RADIUS }]); // км в UI
+        setGeoStatus("ok");
+  
+        // если профессия уже выбрана — авто-поиск
+        if (professionId) {
+          const { mn, mx } = parseNums();
+          setApplied({ professions: professionId, minPrice: mn, maxPrice: mx });
+        }
+      },
+      (err) => {
+        // пользователем отклонено или другая ошибка
+        setGeoStatus(err.code === err.PERMISSION_DENIED ? "denied" : "error");
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 60_000,
+        timeout: 10_000,
+      }
+    );
+  }, [useMyGeo, professionId]);
+  
 
   /* автоинициализация: выбрать 1ю профессию и поиск */
   const didInit = useRef(false);
@@ -117,11 +167,36 @@ const { control, getValues, setValue, watch } = useForm<PriceForm>({
     const [mn, mx] = min <= max ? [min, max] : [max, min];
     return { mn, mx };
   };
+
+  const currentGeo = () => {
+    const first = locations[0];
+    if (!first) return null;
+
+    // ВАЖНО: в UI радиус у нас в КИЛОМЕТРАХ.
+    // Бэкенд, судя по твоему примеру, принимает небольшое дробное значение в градусах (или своих единицах).
+    // Если бек ожидает именно то, что ты показал (?radius=0.0423...), просто пробрасываем как есть из формы.
+    // Если нужно будет переводить км → градусы, можно позже добавить конвертацию.
+    return {
+      long: first.longitude,
+      lat: first.latitude,
+      // пока шлём raw-значение из UI (км) только если оно уже приведено к нужному виду.
+      // если бек ожидает «как в примере», можно хранить radius сразу в нужных единицах.
+      radius: first.radius,
+    };
+  };
+
   
   const onSearch = () => {
     if (!professionId) return;
     const { mn, mx } = parseNums();
-    setApplied({ professions: professionId, minPrice: mn, maxPrice: mx });
+    const geo = currentGeo();
+
+    setApplied({
+      professions: professionId,
+      minPrice: mn,
+      maxPrice: mx,
+      ...(geo ? {} : {}), // applied остаётся прежнего типа — координаты прокинем при самом вызове запроса
+    });
   };
   
   const onChangeProfession = (v: string | number | null) => {
@@ -135,6 +210,7 @@ const { control, getValues, setValue, watch } = useForm<PriceForm>({
   const resetAll = () => {
     setValue("minPrice", "0");
     setValue("maxPrice", "1000000000");
+    setLocations([]);
     if (profOptions.length) {
       const first = String(profOptions[0].value);
       setProfessionId(first);
@@ -155,6 +231,24 @@ const { control, getValues, setValue, watch } = useForm<PriceForm>({
     for (let i = items.length; i < total; i++) items.push(<i key={`e${i}`} className="s empty" />);
     return items;
   };
+
+  const { data: results = [], isFetching } = useQuery<SearchWorker[]>({
+    queryKey: ["opt", "order-search", applied, locations],
+    queryFn: ({ signal }) => {
+      if (!applied) return Promise.resolve([]);
+      const geo = currentGeo();
+      return searchWorkers(
+        {
+          professions: applied.professions,
+          minPrice: applied.minPrice,
+          maxPrice: applied.maxPrice,
+          ...(geo ? { long: geo.long, lat: geo.lat, radius: geo.radius } : {}),
+        },
+        signal
+      );
+    },
+    enabled: Boolean(applied),
+  });
 
 
   return (
@@ -186,34 +280,82 @@ const { control, getValues, setValue, watch } = useForm<PriceForm>({
   
       {/* Панель с мин/макс ценой */}
       <FiltersPanel $open={showFilters}>
-  <div className="field">
-    <CustomInput
-      control={control}
-      name="minPrice"
-      label="Минимальная цена *"
-      placeholder="0"
-      rules={{
-        required: "Укажите минимальную цену",
-        validate: (v: string) =>
-          /^\d*$/.test(v ?? "") || "Только цифры",
-      }}
-    />
-  </div>
+        <div className="field">
+          <CustomInput
+            control={control}
+            name="minPrice"
+            label="Минимальная цена *"
+            placeholder="0"
+            rules={{ required: "Укажите минимальную цену", validate: (v: string) => /^\d*$/.test(v ?? "") || "Только цифры" }}
+          />
+        </div>
 
-  <div className="field">
-    <CustomInput
-      control={control}
-      name="maxPrice"
-      label="Максимальная цена *"
-      placeholder="1000000000"
-      rules={{
-        required: "Укажите максимальную цену",
-        validate: (v: string) =>
-          /^\d*$/.test(v ?? "") || "Только цифры",
-      }}
-    />
-  </div>
-</FiltersPanel>
+        <div className="field">
+          <CustomInput
+            control={control}
+            name="maxPrice"
+            label="Максимальная цена *"
+            placeholder="1000000000"
+            rules={{ required: "Укажите максимальную цену", validate: (v: string) => /^\d*$/.test(v ?? "") || "Только цифры" }}
+          />
+        </div>
+
+        {/* === КАРТА ЛОКАЦИИ === */}
+        <div className="field" style={{ width: "100%" }}>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Локация (по желанию)</label>
+          <MapYandexLocations
+            apiKey={import.meta.env.VITE_YMAPS_KEY}
+            locations={locations}
+            onAdd={onAddLoc}
+            onChange={onChangeLoc}
+            onRemove={onRemoveLoc}
+            height={320}
+          />
+          {!!locations.length && (
+            <div style={{ display: "flex", gap: 12, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <small style={{ opacity: 0.8 }}>
+                Долгота: <b>{locations[0].longitude}</b> | Широта: <b>{locations[0].latitude}</b>
+              </small>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 12, opacity: 0.8 }}>Радиус:</span>
+                <input
+                  type="number"
+                  step="0.001"
+                  min={0}
+                  value={locations[0].radius}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    onChangeLoc(0, { ...locations[0], radius: Number.isFinite(val) ? val : 0 });
+                  }}
+                  style={{
+                    width: 120,
+                    padding: "6px 10px",
+                    borderRadius: 8,
+                    border: "1px solid #e7ecf3",
+                    outline: "none",
+                  }}
+                />
+                <span style={{ fontSize: 12, opacity: 0.8 }}>единицы как в бек (см. примеры)</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onRemoveLoc(0)}
+                style={{
+                  marginLeft: "auto",
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #e7ecf3",
+                  background: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Удалить зону
+              </button>
+            </div>
+          )}
+        </div>
+      </FiltersPanel>
   
       {/* Список карточек с отступами и gap */}
       <List>

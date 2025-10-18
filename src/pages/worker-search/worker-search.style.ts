@@ -39,9 +39,9 @@ export const HHAvatar = styled.div<{ $src?: string | null }>`
 `;
 
 export const HHMid = styled.div`
-  grid-area: mid;                           /* ← явная область центра */
+  grid-area: mid;      
   display: grid; gap: 8px;
-  min-width: 0;                             /* ← чтобы текст не ломал сетку */
+  min-width: 0;   
 `;
 
 export const HHHead = styled.div`
@@ -140,7 +140,7 @@ export const OpenBtn = styled.button`
   border: 1px solid #2f6bff; background: #2f6bff; color: #fff; font-weight: 600;
   cursor: pointer; transition: box-shadow .15s ease, transform .06s ease;
   box-shadow: 0 8px 22px rgba(47,107,255,.25);
-  &:hover { box-shadow: 0 10px 26px rgba(47,107,255,.32); }
+  &:hover { box-shadow: 0 10px 26px rgba(47,107,255,.32);}
   &:active { transform: translateY(1px); }
 `;
 
@@ -212,7 +212,7 @@ export const FiltersPanel = styled.div<{ $open?: boolean }>`
   background: #fff;
   box-shadow: 0 10px 28px rgba(2,32,71,.06);
 
-  .field { grid-column: span 3; }
+  .field { grid-column: span 6; }
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;

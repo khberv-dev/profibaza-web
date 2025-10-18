@@ -29,6 +29,7 @@ import {
   InactiveOnly,
   ActivationPage,
 } from "../components/ActiveGuards";
+import LegalOrdersPage from "../features/orders/pages/legal/LegalOrdersPage";
 
 export const router = createBrowserRouter([
   /* ===== Публичные: доступны всегда, независимо от active ===== */
@@ -72,7 +73,7 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "company/profile", element: <CompanyProfilePage /> },
                   { path: "client/create-order", element: <CreateOrderPage /> },
-                  { path: "legal/orders", element: <ClientOrdersPage /> },
+                  { path: "legal/orders", element: <LegalOrdersPage /> },
                 ],
               },
 

@@ -23,6 +23,11 @@ import {
   getClientOrders,
   postClientComment,
 } from "../../../../shared/endpoints/client-orders";
+import {
+  LegalOrder,
+  getLegalOrders,
+  postLegalComment,
+} from "../../../../shared/endpoints/legal-orders";
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
 
@@ -50,7 +55,7 @@ const fmtDate = (iso?: string | null) =>
 const fmtFromNow = (iso?: string) => (iso ? dayjs(iso).fromNow() : "");
 
 const statusView: Record<
-  NonNullable<ClientOrder["status"]>,
+  NonNullable<LegalOrder["status"]>,
   { text: string; tone: "blue" | "green" | "amber" | "gray" | "red" }
 > = {
   NEW: { text: "Новая", tone: "blue" },
@@ -62,15 +67,15 @@ const statusView: Record<
 
 
 /* ================ Page ================ */
-export default function ClientOrdersPage() {
+export default function LegalOrdersPage() {
   const {
     data: orders = [],
     isLoading,
     isError,
     refetch,
-  } = useQuery<ClientOrder[]>({
-    queryKey: ["client", "orders"],
-    queryFn: ({ signal }) => getClientOrders(signal),
+  } = useQuery<LegalOrder[]>({
+    queryKey: ["legal", "orders"],
+    queryFn: ({ signal }) => getLegalOrders(signal),
     staleTime: 60_000,
   });
 
@@ -104,7 +109,7 @@ export default function ClientOrdersPage() {
           <h3>Заявок пока нет</h3>
           <p>Создайте первую — мастер быстро откликнется.</p>
           <CreateBtn
-            onClick={() => (window.location.href = "/client/create-order")}
+            onClick={() => (window.location.href = "/legal/create-order")}
           >
             Создать заявку
           </CreateBtn>
@@ -161,13 +166,13 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
   const qc = useQueryClient();
   const { mutate: sendComment, isPending } = useMutation({
     mutationFn: (payload: { rate: number; comment: string }) =>
-      postClientComment(order.id, payload),
+      postLegalComment(order.id, payload),
     onSuccess: async () => {
       setRateOpen(false);
       setRate(0);
       setComment("");
 
-      await qc.invalidateQueries({ queryKey: ["client", "orders"] });
+      await qc.invalidateQueries({ queryKey: ["legal", "orders"] });
     },
     onError: () => {
       alert("Не удалось отправить отзыв. Попробуйте ещё раз.");

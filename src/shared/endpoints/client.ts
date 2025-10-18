@@ -97,14 +97,26 @@ export type SearchWorker = {
 
 /* === API === */
 export async function searchWorkers(
-  params: { professions: string; minPrice: number; maxPrice: number },
+  params: {
+    professions: string;
+    minPrice: number;
+    maxPrice: number;
+    long?: number;
+    lat?: number;
+    radius?: number; // бек ждёт дробное значение (как в твоём примере из URL)
+  },
   signal?: AbortSignal
 ): Promise<SearchWorker[]> {
-  const { professions, minPrice, maxPrice } = params;
-  // обязательные 3 query: professions, minPrice, maxPrice
+  const { professions, minPrice, maxPrice, long, lat, radius } = params;
+
+  const query: Record<string, string | number> = { professions, minPrice, maxPrice };
+  if (typeof long === "number") query.long = long;
+  if (typeof lat === "number") query.lat = lat;
+  if (typeof radius === "number") query.radius = radius;
+
   const { data } = await api.get<{ ok: boolean; data: SearchWorker[] }>(
     "/opt/order/search",
-    { params: { professions, minPrice, maxPrice }, signal }
+    { params: query, signal }
   );
   return Array.isArray(data?.data) ? data.data : [];
 }
@@ -185,6 +197,13 @@ export const clientApi = {
   createOrder: async (dto: CreateOrderDto) => {
     const { data } = await api.post<CreateOrderResp>(
       "/client/create-order",
+      dto
+    );
+    return data;
+  },
+  createOrderLegal: async (dto: CreateOrderDto) => {
+    const { data } = await api.post<CreateOrderResp>(
+      "/legal/create-order",
       dto
     );
     return data;

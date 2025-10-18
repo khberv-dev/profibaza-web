@@ -29,7 +29,7 @@ import {
 import CustomSelect, {
   SelectOption,
 } from "../../../../../components/custom-select/CustomSelect";
-import { useCreateOrder } from "../../../api";
+import { useCreateOrder, useCreateOrderLegal  } from "../../../api";
 import { CustomInput } from "../../../../../components/custom-input";
 import { DatePopoverInput } from "../../../../../components/custom-date-input/DatePopoverInput";
 import { useDistricts, useRegions, useVillages } from "../../../../../shared/modules/location";
@@ -38,6 +38,8 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkerById } from "../../../../../shared/endpoints/client";
 import { Rate } from "antd";
+import { useMe } from "../../../../../shared/modules/user";
+import { useAuthStore } from "../../../../../shared/stores/auth";
 
 type Props = { initialWorkerProfessionId?: string | null };
 
@@ -155,13 +157,25 @@ export const CreateOrderCard: React.FC<Props> = ({
   const addr3 = watch("addr3");
   const budgetNum = Number(budgetStr) || 0;
 
-  const { mutateAsync, isPending } = useCreateOrder();
+
+  const me = useAuthStore((s) => s.role);
+  const createClient = useCreateOrder();
+  const createLegal  = useCreateOrderLegal();
+  
+  const isClient = me === "CLIENT";
+  const isLegal  = me === "LEGAL";
+  
+  // правильный выбор хука по роли:
+  const mutateAsync = isLegal ? createLegal.mutateAsync : createClient.mutateAsync;
+  const isPending   = isLegal ? createLegal.isPending   : createClient.isPending;
 
   const canSubmit =
-    !!workerProfessionId &&
-    description.trim().length >= 8 &&
-    !!deadline &&
-    budgetNum >= 0;
+  // LEGAL может без workerProfessionId (если у тебя так задумано)
+  (!!workerProfessionId || isLegal) &&
+  description.trim().length >= 8 &&
+  !!deadline &&
+  budgetNum >= 0 &&
+  !isPending;
 
   const addBudget = (v: number) =>
     setValue("budget", String(v), { shouldDirty: true, shouldValidate: true });
@@ -171,39 +185,64 @@ export const CreateOrderCard: React.FC<Props> = ({
   const navigate = useNavigate();
   const handleSubmit = async () => {
     if (!canSubmit) {
-      toast.error(
-        "Заполните поля: ID профиля мастера, описание (≥ 8 символов), срок, бюджет."
-      );
+      if (!deadline) {
+        toast.error("Выберите срок выполнения");
+        return;
+      }
+      if (description.trim().length < 8) {
+        toast.error("Опишите задачу подробнее (минимум 8 символов)");
+        return;
+      }
+      if (!isLegal && !workerProfessionId) {
+        toast.error("Не указан профиль мастера");
+        return;
+      }
+      toast.error("Проверьте поля формы");
       return;
     }
+  
     try {
-      const regionName  = regionId   ? pickName(regions.find(r => r.id === regionId)!, lng)   : null;
-      const districtName= districtId ? pickName(districts.find(d => d.id === districtId)!, lng): null;
-      const villageName = villageId  ? pickName(villages.find(v => v.id === villageId)!, lng)  : null;
-      
-      const dto = {
-        workerProfessionId: workerProfessionId.trim(),
+      // читаем человекочитаемые названия локаций
+      const regionName   = regionId   ? pickName(regions.find(r => r.id === regionId)!, lng)     : null;
+      const districtName = districtId ? pickName(districts.find(d => d.id === districtId)!, lng) : null;
+      const villageName  = villageId  ? pickName(villages.find(v => v.id === villageId)!, lng)   : null;
+  
+      // базовый ДТО (общее для обеих ролей)
+      const baseDto = {
         description: description.trim(),
+        workerProfessionId: workerProfessionId.trim(),
         deadline,
         budget: budgetNum,
-        address1: regionName,      // ← регион
-        address2: districtName,    // ← район
-        address3: villageName,     // ← махалля/посёлок
+        address1: regionName,
+        address2: districtName,
+        address3: villageName,
       };
-      const res = await mutateAsync(dto);
+  
+      // различия по роли
+      const dto = isLegal
+        ? baseDto                                   // LEGAL — без workerProfessionId
+        : { ...baseDto, workerProfessionId: workerProfessionId.trim() }; // CLIENT — обязателен
+  
+      const res = await mutateAsync(dto as any);
+  
       if (res?.ok) {
-        toast.success("Buyurtma yaratildi va ustaga jo'natildi");
-        navigate('/app/client/orders')
+        toast.success("Заявка создана и отправлена");
+  
+        navigate(isLegal ? "/app/legal/orders" : "/app/client/orders");
+  
+        // сброс формы/локалок
         reset({
-          workerProfessionId: initialWorkerProfessionId || "",
+          workerProfessionId: "",
           budget: "",
           addr2: "",
           addr3: "",
           phone: "",
+          deadline, // можно оставить выбранный
         });
         setDescription("");
-        setAddr1("Toshkent");
-        setAreas(["Toshkent"]);
+        setRegionId(null);
+        setDistrictId(null);
+        setVillageId(null);
       } else {
         toast.error("Не удалось создать заявку");
       }
