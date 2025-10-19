@@ -23,9 +23,9 @@ import {
   Notice,
   Actions,
   PrimaryBtn,
-  GhostBtn,
   Progress,
   Small,
+  HeadRow,
 } from "./worker-profile.style"; // реюз твоих стилей
 import CustomSelect, {
   SelectOption,
@@ -43,14 +43,17 @@ import {
   uploadProfessionDemo,
   Profession,
   WorkerProfessionRow,
-  UploadedDoc,
-  getWorkerDocuments,
 } from "../../../../../shared/modules/worker";
 import type {
   JobType,
   ProfessionDemo,
   WeekSchedule,
 } from "../../../../../shared/modules/worker";
+import {
+  postWorkerExperience,
+  WorkerExperienceItem,
+} from "../../../../../shared/modules/experience";
+import { EditBtn } from "../../../pro-profile-section.style";
 
 type Mode = "create" | "edit";
 type Props = { mode: Mode };
@@ -117,6 +120,41 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
   const [demoUploadErr, setDemoUploadErr] = useState<string | null>(null);
   const demoFileInputRef = useRef<HTMLInputElement | null>(null);
   const demoAbortRef = useRef<AbortController | null>(null);
+
+  const [expList, setExpList] = useState<WorkerExperienceItem[]>([
+    {
+      jobPlace: "",
+      jobDescription: "",
+      startedAt: new Date().getFullYear(),
+      endedAt: null,
+    },
+  ]);
+  const [savingExp, setSavingExp] = useState(false);
+  const [saveExpErr, setSaveExpErr] = useState<string | null>(null);
+  const [savedExpOk, setSavedExpOk] = useState(false);
+
+  const changeExp = <K extends keyof WorkerExperienceItem>(
+    idx: number,
+    key: K,
+    val: WorkerExperienceItem[K]
+  ) =>
+    setExpList((s) =>
+      s.map((it, i) => (i === idx ? { ...it, [key]: val } : it))
+    );
+
+  const addExpRow = () =>
+    setExpList((s) => [
+      ...s,
+      {
+        jobPlace: "",
+        jobDescription: "",
+        startedAt: new Date().getFullYear(),
+        endedAt: null,
+      },
+    ]);
+
+  const removeExpRow = (idx: number) =>
+    setExpList((s) => s.filter((_, i) => i !== idx));
 
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0];
   const profLabel = (p: Profession) =>
@@ -186,6 +224,22 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                 ? (row as any).schedule
                 : defaultSchedule
             );
+
+            const exp = Array.isArray(row.experience) ? row.experience : [];
+            if (exp.length) {
+              setExpList(
+                exp.map((x) => ({
+                  jobPlace: x.jobPlace || "",
+                  jobDescription: x.jobDescription || "",
+                  startedAt: Number(x.startedAt) || new Date().getFullYear(),
+                  endedAt:
+                    x.endedAt == null || Number.isNaN(Number(x.endedAt))
+                      ? null
+                      : Number(x.endedAt),
+                }))
+              );
+            }
+
             setJobType((row.jobType as JobType) || "SOLO");
             const locs = (row.locations || []) as any[];
             if (Array.isArray(locs) && locs.length) {
@@ -252,24 +306,45 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
     setSaving(true);
     setSaveErr(null);
     setSavedOk(false);
+
     try {
       if (!professionId) throw new Error("Выберите профессию");
+
+      // нормализация зон
       const parsedLocations = locations
         .map((l) => {
-          const lon = normalizeDecimal(l.longitude);
-          const lat = normalizeDecimal(l.latitude);
-          const radNum = Number(normalizeDecimal(l.radius));
+          const lon = String(l.longitude ?? "")
+            .replace(",", ".")
+            .trim();
+          const lat = String(l.latitude ?? "")
+            .replace(",", ".")
+            .trim();
+          const radNum = Number(
+            String(l.radius ?? "")
+              .replace(",", ".")
+              .trim()
+          );
           return { longitude: lon, latitude: lat, radius: radNum };
         })
         .filter(
           (l) =>
-            isDec(l.longitude) && isDec(l.latitude) && Number.isFinite(l.radius)
+            /^-?\d+(\.\d+)?$/.test(l.longitude) &&
+            /^-?\d+(\.\d+)?$/.test(l.latitude) &&
+            Number.isFinite(l.radius)
         );
 
+      // вилка
+      const minP = Number(minPrice) || 0;
+      const maxP = Number(maxPrice) || 0;
+      if (minP && maxP && maxP < minP) {
+        throw new Error("Максимальная цена не может быть меньше минимальной");
+      }
+
+      // базовый payload
       const payload = {
         professionId,
-        minPrice: Number(minPrice) || 0,
-        maxPrice: Number(maxPrice) || 0,
+        minPrice: minP,
+        maxPrice: maxP,
         hasTeam,
         teamMemberCount: Number(teamMemberCount) || 0,
         readyForHugeProject,
@@ -277,19 +352,75 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
         jobType,
         locations: parsedLocations,
         schedule,
-        inventory: inventory?.trim() || "",
+        inventory: (inventory || "").trim(),
       };
 
+      // 1) сохранить / обновить профиль
+      let targetRowId = rowId as string | undefined;
       if (mode === "edit" && rowId) {
         await updateWorkerProfession(rowId, payload as any);
       } else {
-        await saveWorkerProfession(payload as any);
+        const created = await saveWorkerProfession(payload as any);
+        targetRowId =
+          (created as any)?.id || (created as any)?.data?.id || targetRowId;
+      }
+      const finalRowId = targetRowId!;
+      // --- END save profile ---
+
+      // 2) отправить ТОЛЬКО НОВЫЕ записи опыта, по одной
+      try {
+        // исходные записи опыта, уже лежащие на бэке
+        const existingExp = (workerProfs.find((r) => r.id === finalRowId)
+          ?.experience ?? []) as Array<{
+          jobPlace?: string;
+          jobDescription?: string;
+          startedAt?: number;
+          endedAt?: number | null;
+        }>;
+
+        // функция сравнения "похожа ли запись" (без id, по полям)
+        const sameExp = (a: {
+          jobPlace: string;
+          jobDescription: string;
+          startedAt: number;
+          endedAt?: number | null;
+        }) =>
+          existingExp.some((b) => {
+            const endedA = a.endedAt ?? null;
+            const endedB = (b.endedAt ?? null) as number | null;
+            return (
+              (b.jobPlace || "").trim() === a.jobPlace.trim() &&
+              (b.jobDescription || "").trim() === a.jobDescription.trim() &&
+              Number(b.startedAt || 0) === a.startedAt &&
+              endedB === endedA
+            );
+          });
+
+        // подчистим ввод пользователя
+        const cleaned = (expList || [])
+          .map((x) => ({
+            jobPlace: (x.jobPlace || "").trim(),
+            jobDescription: (x.jobDescription || "").trim(),
+            startedAt: Number(x.startedAt) || 0,
+            endedAt:
+              x.endedAt == null || x.endedAt === 0
+                ? undefined
+                : Number(x.endedAt),
+          }))
+          .filter(
+            (x) =>
+              x.jobPlace && Number.isInteger(x.startedAt) && x.startedAt > 0
+          );
+
+        // выделяем ТОЛЬКО новые (которых ещё нет на бэке)
+        const onlyNew = cleaned.filter((x) => !sameExp(x));
+      } catch (e) {
+        console.warn("postWorkerExperience (only new) failed:", e);
+        // не валим общий save
       }
 
       setSavedOk(true);
-      setTimeout(() => {
-        navigate("/app/profile");
-      }, 300);
+      setTimeout(() => navigate("/app/profile"), 300);
     } catch (e: any) {
       setSaveErr(e?.message || "Не удалось сохранить");
     } finally {
@@ -371,13 +502,13 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
       <Card style={{ marginTop: 12 }}>
         <CardHeader>
           <CardTitle>{t("worker.fillForm") || "Заполните форму"}</CardTitle>
-          <GhostBtn type="button" onClick={() => navigate("/app/profile")}>
+          <EditBtn type="button" onClick={() => navigate("/app/profile")}>
             {t("worker.back") || "Назад"}
-          </GhostBtn>
+          </EditBtn>
         </CardHeader>
 
         <CardBody>
-          <FormGrid columns={2}>
+          <FormGrid columns={1}>
             <Field>
               <Label>{t("worker.selectProfession")}</Label>
               <SelectBox>
@@ -398,7 +529,246 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
               )}
             </Field>
 
-            <div />
+            {Array.isArray(workerProfs) &&
+              mode === "edit" &&
+              rowId &&
+              (() => {
+                const row = workerProfs.find((r) => r.id === rowId);
+                const exp = Array.isArray(row?.experience)
+                  ? row!.experience!
+                  : [];
+                return (
+                  <div style={{ marginTop: 24 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <Label
+                        style={{ fontSize: 18, fontWeight: 600, color: "#000" }}
+                      >
+                        Опыт работы
+                        {exp.length
+                          ? `: ${exp.length} ${
+                              exp.length === 1 ? "запись" : "записи"
+                            }`
+                          : ""}
+                      </Label>
+                      <PrimaryBtn
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/app/worker/profile/experience/new?pid=${rowId}`
+                          )
+                        }
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                          data-qa="link-icon-left"
+                          role="img"
+                          focusable="false"
+                          className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-primary___KhLAU_12-3-5"
+                        >
+                          <g>
+                            <path
+                              fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M7.3 7.3V3H8.7V7.3H13V8.7H8.7V13H7.3V8.7H3V7.3H7.3Z"
+                              fill="currentColor"
+                            ></path>
+                          </g>
+                        </svg>{" "}
+                        Добавить
+                      </PrimaryBtn>
+                    </div>
+
+                    {exp.length ? (
+                      <div
+                        style={{
+                          position: "relative",
+                          padding: 16,
+                          borderRadius: 16,
+                          background: "#fff",
+                          border: "1px solid #E5E7EB",
+                        }}
+                      >
+                        {/* вертикальная линия через всю колонку */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: 56, // ← якорь линии
+                            top: 16,
+                            bottom: 16,
+                            width: 1,
+                            background: "#aabbca",
+                            zIndex: 0,
+                          }}
+                        />
+
+                        <div style={{ display: "grid", gap: 24 }}>
+                          {exp.map((e, i) => {
+                            const isLast = i === exp.length - 1;
+                            return (
+                              <div
+                                key={e.id || i}
+                                style={{
+                                  position: "relative",
+                                  paddingLeft: 88,
+                                }}
+                              >
+                                {/* аватар (на линии) */}
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    left: 18, // 56(line) - 18(radius) = 38
+                                    top: 4,
+                                    width: 45,
+                                    height: 45,
+                                    borderRadius: "50%",
+                                    overflow: "hidden",
+                                    background: "#F8FAFC",
+                                    border: "1px solid #E2E8F0",
+                                    boxShadow: "0 0 0 4px #fff",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    zIndex: 2,
+                                  }}
+                                >
+                                  <img
+                                    src="/org.png"
+                                    alt=""
+                                    style={{ objectFit: "cover" }}
+                                    width={45}
+                                    height={45}
+                                  />
+                                </div>
+
+                                {/* точка-маркёр под карточкой (строго на линии) */}
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    left: 39 - 5, // центрировать круг на линии (10px ширина)
+                                    top: 65, // фикс ниже аватара; держит визуальный “узел”
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    background: "#aabbca",
+                                    border: "3px solid #fff",
+                                    zIndex: 1,
+                                  }}
+                                />
+
+                                {/* карточка */}
+                                <div
+                                  style={{
+                                    background: "#fff",
+                                    borderRadius: 12,
+                                    padding: "14px 18px",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      fontWeight: 700,
+                                      fontSize: 16,
+                                      textTransform: "capitalize",
+                                      color: "#111827",
+                                    }}
+                                  >
+                                    {e.jobPlace || "—"}
+                                  </div>
+
+                                  <div
+                                    style={{
+                                      color: "#475569",
+                                      fontSize: 13,
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    {e.startedAt
+                                      ? `${e.startedAt}${
+                                          e.endedAt
+                                            ? ` — ${e.endedAt}`
+                                            : " — н.в."
+                                        }`
+                                      : ""}
+                                  </div>
+
+                                  {e.jobDescription && (
+                                    <div
+                                      style={{
+                                        marginTop: 8,
+                                        color: "#334155",
+                                        fontSize: 14,
+                                        lineHeight: 1.55,
+                                        whiteSpace: "pre-line",
+                                      }}
+                                    >
+                                      {e.jobDescription}
+                                    </div>
+                                  )}
+
+                                  {/* edit */}
+                                  <div
+                                    style={{
+                                      position: "absolute",
+                                      right: 16,
+                                      top: 16,
+                                      cursor: "pointer",
+                                      opacity: 0.65,
+                                    }}
+                                    title="Редактировать"
+                                    onClick={() =>
+                                      navigate(
+                                        `/app/worker/profile/experience/${e.id}/edit?pid=${rowId}`
+                                      )
+                                    }
+                                  >
+                                    <svg
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      name="experience"
+                                      mode="secondary"
+                                      aria-hidden="true"
+                                      role="img"
+                                      focusable="false"
+                                      className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-secondary___BoQi4_12-3-5 magritte-icon_disabled-secondary___gfR6-_12-3-5 magritte-icon_highlighted-secondary___wJpNN_12-3-5 magritte-icon_pressed-secondary___Lk1tr_12-3-5"
+                                    >
+                                      <g>
+                                        <path
+                                          fill-rule="evenodd"
+                                          clip-rule="evenodd"
+                                          d="M2.8 21.2L2.8 17.6746L14.1009 6.37362L17.6264 9.89905L6.32544 21.2H2.8ZM18.8992 8.62626L20.4699 7.05558C21.4434 6.08206 21.4434 4.50366 20.4699 3.53014C19.4963 2.55662 17.9179 2.55662 16.9444 3.53014L15.3737 5.10083L18.8992 8.62626ZM1 23L1 16.929L15.6716 2.25735C17.3481 0.580884 20.0662 0.580883 21.7427 2.25735C23.4191 3.93382 23.4191 6.6519 21.7427 8.32837L7.07102 23H1Z"
+                                          fill="currentColor"
+                                        ></path>
+                                      </g>
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <Help style={{ marginTop: 8 }}>
+                        Пока нет записей опыта.
+                      </Help>
+                    )}
+                  </div>
+                );
+              })()}
 
             <Field>
               <Label>{t("worker.minPrice")}</Label>
@@ -564,7 +934,7 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                         }
                       />
                     </div>
-                    <GhostBtn
+                    <EditBtn
                       type="button"
                       onClick={() => removeLocation(idx)}
                       disabled={locations.length === 1}
@@ -575,13 +945,13 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                       }
                     >
                       Удалить
-                    </GhostBtn>
+                    </EditBtn>
                   </div>
                 ))}
                 <div>
-                  <GhostBtn type="button" onClick={addLocation}>
+                  <EditBtn type="button" onClick={addLocation}>
                     + {t("worker.addZone") || "Добавить зону"}
-                  </GhostBtn>
+                  </EditBtn>
                 </div>
               </div>
             </Field>
@@ -691,7 +1061,7 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                   <Small>
                     {t("worker.loading")}: {demoUploadPct}%
                   </Small>
-                  <GhostBtn
+                  <EditBtn
                     type="button"
                     onClick={() => {
                       demoAbortRef.current?.abort();
@@ -699,7 +1069,7 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                     }}
                   >
                     {t("worker.cancel")}
-                  </GhostBtn>
+                  </EditBtn>
                 </Inline>
               </div>
             )}
@@ -782,9 +1152,9 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                 ? t("worker.create")
                 : t("worker.save")}
             </PrimaryBtn>
-            <GhostBtn type="button" onClick={() => navigate("/app/profile")}>
+            <EditBtn type="button" onClick={() => navigate("/app/profile")}>
               {t("worker.close")}
-            </GhostBtn>
+            </EditBtn>
           </Actions>
 
           {saveErr && (

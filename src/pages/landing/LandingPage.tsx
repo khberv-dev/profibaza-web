@@ -161,7 +161,6 @@ export default function LandingPage() {
   const [openMobile, setOpenMobile] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
 
-  
   // текущий язык RU/UZ/EN
   const currentLang = useMemo(
     () => (i18n.language?.split("-")[0] || "ru").toUpperCase(),
@@ -205,8 +204,7 @@ export default function LandingPage() {
 
   return (
     <Shell>
-
-<DbDocModal />
+      <DbDocModal />
       <Topbar>
         <TopbarInner>
           <Link to="/" style={{ textDecoration: "none" }}>
@@ -216,7 +214,7 @@ export default function LandingPage() {
               transition={{ duration: 0.4 }}
             >
               <Brand>
-                <BrandDot>pb</BrandDot>
+                <img src="/logomin.png" height={42} alt="" />
                 <BrandText>{t("brand")}</BrandText>
               </Brand>
             </motion.div>

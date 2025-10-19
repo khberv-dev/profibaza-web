@@ -57,6 +57,17 @@ export type WorkerProfessionWirePayload = Omit<
   locations: ServiceLocationWire[];
 };
 
+export type WorkerExperienceRow = {
+  id: string;
+  startedAt: number;
+  endedAt?: number | null;
+  jobPlace: string;
+  jobDescription: string;
+  workerProfessionId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type WorkerProfessionRow = {
   id: string;
   minPrice: number;
@@ -74,7 +85,7 @@ export type WorkerProfessionRow = {
   schedule?: WeekSchedule | null;
   jobType?: JobType | null;
   locations?: ServiceLocation[] | null;
-
+  experience?: WorkerExperienceRow[];
   inventory?: string;
 };
 
@@ -154,6 +165,12 @@ const inferMediaTypeByFile = (f: File): "image" | "video" => {
     ? "video"
     : "image";
 };
+
+export async function finishWorkerOrder(orderId: string) {
+  // body пустой по ТЗ
+  const { data } = await api.post(`/worker/finish-order/${orderId}`, {});
+  return data;
+}
 
 // ЗАМЕНИ ЭТУ ФУНКЦИЮ
 export async function uploadProfessionDemo(

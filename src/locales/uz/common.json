@@ -60,9 +60,10 @@
   "roleRequired": "Rolni tanlang",
   "nav": {
     "find": "Ustani topish",
+    "legalOffers": "Arizalar",
     "orders": "Buyurtmalar",
     "jobs": "Kompaniyalar uchun vakansiyalar",
-    "forMasters": "Ustalar uchun",
+    "forMasters": "Vakansiyalar",
     "help": "Yordam"
   },
   "topbar": {
@@ -156,12 +157,13 @@
     "title": "Mutaxassis profili",
     "addZone": "Zona qo‘shish",
     "fillForm": "Formani to‘ldiring",
+    "experienceTitle": "Ish tajribasi",
     "back": "Orqaga",
     "serviceZones": "Xizmat ko‘rsatish zonalari",
     "jobFormat": "Ish formati",
     "mapHint": "Xaritaga bosish yangi zonani qo‘shadi. Markazni o‘zgartirish uchun pinni suring. Radiusni pastdagi slayder yoki maydonda o‘zgartiring.",
     "myProfs": "Mening kasblarim",
-    "createNew": "+ Yangi yaratish",
+    "createNew": "Yangi yaratish",
     "canCreateHint": "Yangi kasb qo‘shish",
     "cantCreateHint": "Mavjud barcha kasblar allaqachon qo‘shilgan",
     "noneYet": "Hozircha hech qanday kasb qo‘shilmagan. «Yangi yaratish» tugmasini bosing.",
@@ -223,6 +225,8 @@
     "address": {
       "title": "Manzil",
       "selectRegion": "Viloyatni tanlang",
+      "addHint": "Manzilingizni kiriting, shunda ish qidiruvchilar sizni topishadi",
+      "editHint": "Ko‘chganingizda yoki ofis manzili o‘zgarganda yangilang",
       "selectDistrict": "Tumanni tanlang",
       "selectVillage": "Aholi punktini tanlang",
       "save": "Manzilni saqlash",

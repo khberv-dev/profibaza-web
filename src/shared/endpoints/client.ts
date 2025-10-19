@@ -89,6 +89,8 @@ export type SearchWorker = {
   jobType?: "SOLO" | "COMPANY";
   professionId: string;
   updatedAt?: string;
+  isBusy?: boolean;
+  inArea?: boolean;
   worker?: {
     id: string;
     user?: SearchWorkerUser;
@@ -109,7 +111,11 @@ export async function searchWorkers(
 ): Promise<SearchWorker[]> {
   const { professions, minPrice, maxPrice, long, lat, radius } = params;
 
-  const query: Record<string, string | number> = { professions, minPrice, maxPrice };
+  const query: Record<string, string | number> = {
+    professions,
+    minPrice,
+    maxPrice,
+  };
   if (typeof long === "number") query.long = long;
   if (typeof lat === "number") query.lat = lat;
   if (typeof radius === "number") query.radius = radius;

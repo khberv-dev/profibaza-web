@@ -263,7 +263,7 @@ const btnBase = `
   width: 100%;
 `;
 const iconBtn = `
-  height: 36px; min-width: 36px;
+  height: 42px; min-width: 42px;
   padding: 0 12px;
   display: inline-flex; align-items:center; justify-content:center;
   gap:8px;

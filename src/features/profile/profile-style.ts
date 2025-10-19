@@ -63,9 +63,9 @@ export const AvatarWrap = styled.div`
 export const Avatar = styled.div`
   width: 112px;
   height: 112px;
-  border-radius: 50%;
+  border-radius: 24px;
   border: 2px solid ${border};
-  background: #f1f5f9 url(${userSvg}) center/90% no-repeat;
+  background: #f1f5f9 url(${userSvg}) center/100% no-repeat;
 `;
 
 export const Info = styled.div`
@@ -99,14 +99,18 @@ export const CompanyBadge = styled.span`
   height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  background: #f2f6ff; /* нежно-синий фон */
-  color: #1e3a8a; /* тёмно-синий текст */
-  font-weight: 700;
-  font-size: 12px;
+  // background: #f2f6ff; /* нежно-синий фон */
+  color: #000; /* тёмно-синий текст */
+  font-weight: 500;
+  font-size: 13px;
   letter-spacing: 0.02em;
-  // border: 1px solid #e2e8ff; /* тонкая рамка */
-  // box-shadow: 0 6px 18px rgba(30, 92, 251, 0.12); /* мягкая тень как у hh */
   line-height: 1;
+
+  /* SVG отдельно окрашиваем */
+  svg {
+    color: #0070ff;
+    flex-shrink: 0;
+  }
 `;
 
 export const Subline = styled.div`
@@ -199,15 +203,14 @@ export const ContactCard = styled.div`
   align-items: center;
   gap: 12px;
   padding: 14px;
-  background: ${bg};
-  border: 1px solid ${border};
+  background: #f1f4f9;
   border-radius: 12px;
   transition: box-shadow 0.15s ease, transform 0.06s ease,
     border-color 0.15s ease;
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(2, 32, 71, 0.06);
-    border-color: #dfe7f1;
+    // box-shadow: 0 10px 22px rgba(2, 32, 71, 0.06);
+    // border-color: #dfe7f1;
   }
 `;
 

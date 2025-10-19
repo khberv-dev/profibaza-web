@@ -49,7 +49,7 @@ export default function DbDocModal() {
               marginBottom: 24,
             }}
           >
-{`- Jismoniy buyurtmachi 
+            {`- Jismoniy buyurtmachi 
 • Yuridik buyurtmachi (korxona) 
 • Kasbiy ta'lim bitiruvchisi (diplomli) 
 • Diplomsiz, lekin tajribali usta rollar qo‘shildi
@@ -66,10 +66,17 @@ export default function DbDocModal() {
 - Geolokatsiya: foydalanuvchi joylashuvi, qidiruv radiusi (5 km), masofa bo‘yicha sortlash
 - Yuridik shaxs profili: kompaniya ma’lumotlari, vakansiyalar va baholash bo‘limi
 - Avtomatik rezyume: usta savol-javob orqali o‘z rezyumesini yaratishi mumkin
-- Texnikum o‘quv dasturlari: kurs, modul, muddati, sertifikat, o‘quv muassasa manzili qo‘shildi`}
+- Texnikum o‘quv dasturlari: kurs, modul, muddati, sertifikat, o‘quv muassasa manzili qo‘shildi
+- Monetizatsiya tizimi (Uzcard/Humo/Click/Payme integratsiyasi)
+- Bandlik kalendari — ustaning qaysi sanalarda band ekanligini ko‘rsatish
+- Yarmarkalar va reklama bo‘limi — mehnat yarmarkalari va e’lonlarni boshqarish
+- Moderator paneli — texnikumlar, vakansiyalar va ustalarni tasdiqlash uchun interfeys
+- Reyting algoritmi — real vaqtli baholash va avtomatik yangilanish logikasi
+- Responsive dizayn — mobil va planshet versiyalari uchun adaptiv interfeys
+`}
           </pre>
 
-          <div
+          {/* <div
             style={{
               fontWeight: 900,
               fontSize: 20,
@@ -80,7 +87,7 @@ export default function DbDocModal() {
             }}
           >
             BAJARILMOQDA
-          </div>
+          </div> */}
 
           <pre
             style={{
@@ -89,20 +96,18 @@ export default function DbDocModal() {
               marginBottom: 24,
             }}
           >
-{`- Monetizatsiya tizimi (Uzcard/Humo/Click/Payme integratsiyasi)
+            {`- Monetizatsiya tizimi (Uzcard/Humo/Click/Payme integratsiyasi)
 - Bandlik kalendari — ustaning qaysi sanalarda band ekanligini ko‘rsatish
-- Yarmarkalar va reklama bo‘limi — mehnat yarmarkalari va e’lonlarni boshqarish
 - Moderator paneli — texnikumlar, vakansiyalar va ustalarni tasdiqlash uchun interfeys
-- Reyting algoritmi — real vaqtli baholash va avtomatik yangilanish logikasi
-- Responsive dizayn — mobil va planshet versiyalari uchun adaptiv interfeys`}
+- Reyting algoritmi — real vaqtli baholash va avtomatik yangilanish logikasi`}
           </pre>
-
 
           <div
             style={{
               fontSize: 13,
               color: "#6b7280",
               borderTop: "1px solid #e5e7eb",
+              marginBottom: 30,
               paddingTop: 8,
             }}
           >

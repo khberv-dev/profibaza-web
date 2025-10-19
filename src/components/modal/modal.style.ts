@@ -97,7 +97,6 @@ export const Divider = styled.div`
 
 export const Body = styled.div`
   padding: 16px 20px;
-  overflow: auto;
 
   /* адаптивные отступы для мобильных */
   @media (max-width: 480px) {

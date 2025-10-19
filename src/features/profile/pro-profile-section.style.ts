@@ -40,11 +40,64 @@ export const Card = styled.section`
 export const CardBody = styled.div`
   padding: ${padMobile}px;
 
-  @media (min-width: 640px) {
-    padding: ${padTablet}px;
+  // @media (min-width: 640px) {
+  //   padding: ${padTablet}px;
+  // }
+  // @media (min-width: 1024px) {
+  //   padding: ${padDesktop}px;
+  // }
+`;
+
+export const EditBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  gap: 8px;
+  color: #0f172a;
+  background: #f1f4f9;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: max-content;
+
+  svg {
+    color: #0f172a !important;
+    flex-shrink: 0;
   }
-  @media (min-width: 1024px) {
-    padding: ${padDesktop}px;
+
+  &:hover {
+    background: #f1f5f9;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  &:active {
+    transform: translateY(1px);
+    background: #e2e8f0;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    box-shadow: none;
+  }
+`;
+
+export const CancelBtn = styled(EditBtn)`
+  color: #1e40af;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+
+  &:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+  }
+
+  &:active {
+    background: #bfdbfe;
   }
 `;
 

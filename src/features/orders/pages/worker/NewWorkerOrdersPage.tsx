@@ -54,6 +54,8 @@ import {
 } from "../../../../shared/endpoints/worker";
 import { CommentsThread } from "../client/CommentsThread";
 import ReplyBar from "./ReplyBar";
+import { finishWorkerOrder } from "../../../../shared/modules/worker";
+import { Modal } from "../../../../components/modal/Modal";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
@@ -115,6 +117,84 @@ export default function NewWorkerOrdersPage() {
   const [commentUI, setCommentUI] = useState<CommentUIState>({});
   const getUI = (id: string): UI =>
     commentUI[id] ?? { open: false, text: "", rating: 0 };
+
+  const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [finishTargetId, setFinishTargetId] = useState<string | null>(null);
+
+  const openFinishModal = (orderId: string) => {
+    setFinishTargetId(orderId);
+    setFinishModalOpen(true);
+  };
+  const closeFinishModal = () => {
+    setFinishModalOpen(false);
+    setFinishTargetId(null);
+  };
+
+  const { mutate: finishOrder, isPending: isFinishing } = useMutation({
+    mutationFn: (orderId: string) => finishWorkerOrder(orderId),
+    onMutate: async (orderId) => {
+      await queryClient.cancelQueries({ queryKey: ["worker", "orders"] });
+
+      // снимок всех табов
+      const snapshot = new Map<string, WorkerNewOrder[]>();
+      TABS.forEach((t) => {
+        const key = ["worker", "orders", t.key] as const;
+        const prev = queryClient.getQueryData<WorkerNewOrder[]>(key) ?? [];
+        snapshot.set(JSON.stringify(key), prev);
+      });
+
+      // оптимистично: поменять статус на DONE
+      TABS.forEach((t) => {
+        const key = ["worker", "orders", t.key] as const;
+        const list = queryClient.getQueryData<WorkerNewOrder[]>(key) ?? [];
+
+        if (t.key === "ALL") {
+          const next = list.map((o) =>
+            o.id === orderId ? { ...o, status: "DONE" } : o
+          );
+          queryClient.setQueryData(key, next);
+        } else {
+          if (t.key === "PROGRESS") {
+            const next = list.filter((o) => o.id !== orderId);
+            queryClient.setQueryData(key, next);
+          }
+          if (t.key === "DONE") {
+            // возьмём актуальную карточку из ALL (уже с новым статусом)
+            const all =
+              queryClient.getQueryData<WorkerNewOrder[]>([
+                "worker",
+                "orders",
+                "ALL",
+              ]) ?? [];
+            const updated = all.find((o) => o.id === orderId);
+            const item = updated ?? ({ id: orderId, status: "DONE" } as any);
+            const uniq = [item, ...list.filter((o) => o.id !== orderId)];
+            queryClient.setQueryData(key, uniq);
+          }
+        }
+      });
+
+      return { snapshot };
+    },
+    onError: (_err, _orderId, ctx) => {
+      // откат
+      if (ctx?.snapshot) {
+        for (const [k, v] of ctx.snapshot.entries()) {
+          queryClient.setQueryData(JSON.parse(k), v);
+        }
+      }
+      alert("Не удалось завершить заказ. Попробуйте ещё раз.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["worker", "orders"] });
+    },
+  });
+
+  const confirmFinish = () => {
+    if (!finishTargetId) return;
+    finishOrder(finishTargetId);
+    closeFinishModal();
+  };
 
   const [refresh, setRefresh] = useState(false);
   const { data = [], isLoading } = useQuery({
@@ -318,6 +398,17 @@ export default function NewWorkerOrdersPage() {
     return; // без оценки
   };
 
+  const selectedOrder: WorkerNewOrder | undefined = finishTargetId
+    ? data?.find((o) => o.id === finishTargetId)
+    : undefined;
+
+  // Хелпер: соберём адрес красивой строкой
+  const selectedAddr =
+    selectedOrder &&
+    [selectedOrder.address1, selectedOrder.address2, selectedOrder.address3]
+      .filter(Boolean)
+      .join(", ");
+
   return (
     <WOPage>
       <WOToolbar>
@@ -442,6 +533,21 @@ export default function NewWorkerOrdersPage() {
                           >
                             Позвонить <Phone size={16} />
                           </WOGhost>
+
+                          {/* 🔹 Завершить (доступно в статусе PROGRESS) */}
+                          {row.status === "PROGRESS" && (
+                            <WOPrimary
+                              style={{ maxWidth: "max-content" }}
+                              type="button"
+                              onClick={() => openFinishModal(row.id)}
+                              title="Я выполнил этот заказ"
+                              disabled={isFinishing}
+                            >
+                              {isFinishing && finishTargetId === row.id
+                                ? "…"
+                                : "Я выполнил этот заказ"}
+                            </WOPrimary>
+                          )}
                         </div>
                       ) : (
                         <>
@@ -465,6 +571,21 @@ export default function NewWorkerOrdersPage() {
                             >
                               Позвонить <Phone size={16} />
                             </WOGhost>
+
+                            {/* 🔹 Завершить (доступно в статусе PROGRESS) */}
+                            {row.status === "PROGRESS" && (
+                              <WOPrimary
+                                style={{ maxWidth: "max-content" }}
+                                type="button"
+                                onClick={() => openFinishModal(row.id)}
+                                title="Я выполнил этот заказ"
+                                disabled={isFinishing}
+                              >
+                                {isFinishing && finishTargetId === row.id
+                                  ? "…"
+                                  : "Я выполнил этот заказ"}
+                              </WOPrimary>
+                            )}
                           </div>
 
                           <CommentForm>
@@ -545,6 +666,172 @@ export default function NewWorkerOrdersPage() {
           })}
         </WOList>
       )}
+
+      <Modal
+        open={finishModalOpen}
+        onClose={closeFinishModal}
+        title="Завершить заказ?"
+        width={520}
+        ariaLabel="Подтверждение завершения заказа"
+        /* --- ТЕЛО МОДАЛКИ: сводка заказа --- */
+        /* Если ваш Modal поддерживает children — поместите этот блок внутрь
+     между <Modal>...</Modal>. Если нет, а поддерживает проп `content`,
+     передайте этот блок через него. Ваша реализация принимает children,
+     судя по импорту — используем children. */
+      >
+        {/* --- Сводка заказа --- */}
+        <div style={{ display: "grid", gap: 12 }}>
+          {!selectedOrder ? (
+            <div style={{ color: "#9ca3af" }}>Заказ не найден.</div>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "grid", gap: 2 }}>
+                  <div style={{ fontWeight: 600, fontSize: 16 }}>
+                    {fio(selectedOrder.client?.user)}
+                  </div>
+                  <div style={{ color: "#6b7280", fontSize: 13 }}>
+                    {formatPhone(selectedOrder.client?.user?.phone)}
+                  </div>
+                </div>
+
+                {/* Чип статуса как в карточке */}
+                <WOStatus $tone={statusTone(selectedOrder.status)}>
+                  {statusLabel(selectedOrder.status)}
+                </WOStatus>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 10,
+                  padding: 12,
+                  borderRadius: 12,
+                  background: "#f1f4f9",
+                }}
+              >
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <CalendarDays size={16} />
+                  <div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>Срок</div>
+                    <div style={{ fontWeight: 600 }}>
+                      {dayjs(selectedOrder.deadline).format("DD.MM.YYYY")}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <Wallet size={16} />
+                  <div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>Бюджет</div>
+                    <div style={{ fontWeight: 600 }}>
+                      {fmtMoney(selectedOrder.budget)}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <MapPin size={16} />
+                  <div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>Адрес</div>
+                    <div style={{ fontWeight: 600 }}>{selectedAddr || "—"}</div>
+                  </div>
+                </div>
+              </div>
+
+              {selectedOrder.description && (
+                <div
+                  style={{
+                    padding: 12,
+                    border: "1px dashed #e5e7eb",
+                    borderRadius: 12,
+                    background: "#fff",
+                  }}
+                >
+                  <div
+                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
+                  >
+                    Описание
+                  </div>
+                  <div style={{ whiteSpace: "pre-wrap" }}>
+                    {selectedOrder.description}
+                  </div>
+                </div>
+              )}
+
+              {/* Опционально: быстрый просмотр кол-ва комментариев */}
+              {Array.isArray(selectedOrder.comments) &&
+                selectedOrder.comments.length > 0 && (
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>
+                    Комментариев:{" "}
+                    <span style={{ fontWeight: 600 }}>
+                      {selectedOrder.comments.length}
+                    </span>
+                  </div>
+                )}
+
+              {/* Подсказка перед подтверждением */}
+              <div
+                style={{
+                  background: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                  color: "#9a3412",
+                  padding: 10,
+                  borderRadius: 10,
+                  fontSize: 13,
+                }}
+              >
+                Проверьте данные заказа, прежде чем подтверждать завершение.
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* --- Футер --- */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 8,
+            marginTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            onClick={closeFinishModal}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #e5e7eb",
+              background: "#fff",
+            }}
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            onClick={confirmFinish}
+            disabled={isFinishing || !finishTargetId || !selectedOrder}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              background: "#2f6bff",
+              color: "#fff",
+              border: "1px solid #2f6bff",
+            }}
+            title={selectedOrder ? "Подтвердить завершение" : "Заказ не найден"}
+          >
+            {isFinishing ? "Завершаем…" : "Да, завершить"}
+          </button>
+        </div>
+      </Modal>
     </WOPage>
   );
 }

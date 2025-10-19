@@ -201,21 +201,21 @@ export const Aside = styled.aside`
 /* ===== Cards ===== */
 export const Card = styled.section`
   background: ${UI.bg};
-  border: 1px solid ${UI.line};
+  // border: 1px solid ${UI.line};
   border-radius: ${UI.rLg}px;
-  box-shadow: ${UI.shadow};
+  // box-shadow: ${UI.shadow};
 `;
 
 export const CardHeader = styled.div`
   padding: 14px 16px;
-  border-bottom: 1px solid ${UI.line};
+  // border-bottom: 1px solid ${UI.line};
   display: flex;
   align-items: center;
   justify-content: space-between;
 `;
 
 export const CardTitle = styled.h2`
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
 `;
 

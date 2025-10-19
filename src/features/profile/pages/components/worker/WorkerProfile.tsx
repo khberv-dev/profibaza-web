@@ -83,6 +83,7 @@ import {
   MapYandexLocations,
 } from "../../../../../components/map/MapYandexLocations";
 import { useNavigate } from "react-router-dom";
+import { EditBtn } from "../../../pro-profile-section.style";
 
 const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule =
   {
@@ -600,7 +601,7 @@ export const WorkerProfile: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>{t("worker.myProfs")}</CardTitle>
-              <GhostBtn
+              <PrimaryBtn
                 type="button"
                 onClick={handleCreateClick}
                 title={
@@ -609,12 +610,33 @@ export const WorkerProfile: React.FC = () => {
                     : t("worker.cantCreateHint")
                 }
               >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                  data-qa="profile-other-communication-methods-add-icon-left"
+                  role="img"
+                  focusable="false"
+                  className="magritte-icon___rRr4Q_12-3-0 magritte-icon_initial-primary___KhLAU_12-3-0"
+                >
+                  <g>
+                    <path
+                      fill-rule="evenodd"
+                      clip-rule="evenodd"
+                      d="M11.1 11.1V4H12.9V11.1H20V12.9H12.9V20H11.1V12.9H4V11.1H11.1Z"
+                      fill="currentColor"
+                    ></path>
+                  </g>
+                </svg>
                 {t("worker.createNew")}
-              </GhostBtn>
+              </PrimaryBtn>
             </CardHeader>
             <CardBody>
               {createdList.length > 0 ? (
-                <div style={{ display: "grid", gap: 12 }}>
+                <div style={{ display: "grid", gap: 18 }}>
                   {createdList.map(({ row, profession }) => {
                     const label = profession
                       ? profLabel(profession)
@@ -633,29 +655,42 @@ export const WorkerProfile: React.FC = () => {
                     return (
                       <JobItem key={row.id}>
                         <HeadRow>
-                          <div>
-                            <JobTitle>{label}</JobTitle>
-                            <Meta>
-                              <Clock size={14} className="icon" />
-                              {t("worker.updated")} {fmtUpdated(f.updatedAt)}
-                            </Meta>
-                          </div>
-
-                          <PrimaryBtn
-                            type="button"
-                            onClick={() =>
-                              navigate(`/app/worker/profile/${row.id}/edit`)
-                            }
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
                           >
-                            <img
+                            <div
+                              style={{
+                                background: "#f1f4f9",
+                                borderRadius: "12px",
+                                maxWidth: "max-content",
+                                padding: "13px",
+                              }}
+                            >
+                              <img src="/hat.svg" alt="" />
+                            </div>
+                            <div>
+                              <JobTitle>{label}</JobTitle>
+                              <Meta>
+                                <Clock size={14} className="icon" />
+                                {t("worker.updated")} {fmtUpdated(f.updatedAt)}
+                              </Meta>
+                            </div>
+                          </div>
+                          <a href={`/app/worker/profile/${row.id}/edit`}>
+                            <EditBtn type="button">
+                              {/* <img
                               src="/pen.svg"
                               style={{
-                                filter: "brightness(0) invert(1)",
                                 width: 18,
                               }}
-                            />
-                            {t("worker.edit")}
-                          </PrimaryBtn>
+                            /> */}
+                              {t("worker.edit")}
+                            </EditBtn>
+                          </a>
                         </HeadRow>
 
                         <div>
@@ -766,33 +801,78 @@ export const WorkerProfile: React.FC = () => {
 
               {docs.length > 0 && (
                 <DocList style={{ marginTop: 12 }}>
-                  {docs.map((d) => (
-                    <DocItem key={d.id}>
-                      <div>
-                        <strong>{d.type || t("worker.document")}</strong>{" "}
-                        {d.createdAt && (
-                          <Small>
-                            {new Date(d.createdAt).toLocaleDateString()}
-                          </Small>
-                        )}
-                      </div>
-                      {d.fileId ? (
-                        <PrimaryBtn
-                          type="button"
-                          onClick={() =>
-                            downloadWorkerDocument(
-                              d.fileId!,
-                              d.name || undefined
-                            )
-                          }
+                  {docs.map((d) => {
+                    // получаем расширение из fileId (например "qGbacsH2SWn2kIfy8opt.pdf" → "pdf")
+                    const ext = d.fileId?.split(".").pop()?.toLowerCase() || "";
+
+                    // подбираем иконку по типу файла
+                    const icon =
+                      ext === "pdf"
+                        ? "/pdf.png"
+                        : ext === "jpg" || ext === "jpeg"
+                        ? "/jpg.png"
+                        : ext === "png"
+                        ? "/png.png"
+                        : "/file.png";
+
+                    return (
+                      <DocItem
+                        key={d.id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                        }}
+                      >
+                        {/* Левая часть: иконка и инфо */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
                         >
-                          {t("worker.download")}
-                        </PrimaryBtn>
-                      ) : (
-                        <Small>{t("worker.linkAfterMod")}</Small>
-                      )}
-                    </DocItem>
-                  ))}
+                          <img
+                            src={icon}
+                            alt={ext}
+                            style={{
+                              width: 35,
+                              height: 35,
+                              objectFit: "contain",
+                              opacity: 0.9,
+                              marginLeft: 4,
+                            }}
+                          />
+                          <div>
+                            <strong>{d.fileId || t("worker.document")}</strong>{" "}
+                            {d.createdAt && (
+                              <Small style={{ color: "#64748b" }}>
+                                {new Date(d.createdAt).toLocaleDateString()}
+                              </Small>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Правая часть: кнопка */}
+                        {d.fileId ? (
+                          <PrimaryBtn
+                            type="button"
+                            onClick={() =>
+                              downloadWorkerDocument(
+                                d.fileId!,
+                                d.type || undefined
+                              )
+                            }
+                          >
+                            {t("worker.download")}
+                          </PrimaryBtn>
+                        ) : (
+                          <Small>{t("worker.linkAfterMod")}</Small>
+                        )}
+                      </DocItem>
+                    );
+                  })}
                 </DocList>
               )}
             </CardBody>
@@ -816,448 +896,6 @@ export const WorkerProfile: React.FC = () => {
           </Card>
         </Aside>
       </Layout>
-
-      {/* ===== МОДАЛ ===== */}
-      <Modal
-        open={modalOpen}
-        title={
-          mode === "create"
-            ? t("worker.modalCreateTitle")
-            : t("worker.modalEditTitle", { name: profLabelById(professionId) })
-        }
-        onClose={closeForm}
-        width={820}
-        maxWidth="92vw"
-        closeOnOverlay={true}
-        ariaLabel={t("worker.modalAria")}
-      >
-        <FormGrid columns={2}>
-          <Field>
-            <Label>{t("worker.selectProfession")}</Label>
-            <SelectBox>
-              <CustomSelect
-                id="worker-profession"
-                options={profOptions}
-                value={professionId || null}
-                onChange={(value) => setProfessionId(String(value ?? ""))}
-                placeholder={t("worker.selectPlaceholder")}
-                disabled={
-                  mode === "edit" || profLoading || profOptions.length === 0
-                }
-                loading={profLoading}
-                width="100%"
-                menuMaxHeight={300}
-              />
-            </SelectBox>
-            {mode === "create" && (
-              <Help>{t("worker.createdDisabledHint")}</Help>
-            )}
-          </Field>
-
-          <div />
-
-          <Field>
-            <Label>{t("worker.minPrice")}</Label>
-            <Input
-              placeholder={t("worker.minPlaceholderFrom")}
-              inputMode="numeric"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-            />
-          </Field>
-
-          <Field>
-            <Label>{t("worker.maxPrice")}</Label>
-            <Input
-              placeholder={t("worker.maxPlaceholderTo")}
-              inputMode="numeric"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-            />
-          </Field>
-
-          <Field>
-            <Label>{t("worker.bigProjectsReady")}</Label>
-            <ToggleGroup>
-              <Toggle
-                active={readyForHugeProject}
-                onClick={() => setReadyForHugeProject(true)}
-              >
-                {t("worker.yes")}
-              </Toggle>
-              <Toggle
-                active={!readyForHugeProject}
-                onClick={() => setReadyForHugeProject(false)}
-              >
-                {t("worker.no")}
-              </Toggle>
-            </ToggleGroup>
-          </Field>
-
-          <Field style={{ gridColumn: "1 / -1" }}>
-            <Label>{t("scheduleLabel")}</Label>
-
-            <Inline style={{ flexWrap: "wrap", gap: 8 }}>
-              {dayDefs.map(({ key, short, long }) => (
-                <Toggle
-                  key={key}
-                  active={schedule[key]}
-                  onClick={() => setSchedule((s) => ({ ...s, [key]: !s[key] }))}
-                  title={long}
-                >
-                  {short}
-                </Toggle>
-              ))}
-            </Inline>
-
-            <Help>{t("scheduleHelp")}</Help>
-          </Field>
-
-          <Field>
-            <Label>{t("worker.teamPresence")}</Label>
-            <Inline>
-              <ToggleGroup>
-                <Toggle active={hasTeam} onClick={() => setHasTeam(true)}>
-                  {t("worker.yes")}
-                </Toggle>
-                <Toggle active={!hasTeam} onClick={() => setHasTeam(false)}>
-                  {t("worker.no")}
-                </Toggle>
-              </ToggleGroup>
-              <Input
-                placeholder={t("worker.peopleCount")}
-                inputMode="numeric"
-                disabled={!hasTeam}
-                value={teamMemberCount}
-                onChange={(e) => setTeamMemberCount(e.target.value)}
-                style={{ width: 200 }}
-              />
-            </Inline>
-          </Field>
-
-          <Field style={{ gridColumn: "1 / -1" }}>
-            <Label>Зоны обслуживания</Label>
-            <Help>
-              Клик по карте добавляет новую зону. Перетащи пин — чтобы сменить
-              центр. Радиус меняется ползунком/инпутом ниже.
-            </Help>
-
-            <div style={{ marginTop: 10 }}>
-              <MapYandexLocations
-                apiKey={import.meta.env.VITE_YMAPS_API_KEY as string} // ← положи ключ в .env
-                locations={locations.map<MapLocation>((l) => ({
-                  latitude: Number(l.latitude) || 0,
-                  longitude: Number(l.longitude) || 0,
-                  radius: Number(l.radius) || 0, // км
-                }))}
-                onAdd={(loc) => {
-                  setLocations((s) => [...s, normalizeLoc(loc)]);
-                }}
-                onChange={(index, loc) => {
-                  changeLocation(index, "latitude", String(loc.latitude));
-                  changeLocation(index, "longitude", String(loc.longitude));
-                  // радиус правится внизу контролами
-                }}
-                onRemove={(index) => removeLocation(index)}
-              />
-            </div>
-
-            {/* Контролы радиусов и точный ввод координат */}
-            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-              {locations.map((l, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr auto",
-                    gap: 8,
-                    alignItems: "center",
-                  }}
-                >
-                  <Input
-                    placeholder="Широта"
-                    inputMode="decimal"
-                    value={l.latitude}
-                    onChange={(e) =>
-                      changeLocation(idx, "latitude", e.target.value)
-                    }
-                  />
-                  <Input
-                    placeholder="Долгота"
-                    inputMode="decimal"
-                    value={l.longitude}
-                    onChange={(e) =>
-                      changeLocation(idx, "longitude", e.target.value)
-                    }
-                  />
-
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
-                    >
-                      <label style={{ fontSize: 12, color: "#6b7a90" }}>
-                        Радиус, км
-                      </label>
-                      <Input
-                        placeholder="км"
-                        inputMode="decimal"
-                        value={l.radius}
-                        onChange={(e) =>
-                          changeLocation(idx, "radius", e.target.value)
-                        }
-                        style={{ width: 90 }}
-                      />
-                    </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={100}
-                      step={1}
-                      value={Number(l.radius) || 0}
-                      onChange={(e) =>
-                        changeLocation(idx, "radius", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <GhostBtn
-                    type="button"
-                    onClick={() => removeLocation(idx)}
-                    disabled={locations.length === 1}
-                    title={
-                      locations.length === 1
-                        ? "Нужна хотя бы одна зона"
-                        : "Удалить"
-                    }
-                  >
-                    Удалить
-                  </GhostBtn>
-                </div>
-              ))}
-              <div>
-                <GhostBtn type="button" onClick={addLocation}>
-                  + Добавить зону
-                </GhostBtn>
-              </div>
-            </div>
-          </Field>
-
-          <Field>
-            <Label>Формат работы</Label>
-            <ToggleGroup>
-              <Toggle
-                active={jobType === "SOLO"}
-                onClick={() => setJobType("SOLO")}
-                title="Самозанятый/фрилансер"
-              >
-                Yakka
-              </Toggle>
-              <Toggle
-                active={jobType === "EMPLOYEE"}
-                onClick={() => setJobType("EMPLOYEE")}
-                title="Работа по найму"
-              >
-                Ishchi
-              </Toggle>
-              <Toggle
-                active={jobType === "ABROAD"}
-                onClick={() => setJobType("ABROAD")}
-                title="Готов к работе за рубежом"
-              >
-                Xorijda
-              </Toggle>
-            </ToggleGroup>
-          </Field>
-
-          <Field>
-            <Label>{t("worker.contestsParticipation")}</Label>
-            <ToggleGroup>
-              <Toggle
-                active={competitions === "YES"}
-                onClick={() => setCompetitions("YES")}
-              >
-                {t("worker.yes")}
-              </Toggle>
-              <Toggle
-                active={competitions === "NO"}
-                onClick={() => setCompetitions("NO")}
-              >
-                {t("worker.no")}
-              </Toggle>
-            </ToggleGroup>
-          </Field>
-
-          <Field>
-            <Label>{t("worker.inventoryLabel")}</Label>
-            <Input
-              placeholder={t("worker.inventoryPlaceholder")}
-              value={inventory}
-              onChange={(e) => setInventory(e.target.value)}
-            />
-            <Help>{t("worker.inventoryHelp")}</Help>
-          </Field>
-        </FormGrid>
-
-        <div style={{ marginTop: 16 }}>
-          <Label>{t("worker.portfolioLabel")}</Label>
-
-          <Upload
-            as="label"
-            htmlFor={canUploadDemo ? demoInputId : undefined}
-            style={{
-              marginTop: 8,
-              cursor: canUploadDemo ? "pointer" : "not-allowed",
-            }}
-            aria-disabled={!canUploadDemo}
-            title={
-              canUploadDemo
-                ? t("worker.dragFileHere")
-                : t("worker.needSaveFirst")
-            }
-          >
-            <div>
-              {t("worker.dragFileHere")}
-              <br />
-              <Small>{t("worker.portfolioHelp")}</Small>
-              {!canUploadDemo && (
-                <div style={{ marginTop: 6 }}>
-                  <Small>{t("worker.needSaveFirst")}</Small>
-                </div>
-              )}
-            </div>
-
-            <input
-              id={demoInputId}
-              ref={demoFileInputRef}
-              type="file"
-              accept="image/*,video/*"
-              onChange={onDemoFileChange}
-              disabled={!canUploadDemo}
-              style={{ display: "none" }}
-            />
-          </Upload>
-
-          {demoUploadPct !== null && (
-            <div style={{ marginTop: 10 }}>
-              <Progress>
-                <i style={{ width: `${demoUploadPct}%` }} />
-              </Progress>
-              <Inline style={{ marginTop: 6 }}>
-                <Small>
-                  {t("worker.loading")}: {demoUploadPct}%
-                </Small>
-                <GhostBtn type="button" onClick={cancelDemoUpload}>
-                  {t("worker.cancel")}
-                </GhostBtn>
-              </Inline>
-            </div>
-          )}
-          {demoUploadErr && (
-            <Notice tone="error" style={{ marginTop: 8 }}>
-              {demoUploadErr}
-            </Notice>
-          )}
-
-          {(() => {
-            const rowId = currentRowId;
-            const list = rowId ? demosByRowId[rowId] || [] : [];
-            if (!rowId) {
-              return (
-                <Small style={{ display: "block", marginTop: 8 }}>
-                  {t("worker.saveProfessionToAddDemos")}
-                </Small>
-              );
-            }
-            if (list.length === 0) return null;
-
-            const images = list.filter((d) => d.type !== "video");
-            const videos = list.filter((d) => d.type === "video");
-
-            return (
-              <div
-                style={{
-                  marginTop: 12,
-                  display: "grid",
-                  gap: 8,
-                  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                }}
-              >
-                <Image.PreviewGroup>
-                  {images.map((d) => (
-                    <div
-                      key={d.id}
-                      style={{
-                        borderRadius: 12,
-                        overflow: "hidden",
-                        border: "1px solid rgba(0,0,0,0.06)",
-                      }}
-                    >
-                      <Image
-                        src={d.url}
-                        alt=""
-                        width="100%"
-                        height={140}
-                        style={{ objectFit: "cover", display: "block" }}
-                      />
-                    </div>
-                  ))}
-                </Image.PreviewGroup>
-
-                {videos.map((d) => (
-                  <div
-                    key={d.id}
-                    style={{
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                    }}
-                  >
-                    <video
-                      src={d.url}
-                      controls
-                      playsInline
-                      style={{
-                        width: "100%",
-                        height: 140,
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
-
-        <Actions style={{ marginTop: 12 }}>
-          <PrimaryBtn
-            type="button"
-            onClick={onSave}
-            disabled={saving || !professionId}
-          >
-            {saving
-              ? t("worker.saving")
-              : mode === "create"
-              ? t("worker.create")
-              : t("worker.save")}
-          </PrimaryBtn>
-          <GhostBtn type="button" onClick={closeForm}>
-            {t("worker.close")}
-          </GhostBtn>
-        </Actions>
-
-        {saveErr && (
-          <Notice tone="error" style={{ marginTop: 12 }}>
-            {saveErr}
-          </Notice>
-        )}
-        {savedOk && (
-          <Notice tone="success" style={{ marginTop: 12 }}>
-            {t("worker.saveSuccess")}
-          </Notice>
-        )}
-      </Modal>
     </Page>
   );
 };

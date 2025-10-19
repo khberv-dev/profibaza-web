@@ -30,6 +30,10 @@ import {
   ActivationPage,
 } from "../components/ActiveGuards";
 import LegalOrdersPage from "../features/orders/pages/legal/LegalOrdersPage";
+import ExperienceFormPage from "../features/profile/pages/components/worker/experience/ExperienceFormPage";
+import VacancyEditorPage from "../features/vacancy/CreateVacancyPage";
+import WorkerVacanciesSearchPage from "../features/worker-vacancies/WorkerVacanciesSearchPage";
+import LegalOffersPage from "../features/legal-offers/LegalOffersPage";
 
 export const router = createBrowserRouter([
   /* ===== Публичные: доступны всегда, независимо от active ===== */
@@ -69,11 +73,13 @@ export const router = createBrowserRouter([
 
               // Раздел только для LEGAL (компании)
               {
-                element: <RoleGuard allow={["LEGAL", "WORKER"]} />,
+                element: <RoleGuard allow={["LEGAL"]} />,
                 children: [
                   { path: "company/profile", element: <CompanyProfilePage /> },
                   { path: "client/create-order", element: <CreateOrderPage /> },
                   { path: "legal/orders", element: <LegalOrdersPage /> },
+                  { path: "legal/vacancy", element: <VacancyEditorPage /> },
+                  { path: "legal/offers", element: <LegalOffersPage /> },
                 ],
               },
 
@@ -92,12 +98,24 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "worker/jobs", element: <NewWorkerOrdersPage /> },
                   {
+                    path: "worker/vacancies",
+                    element: <WorkerVacanciesSearchPage />,
+                  },
+                  {
                     path: "worker/profile/:rowId/edit",
                     element: <WorkerProfessionFormPage mode="edit" />,
                   },
                   {
                     path: "worker/profile/new",
                     element: <WorkerProfessionFormPage mode="create" />,
+                  },
+                  {
+                    path: "worker/profile/experience/new",
+                    element: <ExperienceFormPage mode="create" />,
+                  },
+                  {
+                    path: "worker/profile/experience/:rowId/edit",
+                    element: <ExperienceFormPage mode="edit" />,
                   },
                 ],
               },

@@ -69,52 +69,52 @@ import CustomSelect, {
 } from "../../../components/custom-select/CustomSelect";
 import ProProfileSection from "./ProProfileSection";
 import { useQueryClient } from "@tanstack/react-query";
-
-/* — компактная сетка под селекты — */
-const SelectRow = styled.div`
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 1fr 1fr;
-
-  @media (max-width: 840px) {
-    grid-template-columns: 1fr;
-  }
-`;
+import { EditBtn } from "../pro-profile-section.style";
 
 /* — аккуратная карточка адреса — */
+/* — hh-like address card — */
 const AddressCard = styled.section`
-  border: 1px solid #e7ecf3;
-  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
   background: #fff;
-  padding: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.03);
 `;
 
 const AddressHeader = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
 `;
 
 const AddressTitle = styled.h3`
   margin: 0;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   color: #0f172a;
+  letter-spacing: -0.01em;
+`;
+
+const AddressHint = styled.span`
+  font-size: 12px;
+  color: #64748b;
 `;
 
 const LinkBtn = styled.button`
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: #1e5cfb;
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  background: #fff;
+  color: #111827;
   font-weight: 600;
   cursor: pointer;
   line-height: 1;
-  transition: opacity 0.15s ease, transform 0.06s ease;
+  border-radius: 10px;
+  transition: box-shadow 0.15s ease, transform 0.06s ease, background 0.15s ease;
   &:hover {
-    opacity: 0.85;
+    background: #f9fafb;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
   }
   &:active {
     transform: translateY(1px);
@@ -124,13 +124,41 @@ const LinkBtn = styled.button`
 const AddressLine = styled.div`
   color: #0f172a;
   font-weight: 600;
-  min-height: 20px;
+  min-height: 22px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 `;
 
 const AddressSub = styled.div`
-  margin-top: 4px;
-  color: #667085;
+  margin-top: 6px;
+  color: #64748b;
   font-size: 12px;
+`;
+
+const AddressDivider = styled.div`
+  height: 1px;
+  background: #f1f5f9;
+  margin: 12px 0;
+`;
+
+/* Кнопочная полоса действий */
+const ActionsRow = styled.div`
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 12px;
+`;
+
+/* Сетка селектов */
+const SelectRow = styled.div`
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  @media (max-width: 840px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Row = styled.div`
@@ -475,34 +503,6 @@ export default function ProfilePage() {
                     <span>
                       {(data?.name || "—") + " " + (data?.surname || "")}
                     </span>
-
-                    {isLegal && legalMe?.name ? (
-                      <CompanyBadge title={legalMe.name}>
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="#0070ff"
-                          xmlns="http://www.w3.org/2000/svg"
-                          aria-hidden="true"
-                          role="img"
-                          focusable="false"
-                          className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-accent___E3b-y_12-3-5"
-                        >
-                          <g>
-                            <g>
-                              <path
-                                fill-rule="evenodd"
-                                clip-rule="evenodd"
-                                d="M6.29443 14.8729C6.76051 15.4025 7.28287 15.996 7.998 15.996V15.988C8.72144 15.988 9.24393 15.394 9.70211 14.8643C9.9754 14.5433 10.2728 14.2062 10.53 14.1019C10.7973 13.9875 11.217 14.0107 11.6374 14.0339C11.6594 14.0352 11.6815 14.0364 11.7036 14.0376L11.7306 14.0391C12.4376 14.0788 13.1647 14.1197 13.6488 13.6363C14.1254 13.1605 14.084 12.4261 14.0442 11.7196L14.0427 11.694C14.0416 11.6747 14.0406 11.6553 14.0395 11.6358C14.016 11.2201 13.9918 10.7905 14.107 10.5222C14.2196 10.2653 14.5491 9.97647 14.8707 9.69555L14.8885 9.67992C15.4144 9.21853 15.996 8.7083 15.996 7.99403C15.996 7.27169 15.4012 6.75 14.8707 6.29251C14.5491 6.01962 14.2115 5.72263 14.107 5.4658C13.9925 5.19902 14.0158 4.78025 14.039 4.36068C14.0403 4.33846 14.0415 4.31623 14.0427 4.29403C14.091 3.57971 14.1392 2.84127 13.6488 2.35168C13.1722 1.86785 12.4365 1.90919 11.7288 1.94896L11.7036 1.95038C11.6841 1.95146 11.6646 1.95256 11.645 1.95366C11.2287 1.97704 10.7987 2.00119 10.53 1.8862C10.2728 1.77384 9.98344 1.44471 9.70211 1.12367L9.68644 1.10586C9.22435 0.580731 8.71334 0 7.998 0C7.27456 0 6.75208 0.593949 6.29391 1.12367C6.02061 1.44471 5.7232 1.78187 5.46597 1.8862C5.19885 2.00052 4.77953 1.97731 4.35942 1.95407C4.33707 1.95283 4.31472 1.95159 4.29239 1.95038C4.2834 1.94987 4.27439 1.94937 4.26539 1.94886C3.55843 1.90912 2.83131 1.86825 2.34715 2.35168C1.87101 2.83503 1.91194 3.5609 1.95173 4.26668C1.95225 4.2758 1.95276 4.28491 1.95328 4.29403C1.95443 4.31508 1.95559 4.33618 1.95676 4.35729C1.98011 4.7787 2.0038 5.20632 1.88898 5.47383C1.77645 5.73067 1.44687 6.01963 1.12534 6.30054L1.10753 6.31617C0.581598 6.77756 0 7.28779 0 8.00207C0 8.72441 0.594821 9.2461 1.12534 9.70359C1.44687 9.97648 1.78448 10.2734 1.88898 10.5302C2.00348 10.797 1.98024 11.2158 1.95696 11.6354C1.95572 11.6576 1.95449 11.6799 1.95328 11.7021C1.90505 12.4164 1.85682 13.1547 2.34715 13.6443C2.82377 14.1282 3.55945 14.0868 4.26715 14.047L4.29239 14.0456C4.31163 14.0446 4.33092 14.0435 4.35023 14.0424C4.76672 14.019 5.19711 13.9948 5.46597 14.1099C5.7232 14.2223 6.01309 14.5519 6.29443 14.8729ZM11.9872 5.99862L10.9972 5.00867L6.99825 9.00767L4.99875 7.00817L4.0088 7.99812L6.99825 10.9876L11.9872 5.99862Z"
-                                fill="currentColor"
-                              ></path>
-                            </g>
-                          </g>
-                        </svg>
-                        {legalMe.name}
-                      </CompanyBadge>
-                    ) : null}
                   </NameRow>
                 )}
               </Name>
@@ -531,7 +531,35 @@ export default function ProfilePage() {
                     {data?.role ? t(`profile.roles.${data.role}`) : "—"}
                   </Badge>
                 )}
-                <Badge tone="muted">{t("profile.visibility.public")}</Badge>
+
+                {isLegal && legalMe?.name ? (
+                  <CompanyBadge title={legalMe.name}>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="#0070ff"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                      role="img"
+                      focusable="false"
+                      className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-accent___E3b-y_12-3-5"
+                    >
+                      <g>
+                        <g>
+                          <path
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                            d="M6.29443 14.8729C6.76051 15.4025 7.28287 15.996 7.998 15.996V15.988C8.72144 15.988 9.24393 15.394 9.70211 14.8643C9.9754 14.5433 10.2728 14.2062 10.53 14.1019C10.7973 13.9875 11.217 14.0107 11.6374 14.0339C11.6594 14.0352 11.6815 14.0364 11.7036 14.0376L11.7306 14.0391C12.4376 14.0788 13.1647 14.1197 13.6488 13.6363C14.1254 13.1605 14.084 12.4261 14.0442 11.7196L14.0427 11.694C14.0416 11.6747 14.0406 11.6553 14.0395 11.6358C14.016 11.2201 13.9918 10.7905 14.107 10.5222C14.2196 10.2653 14.5491 9.97647 14.8707 9.69555L14.8885 9.67992C15.4144 9.21853 15.996 8.7083 15.996 7.99403C15.996 7.27169 15.4012 6.75 14.8707 6.29251C14.5491 6.01962 14.2115 5.72263 14.107 5.4658C13.9925 5.19902 14.0158 4.78025 14.039 4.36068C14.0403 4.33846 14.0415 4.31623 14.0427 4.29403C14.091 3.57971 14.1392 2.84127 13.6488 2.35168C13.1722 1.86785 12.4365 1.90919 11.7288 1.94896L11.7036 1.95038C11.6841 1.95146 11.6646 1.95256 11.645 1.95366C11.2287 1.97704 10.7987 2.00119 10.53 1.8862C10.2728 1.77384 9.98344 1.44471 9.70211 1.12367L9.68644 1.10586C9.22435 0.580731 8.71334 0 7.998 0C7.27456 0 6.75208 0.593949 6.29391 1.12367C6.02061 1.44471 5.7232 1.78187 5.46597 1.8862C5.19885 2.00052 4.77953 1.97731 4.35942 1.95407C4.33707 1.95283 4.31472 1.95159 4.29239 1.95038C4.2834 1.94987 4.27439 1.94937 4.26539 1.94886C3.55843 1.90912 2.83131 1.86825 2.34715 2.35168C1.87101 2.83503 1.91194 3.5609 1.95173 4.26668C1.95225 4.2758 1.95276 4.28491 1.95328 4.29403C1.95443 4.31508 1.95559 4.33618 1.95676 4.35729C1.98011 4.7787 2.0038 5.20632 1.88898 5.47383C1.77645 5.73067 1.44687 6.01963 1.12534 6.30054L1.10753 6.31617C0.581598 6.77756 0 7.28779 0 8.00207C0 8.72441 0.594821 9.2461 1.12534 9.70359C1.44687 9.97648 1.78448 10.2734 1.88898 10.5302C2.00348 10.797 1.98024 11.2158 1.95696 11.6354C1.95572 11.6576 1.95449 11.6799 1.95328 11.7021C1.90505 12.4164 1.85682 13.1547 2.34715 13.6443C2.82377 14.1282 3.55945 14.0868 4.26715 14.047L4.29239 14.0456C4.31163 14.0446 4.33092 14.0435 4.35023 14.0424C4.76672 14.019 5.19711 13.9948 5.46597 14.1099C5.7232 14.2223 6.01309 14.5519 6.29443 14.8729ZM11.9872 5.99862L10.9972 5.00867L6.99825 9.00767L4.99875 7.00817L4.0088 7.99812L6.99825 10.9876L11.9872 5.99862Z"
+                            fill="currentColor"
+                          ></path>
+                        </g>
+                      </g>
+                    </svg>
+                    {legalMe.name}
+                  </CompanyBadge>
+                ) : null}
+                {/* <Badge tone="muted">{t("profile.visibility.public")}</Badge> */}
               </MetaRow>
 
               <Actions>
@@ -549,9 +577,9 @@ export default function ProfilePage() {
                 />
 
                 <NavLink to="/app/settings" style={{ textDecoration: "none" }}>
-                  <GhostBtn type="button" disabled={uploading}>
+                  <EditBtn type="button" disabled={uploading}>
                     {t("profile.settings")}
-                  </GhostBtn>
+                  </EditBtn>
                 </NavLink>
               </Actions>
 
@@ -601,13 +629,27 @@ export default function ProfilePage() {
       {(isClient || isLegal) && (
         <AddressCard>
           <AddressHeader>
-            <AddressTitle>{t("profile.address.title") || "Адрес"}</AddressTitle>
+            <div style={{ display: "grid", gap: 2 }}>
+              <AddressTitle>
+                {t("profile.address.title") || "Адрес"}
+              </AddressTitle>
+              {!isEditingAddress && (
+                <AddressHint>
+                  {currentAddressText === "—"
+                    ? (t("profile.address.addHint") as string) ||
+                      "Добавьте ваш адрес, чтобы соискатели видели локацию"
+                    : (t("profile.address.editHint") as string) ||
+                      "Обновите адрес при переезде или смене офиса"}
+                </AddressHint>
+              )}
+            </div>
+
             {!isEditingAddress && (
-              <LinkBtn onClick={openAddressEditor}>
+              <EditBtn onClick={openAddressEditor}>
                 {currentAddressText === "—"
                   ? (t("profile.address.add") as string) || "Добавить"
                   : (t("profile.edit") as string) || "Изменить"}
-              </LinkBtn>
+              </EditBtn>
             )}
           </AddressHeader>
 
@@ -618,101 +660,65 @@ export default function ProfilePage() {
             </>
           ) : (
             <>
-              <AddressCard>
-                <AddressHeader>
-                  <AddressTitle>
-                    {t("profile.address.title") || "Адрес"}
-                  </AddressTitle>
-                  {!isEditingAddress && (
-                    <LinkBtn onClick={openAddressEditor}>
-                      {currentAddressText === "—"
-                        ? (t("profile.address.add") as string) || "Добавить"
-                        : (t("profile.edit") as string) || "Изменить"}
-                    </LinkBtn>
-                  )}
-                </AddressHeader>
+              <AddressDivider />
 
-                {!isEditingAddress ? (
-                  <>
-                    <AddressLine>{currentAddressText}</AddressLine>
-                    <AddressSub>
-                      {saveMsg
-                        ? saveMsg
-                        : clientMe
-                        ? safeFormatDate(
-                            clientMe.updatedAt || clientMe.createdAt
-                          )
-                        : ""}
-                    </AddressSub>
-                  </>
-                ) : (
-                  <>
-                    <SelectRow>
-                      <CustomSelect
-                        id="region"
-                        options={regionOptions}
-                        value={regionId ?? null}
-                        onChange={onRegionChange}
-                        placeholder={
-                          t("profile.address.selectRegion") as string
-                        }
-                        disabled={false}
-                        loading={regionsLoading}
-                        menuMaxHeight={300}
-                      />
-                      <CustomSelect
-                        id="district"
-                        options={districtOptions}
-                        value={districtId ?? null}
-                        onChange={onDistrictChange}
-                        placeholder={
-                          t("profile.address.selectDistrict") as string
-                        }
-                        disabled={!regionId}
-                        loading={districtsLoading}
-                        menuMaxHeight={300}
-                      />
-                      <CustomSelect
-                        id="village"
-                        options={villageOptions}
-                        value={villageId ?? null}
-                        onChange={onVillageChange}
-                        placeholder={
-                          t("profile.address.selectVillage") as string
-                        }
-                        disabled={!districtId}
-                        loading={villagesLoading}
-                        menuMaxHeight={300}
-                      />
-                    </SelectRow>
+              {/* Сетка селектов */}
+              <SelectRow>
+                <CustomSelect
+                  id="region"
+                  options={regionOptions}
+                  value={regionId ?? null}
+                  onChange={onRegionChange}
+                  placeholder={t("profile.address.selectRegion") as string}
+                  disabled={false}
+                  loading={regionsLoading}
+                  menuMaxHeight={300}
+                />
+                <CustomSelect
+                  id="district"
+                  options={districtOptions}
+                  value={districtId ?? null}
+                  onChange={onDistrictChange}
+                  placeholder={t("profile.address.selectDistrict") as string}
+                  disabled={!regionId}
+                  loading={districtsLoading}
+                  menuMaxHeight={300}
+                />
+                <CustomSelect
+                  id="village"
+                  options={villageOptions}
+                  value={villageId ?? null}
+                  onChange={onVillageChange}
+                  placeholder={t("profile.address.selectVillage") as string}
+                  disabled={!districtId}
+                  loading={villagesLoading}
+                  menuMaxHeight={300}
+                />
+              </SelectRow>
 
-                    <Row>
-                      <PrimaryBtn
-                        type="button"
-                        onClick={submitAddress}
-                        disabled={
-                          savingAddress ||
-                          !regionId ||
-                          !districtId ||
-                          !villageId ||
-                          regionsLoading ||
-                          districtsLoading ||
-                          villagesLoading
-                        }
-                      >
-                        {savingAddress
-                          ? (t("profile.address.saving") as string) ||
-                            "Сохраняем…"
-                          : (t("profile.address.save") as string) ||
-                            "Сохранить"}
-                      </PrimaryBtn>
-                      <LinkBtn onClick={cancelAddressEditor}>
-                        {t("cancel") || "Отмена"}
-                      </LinkBtn>
-                    </Row>
-                  </>
-                )}
-              </AddressCard>
+              <ActionsRow>
+                <EditBtn onClick={cancelAddressEditor}>
+                  {t("common1.cancel") || "Отмена"}
+                </EditBtn>
+                <PrimaryBtn
+                  type="button"
+                  onClick={submitAddress}
+                  disabled={
+                    savingAddress ||
+                    !regionId ||
+                    !districtId ||
+                    !villageId ||
+                    regionsLoading ||
+                    districtsLoading ||
+                    villagesLoading
+                  }
+                  style={{ borderRadius: 10, padding: "10px 16px" }}
+                >
+                  {savingAddress
+                    ? (t("profile.address.saving") as string) || "Сохраняем…"
+                    : (t("profile.address.save") as string) || "Сохранить"}
+                </PrimaryBtn>
+              </ActionsRow>
             </>
           )}
         </AddressCard>
@@ -722,12 +728,12 @@ export default function ProfilePage() {
       {data?.role === "LEGAL" && <ProProfileSection role="LEGAL" />}
       {data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
       <div style={{ padding: 16 }}>
-        <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
+        {/* <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
         <AddLink href="#">{t("profile.add")}</AddLink>
 
         <SectionTitle style={{ marginTop: 28 }}>
           {t("profile.searchSettings")}
-        </SectionTitle>
+        </SectionTitle> */}
       </div>
 
       <EditProfileModal
