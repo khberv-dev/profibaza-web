@@ -28,6 +28,8 @@ import {
   AgreementText,
   AgreementA,
 } from "../login-style";
+import { DatePopoverInput } from "../../../components/custom-date-input/DatePopoverInput";
+import dayjs from "dayjs";
 
 /* ---------- типы формы ---------- */
 type FormValues = {
@@ -38,7 +40,9 @@ type FormValues = {
   password: string;
   confirmPassword: string;
   role: "CLIENT" | "WORKER" | "";
-  clientKind?: "PERSON" | "LEGAL"; // подтип для CLIENT
+  clientKind?: "PERSON" | "LEGAL";
+  gender: "MALE" | "FEMALE";
+  birthday: string;
 };
 
 /* ---------- стили выбора роли (карточки) ---------- */
@@ -239,8 +243,10 @@ const RegisterPage = () => {
       phone: "",
       password: "",
       confirmPassword: "",
-      role: "", // обязательный выбор
-      clientKind: "PERSON", // по умолчанию физ. лицо
+      role: "",
+      clientKind: "PERSON",
+      gender: "MALE",
+      birthday: "",
     },
     mode: "onChange",
   });
@@ -281,6 +287,8 @@ const RegisterPage = () => {
         phone: rawPhone,
         password: values.password,
         role: roleToSend,
+        gender: values.gender,
+        birthday: values.birthday,
       });
       navigate("/login", { state: { phone: rawPhone } });
     } catch (e: any) {
@@ -350,6 +358,85 @@ const RegisterPage = () => {
                 (t("phoneInvalid") as string),
             }}
           />
+
+<FieldLabel>Пол</FieldLabel>
+<div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+  <Controller
+    name="gender"
+    control={control}
+    render={({ field }) => (
+      <>
+        <label
+          style={{
+            flex: 1,
+            border: field.value === "MALE" ? "2px solid #1E5CFB" : "1px solid #ccc",
+            borderRadius: 8,
+            padding: "10px 12px",
+            textAlign: "center",
+            cursor: "pointer",
+            background: field.value === "MALE" ? "#EEF2FF" : "#fff",
+            fontWeight: 600,
+          }}
+        >
+          <input
+            type="radio"
+            value="MALE"
+            checked={field.value === "MALE"}
+            onChange={() => field.onChange("MALE")}
+            style={{ display: "none" }}
+          />
+          Мужчина
+        </label>
+
+        <label
+          style={{
+            flex: 1,
+            border: field.value === "FEMALE" ? "2px solid #1E5CFB" : "1px solid #ccc",
+            borderRadius: 8,
+            padding: "10px 12px",
+            textAlign: "center",
+            cursor: "pointer",
+            background: field.value === "FEMALE" ? "#EEF2FF" : "#fff",
+            fontWeight: 600,
+          }}
+        >
+          <input
+            type="radio"
+            value="FEMALE"
+            checked={field.value === "FEMALE"}
+            onChange={() => field.onChange("FEMALE")}
+            style={{ display: "none" }}
+          />
+          Женщина
+        </label>
+      </>
+    )}
+  />
+</div>
+
+<DatePopoverInput
+  control={control}
+  name="birthday"
+  label="Дата рождения"
+  placeholder="ГГГГ-ММ-ДД"
+  required
+  // Ограничим возраст: от 16 до 100 лет
+  min={dayjs().subtract(100, "year").format("YYYY-MM-DD")}
+  max={dayjs().subtract(16, "year").format("YYYY-MM-DD")}
+  rules={{
+    required: "Укажите дату рождения",
+    validate: (v: string) => {
+      // формат YYYY-MM-DD
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "Введите в формате YYYY-MM-DD";
+      const d = dayjs(v, "YYYY-MM-DD", true);
+      if (!d.isValid()) return "Некорректная дата";
+      const age = dayjs().diff(d, "year");
+      if (age < 16) return "Возраст должен быть 16+";
+      if (age > 100) return "Возраст не может превышать 100 лет";
+      return true;
+    },
+  }}
+/>
 
           {/* Выбор основной роли */}
           <Controller

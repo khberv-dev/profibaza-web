@@ -20,6 +20,8 @@ export type RegisterDto = {
   phone: string;
   password: string;
   role: UserRole;
+  gender: "MALE" | "FEMALE";   // 👈 новое поле
+  birthday: string;
 };
 
 export const authApi = {

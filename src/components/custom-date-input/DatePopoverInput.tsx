@@ -44,6 +44,60 @@ dayjs.locale("ru");
 const startOfWeek = (d: dayjs.Dayjs) => d.startOf("week").add(1, "day"); // понедельник
 const endOfWeek = (d: dayjs.Dayjs) => d.endOf("week").add(1, "day");
 
+
+function clamp(n: number, min: number, max: number) {
+  if (Number.isNaN(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+/** Превращает произвольный ввод в YYYY-MM-DD с автодефисами по мере набора */
+function maskToYMD(raw: string): string {
+  // берём только цифры, максимум 8 шт (YYYYMMDD)
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+
+  // YYYY
+  const y = digits.slice(0, 4);
+  if (digits.length <= 4) return y;
+
+  // MM
+  let m = digits.slice(4, 6);
+  // нормализуем месяц в 01..12
+  const mNum = clamp(parseInt(m || "0", 10), 1, 12);
+  if (m.length === 1 && parseInt(m, 10) > 1) {
+    // если первая цифра месяца >1 — добавим ведущий 0: "3" → "03"
+    m = `0${m}`;
+  } else if (m.length === 2) {
+    m = String(mNum).padStart(2, "0");
+  }
+
+  if (digits.length <= 6) return `${y}-${m}`;
+
+  // DD
+  let d = digits.slice(6, 8);
+  // нормализуем день 01..31 (простая защита, без учёта месяца)
+  const dNum = clamp(parseInt(d || "0", 10), 1, 31);
+  if (d.length === 1 && parseInt(d, 10) > 3) {
+    d = `0${d}`;
+  } else if (d.length === 2) {
+    d = String(dNum).padStart(2, "0");
+  }
+
+  return `${y}-${m}-${d}`;
+}
+
+/** На blur пытаемся довести значение до строгого YYYY-MM-DD или очистить, если всё пусто */
+function normalizeOnBlur(v: string): string {
+  const digits = v.replace(/\D/g, "");
+  if (!digits) return "";
+  const masked = maskToYMD(v);
+  // Проверим валидность через dayjs в строгом режиме
+  const d = dayjs(masked, "YYYY-MM-DD", true);
+  if (d.isValid()) return masked;
+  // Если неполная дата типа "2025-01", оставим как есть (пусть покажет ошибку в rules)
+  return masked;
+}
+
+
 export function DatePopoverInput({
   control,
   name,
@@ -181,21 +235,30 @@ function DateInner({
 
       {/* Anchor: инпут без иконки; поповер всплывает отсюда */}
       <InputContainer ref={anchorRef}>
-        <StyledInput
-          value={field.value || ""}
-          onChange={(e) => field.onChange(e.target.value)} // ручной ввод тоже ок
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
-          onBlur={field.onBlur}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          hasError={hasError}
-          aria-invalid={hasError}
-          type="text" // показываем как обычный текст, чтобы не всплывал нативный календарь
-          inputMode="none"
-          readOnly // можно переключить на false, если хочешь ручной ввод
-        />
+      <StyledInput
+  value={field.value || ""}
+
+  onChange={(e) => {
+    const next = maskToYMD(e.target.value);
+    field.onChange(next);
+  }}
+
+  onBlur={(e) => {
+    const normalized = normalizeOnBlur(e.target.value);
+    field.onChange(normalized);
+    field.onBlur(); // важно дернуть RHF blur
+  }}
+
+  onFocus={() => setOpen(true)}
+  onClick={() => setOpen(true)}
+  placeholder={placeholder}
+  required={required}
+  disabled={disabled}
+  hasError={hasError}
+  aria-invalid={hasError}
+  type="text"
+  inputMode="numeric"
+/>
         {/* твоя кастомная иконка/кнопка: опционально */}
         {rightSlot ?? null}
 
