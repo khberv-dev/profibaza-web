@@ -35,43 +35,42 @@ import VacancyEditorPage from "../features/vacancy/CreateVacancyPage";
 import WorkerVacanciesSearchPage from "../features/worker-vacancies/WorkerVacanciesSearchPage";
 import LegalOffersPage from "../features/legal-offers/LegalOffersPage";
 
+// ⬇️ Новое: импорт админских страниц и лейаута
+import { AdminLayout } from "../layouts/admin/AdminLayout";
+import AdminDashboardPage from "../features/admin/AdminDashboardPage";
+import AdminInvoicesPage from "../features/admin/AdminInvoicesPage";
+
+
 export const router = createBrowserRouter([
-  /* ===== Публичные: доступны всегда, независимо от active ===== */
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/forgot", element: <ForgotPasswordPage /> },
   { path: "/register", element: <OtpPage /> },
 
-  /* ===== Зона «не активен»: показываем страницу активации и
-     любые дополнительные публичные страницы для неактивных ===== */
   {
     element: <InactiveOnly />,
-    children: [
-      { path: "/activate", element: <ActivationPage /> },
-      // если нужно, можно добавить сюда и другие страницы, доступные только до активации
-      // например: { path: "/pricing", element: <PricingPage /> },
-    ],
+    children: [{ path: "/activate", element: <ActivationPage /> }],
   },
 
-  /* ===== Зона «активен»: основное приложение под /app ===== */
   {
-    element: <ActiveOnly />, // пускает только active === true
+    element: <ActiveOnly />,
     children: [
       {
-        element: <Protected />, // ваша авторизация/токен
+        element: <Protected />,
         children: [
+          // ===== Основное приложение
           {
             path: "/app",
             element: <TopbarLayout />,
             children: [
-              { index: true, element: <SearchPage /> }, // /app
+              { index: true, element: <SearchPage /> },
               { path: "profile", element: <ProfilePage /> },
               { path: "settings", element: <SettingsPage /> },
               { path: "orders/new", element: <NewOrderPage /> },
               { path: "orders/my", element: <MyOrdersPage /> },
               { path: "find", element: <WorkerSearchPage /> },
 
-              // Раздел только для LEGAL (компании)
+              // LEGAL
               {
                 element: <RoleGuard allow={["LEGAL"]} />,
                 children: [
@@ -83,7 +82,7 @@ export const router = createBrowserRouter([
                 ],
               },
 
-              // Блоки для CLIENT
+              // CLIENT
               {
                 element: <RoleGuard allow={["CLIENT"]} />,
                 children: [
@@ -92,7 +91,7 @@ export const router = createBrowserRouter([
                 ],
               },
 
-              // Блоки для WORKER
+              // WORKER
               {
                 element: <RoleGuard allow={["WORKER"]} />,
                 children: [
@@ -121,11 +120,40 @@ export const router = createBrowserRouter([
               },
             ],
           },
+
+        ],
+      },
+    ],
+  },
+  {
+    element: <ActiveOnly />,
+    children: [
+      {
+        element: <Protected />,
+        children: [
+          // ===== Основное приложение
+          {
+            path: "/admin",
+            element: <AdminLayout />,
+            children: [
+
+              // LEGAL
+              {
+                element: <RoleGuard allow={["ADMIN"]} />,
+                children: [
+                  { path: "stats", element: <AdminDashboardPage /> },
+                  { path: "invoices", element: <AdminInvoicesPage /> },
+                ],
+              },
+
+            ],
+          },
+
+
         ],
       },
     ],
   },
 
-  /* ===== 404 ===== */
   { path: "*", element: <Page404 /> },
 ]);

@@ -369,6 +369,64 @@ export async function getWorkerDocuments(
   }));
 }
 
+
+export function getWorkerResumeUrl(workerProfessionId: string): string {
+  const base = import.meta.env.VITE_API_URL || "";
+  return `${base.replace(/\/$/, "")}/worker/download-resume/${encodeURIComponent(
+    workerProfessionId
+  )}`;
+}
+
+
+export async function downloadWorkerResume(
+  workerProfessionId: string,
+  filename?: string
+) {
+  if (!workerProfessionId) throw new Error("workerProfessionId is required");
+
+  // Если api клиент уже подставляет baseURL — можно дернуть относительный путь:
+  // const { data, headers } = await api.get(
+  //   `/worker/download-resume/${encodeURIComponent(workerProfessionId)}`,
+  //   { responseType: "blob" }
+  // );
+
+  // Универсально (и одинаково с build*Url-хелперами):
+  const url = getWorkerResumeUrl(workerProfessionId);
+  const { data, headers } = await api.get(url, { responseType: "blob" });
+
+  // Пытаемся вытащить имя из заголовка, если сервер его отдает
+  let suggested =
+    headers?.["content-disposition"]?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/)?.[1] ||
+    "";
+
+  try {
+    // декод, если было filename*=UTF-8''
+    suggested = decodeURIComponent(suggested);
+  } catch (_) {}
+
+  const extFromMime = (() => {
+    const ct = (headers?.["content-type"] as string | undefined)?.toLowerCase() || "";
+    if (ct.includes("pdf")) return "pdf";
+    if (ct.includes("msword")) return "doc";
+    if (ct.includes("officedocument.wordprocessingml")) return "docx";
+    return "bin";
+  })();
+
+  const safeName =
+    filename ||
+    (suggested && suggested.trim()) ||
+    `worker-resume-${workerProfessionId}.${extFromMime}`;
+
+  const blob = new Blob([data]);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = safeName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
 export async function uploadWorkerDocument(
   file: File,
   onProgress?: (pct: number) => void,

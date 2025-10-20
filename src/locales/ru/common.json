@@ -68,6 +68,7 @@
   },
   "worker": {
     "title": "Профиль специалиста",
+    "downloadResume": "Скачать резюме",
     "fillForm": "Заполните форму",
     "experienceTitle": "Опыт работы",
     "back": "Назад",

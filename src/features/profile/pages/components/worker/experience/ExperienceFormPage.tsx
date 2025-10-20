@@ -180,36 +180,66 @@ export default function ExperienceFormPage({ mode }: Props) {
             </Field>
 
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr auto",
-                gap: 10,
-              }}
-            >
-              <Field>
-                <Label>Начало (год)</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="Год"
-                  value={startedYear}
-                  onChange={(e) =>
-                    setStartedYear(e.target.value ? Number(e.target.value) : "")
-                  }
-                />
-              </Field>
-              <Field>
-                <Label>Окончание (год)</Label>
-                <Input
-                  inputMode="numeric"
-                  placeholder="Год"
-                  disabled={now}
-                  value={endedYear}
-                  onChange={(e) =>
-                    setEndedYear(e.target.value ? Number(e.target.value) : "")
-                  }
-                />
-              </Field>
-            </div>
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr auto",
+    gap: 10,
+  }}
+>
+  <Field>
+    <Label>Начало (год)</Label>
+    <Input
+      inputMode="numeric"
+      placeholder="Год"
+      value={startedYear}
+      onChange={(e) =>
+        setStartedYear(e.target.value ? Number(e.target.value) : "")
+      }
+    />
+  </Field>
+
+  <Field>
+    <Label>Окончание (год)</Label>
+    <Input
+      inputMode="numeric"
+      placeholder="Год"
+      disabled={now} // ← станет кликабельным, когда now = false
+      value={endedYear}
+      onChange={(e) =>
+        setEndedYear(e.target.value ? Number(e.target.value) : "")
+      }
+    />
+  </Field>
+
+  <Field>
+    <Label>&nbsp;</Label>
+    <label
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        height: 42,
+        padding: "0 10px",
+        border: "1px solid #E5E7EB",
+        borderRadius: 10,
+        cursor: "pointer",
+        userSelect: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={now}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          setNow(checked);
+          if (checked) setEndedYear(""); // очищаем конец, если «по н.в.»
+        }}
+      />
+      По настоящее время
+    </label>
+  </Field>
+</div>
 
             <Field>
               <Label>Обязанности и достижения</Label>
