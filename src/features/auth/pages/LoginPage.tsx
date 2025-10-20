@@ -37,13 +37,19 @@ const LoginPage = () => {
 
   const onSubmit = async (values: FormValues) => {
     const raw = values.phone.replace(/\D/g, "");
-
+  
     try {
-      await login({ phone: raw, password: values.password });
-      navigate("/app/profile");
+      const user = await login({ phone: raw, password: values.password });
+  
+      // если API возвращает роль, например user.role === "ADMIN"
+      if (user?.role === "ADMIN") {
+        navigate("/admin/stats");
+      } else {
+        navigate("/app/profile");
+      }
     } catch (e: any) {
       let serverMsg = t("loginFailed");
-
+  
       if (isAxiosError(e) && e.response?.data) {
         const data = e.response.data;
         if (typeof data === "string") {
@@ -55,7 +61,7 @@ const LoginPage = () => {
           }
         }
       }
-
+  
       setError("phone", { message: serverMsg });
       setError("password", { message: serverMsg });
     }
