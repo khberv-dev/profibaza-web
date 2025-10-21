@@ -429,18 +429,27 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
   };
 
   const onDemoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
+    const input = e.currentTarget;
+    const f = input.files?.[0];
     if (!f) return;
-    if (f.size > 20 * 1024 * 1024) {
-      setDemoUploadErr("Файл превышает 20 МБ");
-      e.target.value = "";
+  
+    // Лимит: 30 MB (десятичные мегабайты)
+    const MAX_MB = 30;
+    const MAX_BYTES = MAX_MB * 1_000_000; // 30,000,000
+  
+    // Для понятного лога/сообщения
+    const sizeMB = f.size / 1_000_000; // десятичные MB
+  
+    if (f.size > MAX_BYTES) {
+      setDemoUploadErr(`Файл превышает ${MAX_MB} МБ (ваш: ${sizeMB.toFixed(2)} МБ)`);
+      input.value = ""; // сброс выбора
       return;
     }
+  
+    // Проверка режима редактирования
     if (mode !== "edit" || !rowId) {
-      setDemoUploadErr(
-        "Сначала сохраните (или перейдите в режим редактирования)"
-      );
-      e.target.value = "";
+      setDemoUploadErr("Сначала сохраните (или перейдите в режим редактирования)");
+      input.value = "";
       return;
     }
 

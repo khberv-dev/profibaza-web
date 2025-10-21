@@ -489,7 +489,7 @@ export const WorkerProfile: React.FC = () => {
   const onDemoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 20 * 1024 * 1024) {
+    if (f.size > 30 * 1024 * 1024) {
       setDemoUploadErr("Файл превышает 20 МБ");
       e.target.value = "";
       return;
