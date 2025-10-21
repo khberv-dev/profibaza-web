@@ -46,23 +46,23 @@ const mapClientMe = (r: ClientMeRaw): ClientMe => ({
   updatedAt: r.updated_at,
 });
 
+/* ---------- order types ---------- */
 export type CreateOrderDto = {
-  workerProfessionId: string; // таргет на конкретного исполнителя (его строка профиля)
+  workerProfessionId: string;
   description: string;
   deadline: string; // ISO: 2025-01-05
   budget: number; // сум
-  address1?: string | null; // область/город
-  address2?: string | null; // район/посёлок
-  address3?: string | null; // улица/ориентир
+  address1?: string | null; // область / город
+  address2?: string | null; // район / посёлок
+  address3?: string | null; // улица / ориентир
 };
 
 export type CreateOrderResp = {
   ok: boolean;
-  data: {
-    id: string;
-  };
+  data: { id: string };
 };
 
+/* ---------- search types ---------- */
 export type Profession = {
   id: string;
   nameUz: string;
@@ -77,7 +77,7 @@ export type SearchWorkerUser = {
 };
 
 export type SearchWorker = {
-  id: string; // row id (workerProfessionId)
+  id: string; // workerProfessionId
   minPrice: number;
   maxPrice: number;
   rating: number;
@@ -97,7 +97,9 @@ export type SearchWorker = {
   };
 };
 
-/* === API === */
+/* ---------- API ---------- */
+
+// поиск мастеров по профессии, цене и геолокации
 export async function searchWorkers(
   params: {
     professions: string;
@@ -105,20 +107,26 @@ export async function searchWorkers(
     maxPrice: number;
     long?: number;
     lat?: number;
-    radius?: number; // бек ждёт дробное значение (как в твоём примере из URL)
+    radius?: number; // дробное значение
+    address1?: string | null;
+    address2?: string | null;
+    address3?: string | null;
   },
   signal?: AbortSignal
 ): Promise<SearchWorker[]> {
-  const { professions, minPrice, maxPrice, long, lat, radius } = params;
-
-  const query: Record<string, string | number> = {
-    professions,
-    minPrice,
-    maxPrice,
+  const query: Record<string, string | number | null> = {
+    professions: params.professions,
+    minPrice: params.minPrice,
+    maxPrice: params.maxPrice,
   };
-  if (typeof long === "number") query.long = long;
-  if (typeof lat === "number") query.lat = lat;
-  if (typeof radius === "number") query.radius = radius;
+
+  if (typeof params.long === "number") query.long = params.long;
+  if (typeof params.lat === "number") query.lat = params.lat;
+  if (typeof params.radius === "number") query.radius = params.radius;
+
+  if (params.address1) query.address1 = params.address1;
+  if (params.address2) query.address2 = params.address2;
+  if (params.address3) query.address3 = params.address3;
 
   const { data } = await api.get<{ ok: boolean; data: SearchWorker[] }>(
     "/opt/order/search",
@@ -127,6 +135,7 @@ export async function searchWorkers(
   return Array.isArray(data?.data) ? data.data : [];
 }
 
+// детальный просмотр мастера
 export async function getWorkerById(
   id: string,
   signal?: AbortSignal
@@ -135,12 +144,11 @@ export async function getWorkerById(
     ok: boolean;
     data: SearchWorker | SearchWorker[];
   }>(`/opt/order/search/${id}`, { signal });
-  // Бэки иногда шлют объект, иногда массив — аккуратно достанем
   if (Array.isArray(data?.data)) return data.data[0] ?? null;
   return (data && (data as any).data) || null;
 }
 
-/* ---------- api ---------- */
+/* ---------- clientApi ---------- */
 export const clientApi = {
   updateAddress: async (dto: UpdateAddressDto): Promise<boolean> => {
     const { data } = await api.put<UpdateAddressResp>(
@@ -176,7 +184,6 @@ export const clientApi = {
     return true;
   },
 
-  /** Возвращает клиентский профиль; 404 -> null */
   me: async (): Promise<ClientMe | null> => {
     try {
       const { data } = await api.get<{ ok: boolean; data: ClientMeRaw }>(
@@ -188,6 +195,7 @@ export const clientApi = {
       throw e;
     }
   },
+
   melegal: async (): Promise<ClientMe | null> => {
     try {
       const { data } = await api.get<{ ok: boolean; data: ClientMeRaw }>(
@@ -207,6 +215,7 @@ export const clientApi = {
     );
     return data;
   },
+
   createOrderLegal: async (dto: CreateOrderDto) => {
     const { data } = await api.post<CreateOrderResp>(
       "/legal/create-order",

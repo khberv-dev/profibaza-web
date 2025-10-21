@@ -34,7 +34,11 @@ import {
 import CustomSelect, {
   SelectOption,
 } from "../../components/custom-select/CustomSelect";
-import { getProfessions } from "../../shared/modules/worker";
+import {
+  getProfessions,
+  Profession,
+  ProfessionCategory,
+} from "../../shared/modules/worker";
 import { SearchWorker, searchWorkers } from "../../shared/endpoints/client";
 import { Heart, Share2 } from "lucide-react";
 import { Rate } from "antd";
@@ -42,6 +46,13 @@ import {
   MapLocation,
   MapYandexLocations,
 } from "../../components/map/MapYandexLocations";
+import {
+  District,
+  locationApi,
+  pickName,
+  Region,
+  Village,
+} from "../../shared/endpoints/location";
 
 /* ========== helpers ========== */
 const fmtMoney = (n?: number) =>
@@ -148,6 +159,37 @@ export const WorkerSearchPage: React.FC = () => {
   const [geoStatus, setGeoStatus] = useState<
     "idle" | "ok" | "denied" | "error"
   >("idle");
+  const [regionId, setRegionId] = useState<number | null>(null);
+  const [districtId, setDistrictId] = useState<number | null>(null);
+  const [villageId, setVillageId] = useState<number | null>(null);
+
+  const { data: regions = [], isLoading: regionsLoading } = useQuery<Region[]>({
+    queryKey: ["opt", "regions"],
+    queryFn: () => locationApi.getRegions(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Районы (зависит от выбранной области)
+  const { data: districts = [], isLoading: districtsLoading } = useQuery<
+    District[]
+  >({
+    queryKey: ["opt", "districts", regionId],
+    queryFn: () =>
+      regionId ? locationApi.getDistricts(regionId) : Promise.resolve([]),
+    enabled: regionId != null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Махалли (зависит от выбранного района)
+  const { data: villages = [], isLoading: villagesLoading } = useQuery<
+    Village[]
+  >({
+    queryKey: ["opt", "villages", districtId],
+    queryFn: () =>
+      districtId ? locationApi.getVillages(districtId) : Promise.resolve([]),
+    enabled: districtId != null,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const onAddLoc = (loc: MapLocation) => setLocations([loc]);
   const onChangeLoc = (index: number, next: MapLocation) =>
@@ -167,33 +209,100 @@ export const WorkerSearchPage: React.FC = () => {
   });
 
   /* === Справочник профессий === */
-  const { data: profs = [], isLoading: profLoading } = useQuery({
+  const { data: profCats = [], isLoading: profLoading } = useQuery<
+    ProfessionCategory[]
+  >({
     queryKey: ["opt", "professions"],
-    queryFn: ({ signal }) => getProfessions(signal),
+    queryFn: ({ signal }) => getProfessions(signal), // -> ProfessionCategory[]
     staleTime: 5 * 60 * 1000,
   });
 
+  const flatProfs: Profession[] = useMemo(
+    () =>
+      profCats.flatMap((c) =>
+        (c.professions || []).map((p) => ({
+          ...p,
+          // гарантируем наличие categoryId: если вдруг нет — ставим id категории
+          categoryId: p.categoryId ?? c.id,
+        }))
+      ),
+    [profCats]
+  );
+
+  // 4) Опции селекта строим из flatProfs
   const profOptions: SelectOption[] = useMemo(
     () =>
-      profs.map((p) => ({
+      flatProfs.map((p) => ({
         value: p.id,
         label: lang === "uz" ? (p as any).nameUz : (p as any).nameRu,
       })),
-    [profs, lang]
+    [flatProfs, lang]
   );
 
   const profLabelById = (id?: string) => {
-    const found = profs.find((p) => p.id === id);
+    const found = flatProfs.find((p) => p.id === id);
     if (!found) return "—";
     return lang === "uz" ? (found as any).nameUz : (found as any).nameRu;
   };
+
+  const regionOptions: SelectOption[] = useMemo(
+    () =>
+      regions.map((r) => ({
+        value: r.id,
+        label: pickName(r, lang),
+      })),
+    [regions, lang]
+  );
+
+  const districtOptions: SelectOption[] = useMemo(
+    () =>
+      districts.map((d) => ({
+        value: d.id,
+        label: pickName(d, lang),
+      })),
+    [districts, lang]
+  );
+
+  const villageOptions: SelectOption[] = useMemo(
+    () =>
+      villages.map((v) => ({
+        value: v.id,
+        label: pickName(v, lang),
+      })),
+    [villages, lang]
+  );
 
   /* === Применённые фильтры === */
   const [applied, setApplied] = useState<{
     professions: string;
     minPrice: number;
     maxPrice: number;
+    address1?: string | null; // область
+    address2?: string | null; // район
+    address3?: string | null; // махалля/улица (если понадобится)
   } | null>(null);
+
+  const regionName = useMemo(
+    () =>
+      regions.find((r) => r.id === regionId)
+        ? pickName(regions.find((r) => r.id === regionId)!, lang)
+        : null,
+    [regions, regionId, lang]
+  );
+  const districtName = useMemo(
+    () =>
+      districts.find((d) => d.id === districtId)
+        ? pickName(districts.find((d) => d.id === districtId)!, lang)
+        : null,
+    [districts, districtId, lang]
+  );
+  const villageName = useMemo(
+    () =>
+      villages.find((v) => v.id === villageId)
+        ? pickName(villages.find((v) => v.id === villageId)!, lang)
+        : null,
+    [villages, villageId, lang]
+  );
 
   /* Геолокация браузера (опционально) */
   useEffect(() => {
@@ -210,7 +319,14 @@ export const WorkerSearchPage: React.FC = () => {
         setGeoStatus("ok");
         if (professionId) {
           const { mn, mx } = parseNums();
-          setApplied({ professions: professionId, minPrice: mn, maxPrice: mx });
+          setApplied({
+            professions: professionId,
+            minPrice: mn,
+            maxPrice: mx,
+            address1: regionName,
+            address2: districtName,
+            address3: villageName,
+          });
         }
       },
       (err) =>
@@ -256,7 +372,14 @@ export const WorkerSearchPage: React.FC = () => {
   const onSearch = () => {
     if (!professionId) return;
     const { mn, mx } = parseNums();
-    setApplied({ professions: professionId, minPrice: mn, maxPrice: mx });
+    setApplied({
+      professions: professionId,
+      minPrice: mn,
+      maxPrice: mx,
+      address1: regionName,
+      address2: districtName,
+      address3: villageName, // можешь не отправлять, если бек это не использует
+    });
   };
 
   const onChangeProfession = (v: string | number | null) => {
@@ -264,17 +387,37 @@ export const WorkerSearchPage: React.FC = () => {
     setProfessionId(id);
     if (!id) return;
     const { mn, mx } = parseNums();
-    setApplied({ professions: id, minPrice: mn, maxPrice: mx });
+    setApplied({
+      professions: id,
+      minPrice: mn,
+      maxPrice: mx,
+      address1: regionName,
+      address2: districtName,
+      address3: villageName,
+    });
   };
 
   const resetAll = () => {
     setValue("minPrice", "0");
     setValue("maxPrice", "1000000000");
     setLocations([]);
-    if (profs.length) {
-      const first = String(profs[0].id);
+
+    // сброс каскада локаций
+    setRegionId(null);
+    setDistrictId(null);
+    setVillageId(null);
+
+    if (flatProfs.length) {
+      const first = String(flatProfs[0].id);
       setProfessionId(first);
-      setApplied({ professions: first, minPrice: 0, maxPrice: 1_000_000_000 });
+      setApplied({
+        professions: first,
+        minPrice: 0,
+        maxPrice: 1_000_000_000,
+        address1: regionName,
+        address2: districtName,
+        address3: villageName,
+      });
     } else {
       setProfessionId("");
       setApplied(null);
@@ -293,6 +436,9 @@ export const WorkerSearchPage: React.FC = () => {
           minPrice: applied.minPrice,
           maxPrice: applied.maxPrice,
           ...(geo ? { long: geo.long, lat: geo.lat, radius: geo.radius } : {}),
+          ...(applied.address1 ? { address1: applied.address1 } : {}),
+          ...(applied.address2 ? { address2: applied.address2 } : {}),
+          ...(applied.address3 ? { address3: applied.address3 } : {}),
         },
         signal
       );
@@ -364,6 +510,112 @@ export const WorkerSearchPage: React.FC = () => {
           />
         </div>
 
+        <div className="field" style={{ minWidth: 240 }}>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+            Область
+          </label>
+          <CustomSelect
+            id="region"
+            placeholder={regionsLoading ? "Загрузка…" : "Выберите область"}
+            options={regionOptions}
+            value={regionId ?? null}
+            loading={regionsLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setRegionId(id);
+              // сбрасываем ниже по каскаду
+              setDistrictId(null);
+              setVillageId(null);
+              // обновляем applied (если уже есть профессия)
+              if (professionId) {
+                const { mn, mx } = parseNums();
+                setApplied({
+                  professions: professionId,
+                  minPrice: mn,
+                  maxPrice: mx,
+                  address1: regionName,
+                  address2: districtName,
+                  address3: villageName,
+                });
+              }
+            }}
+            width="100%"
+          />
+        </div>
+
+        <div className="field" style={{ minWidth: 240 }}>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+            Район
+          </label>
+          <CustomSelect
+            id="district"
+            placeholder={
+              regionId == null
+                ? "Сначала выберите область"
+                : districtsLoading
+                ? "Загрузка…"
+                : "Выберите район"
+            }
+            disabled={regionId == null}
+            options={districtOptions}
+            value={districtId ?? null}
+            loading={districtsLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setDistrictId(id);
+              setVillageId(null);
+              if (professionId) {
+                const { mn, mx } = parseNums();
+                setApplied({
+                  professions: professionId,
+                  minPrice: mn,
+                  maxPrice: mx,
+                  address1: regionName,
+                  address2: districtName,
+                  address3: villageName,
+                });
+              }
+            }}
+            width="100%"
+          />
+        </div>
+
+        <div className="field" style={{ minWidth: 240 }}>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
+            Махалля
+          </label>
+          <CustomSelect
+            id="village"
+            placeholder={
+              districtId == null
+                ? "Сначала выберите район"
+                : villagesLoading
+                ? "Загрузка…"
+                : "Выберите махаллю"
+            }
+            disabled={districtId == null}
+            options={villageOptions}
+            value={villageId ?? null}
+            loading={villagesLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setVillageId(id);
+              if (professionId) {
+                const { mn, mx } = parseNums();
+                setApplied({
+                  professions: professionId,
+                  minPrice: mn,
+                  maxPrice: mx,
+                  address1: regionName,
+                  address2: districtName,
+                  address3: villageName,
+                });
+              }
+            }}
+            width="100%"
+          />
+        </div>
+
         <div className="field">
           <CustomInput
             control={control}
@@ -382,6 +634,7 @@ export const WorkerSearchPage: React.FC = () => {
           <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
             Локация (по желанию)
           </label>
+
           <MapYandexLocations
             apiKey={import.meta.env.VITE_YMAPS_KEY}
             locations={locations}
@@ -625,6 +878,9 @@ export const WorkerSearchPage: React.FC = () => {
                         professions: professionId,
                         minPrice: mn,
                         maxPrice: mx,
+                        address1: regionName,
+                        address2: districtName,
+                        address3: villageName,
                       });
                     }
                   } else {

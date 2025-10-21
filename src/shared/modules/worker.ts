@@ -3,8 +3,22 @@ import { api } from "../api/client";
 // ============= Professions =============
 export type Profession = {
   id: string;
-  nameRu: string;
   nameUz: string;
+  nameRu: string;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ProfessionCategory = {
+  id: string;
+  nameUz: string;
+  nameRu: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  professions: Profession[];
 };
 
 export type JobType = "SOLO" | "EMPLOYEE" | "ABROAD";
@@ -24,12 +38,12 @@ export type ServiceLocationWire = {
 
 export async function getProfessions(
   signal?: AbortSignal
-): Promise<Profession[]> {
-  const { data } = await api.get<{ ok: boolean; data: Profession[] }>(
+): Promise<ProfessionCategory[]> {
+  const { data } = await api.get<{ ok: boolean; data: ProfessionCategory[] }>(
     "/opt/professions",
     { signal }
   );
-  return Array.isArray(data?.data) ? data.data : [];
+  return data?.data ?? [];
 }
 
 // ============= Worker Profession =============
@@ -80,7 +94,18 @@ export type WorkerProfessionRow = {
   professionId: string;
   createdAt: string;
   updatedAt: string;
-  // доп. поля
+
+  // новое:
+  profession?: {
+    id: string;
+    nameUz: string;
+    nameRu: string;
+    categoryId: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
+
   competitions?: "YES" | "NO";
   schedule?: WeekSchedule | null;
   jobType?: JobType | null;
@@ -369,14 +394,13 @@ export async function getWorkerDocuments(
   }));
 }
 
-
 export function getWorkerResumeUrl(workerProfessionId: string): string {
   const base = import.meta.env.VITE_API_URL || "";
-  return `${base.replace(/\/$/, "")}/worker/download-resume/${encodeURIComponent(
-    workerProfessionId
-  )}`;
+  return `${base.replace(
+    /\/$/,
+    ""
+  )}/worker/download-resume/${encodeURIComponent(workerProfessionId)}`;
 }
-
 
 export async function downloadWorkerResume(
   workerProfessionId: string,
@@ -396,8 +420,9 @@ export async function downloadWorkerResume(
 
   // Пытаемся вытащить имя из заголовка, если сервер его отдает
   let suggested =
-    headers?.["content-disposition"]?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/)?.[1] ||
-    "";
+    headers?.["content-disposition"]?.match(
+      /filename\*?=(?:UTF-8'')?"?([^";]+)"?/
+    )?.[1] || "";
 
   try {
     // декод, если было filename*=UTF-8''
@@ -405,7 +430,8 @@ export async function downloadWorkerResume(
   } catch (_) {}
 
   const extFromMime = (() => {
-    const ct = (headers?.["content-type"] as string | undefined)?.toLowerCase() || "";
+    const ct =
+      (headers?.["content-type"] as string | undefined)?.toLowerCase() || "";
     if (ct.includes("pdf")) return "pdf";
     if (ct.includes("msword")) return "doc";
     if (ct.includes("officedocument.wordprocessingml")) return "docx";

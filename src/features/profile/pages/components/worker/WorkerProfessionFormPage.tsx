@@ -46,6 +46,7 @@ import {
 } from "../../../../../shared/modules/worker";
 import type {
   JobType,
+  ProfessionCategory,
   ProfessionDemo,
   WeekSchedule,
 } from "../../../../../shared/modules/worker";
@@ -54,6 +55,7 @@ import {
   WorkerExperienceItem,
 } from "../../../../../shared/modules/experience";
 import { EditBtn } from "../../../pro-profile-section.style";
+import { Drill, HardHat, PencilRuler, RotateCwSquare } from "lucide-react";
 
 type Mode = "create" | "edit";
 type Props = { mode: Mode };
@@ -87,7 +89,8 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
   const { rowId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-
+  const [categories, setCategories] = useState<ProfessionCategory[]>([]);
+  const [activeCatId, setActiveCatId] = useState<string>("");
   // справочники
   const [professions, setProfessions] = useState<Profession[]>([]);
   const [profLoading, setProfLoading] = useState(true);
@@ -129,34 +132,9 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
       endedAt: null,
     },
   ]);
-  const [savingExp, setSavingExp] = useState(false);
-  const [saveExpErr, setSaveExpErr] = useState<string | null>(null);
-  const [savedExpOk, setSavedExpOk] = useState(false);
-
-  const changeExp = <K extends keyof WorkerExperienceItem>(
-    idx: number,
-    key: K,
-    val: WorkerExperienceItem[K]
-  ) =>
-    setExpList((s) =>
-      s.map((it, i) => (i === idx ? { ...it, [key]: val } : it))
-    );
-
-  const addExpRow = () =>
-    setExpList((s) => [
-      ...s,
-      {
-        jobPlace: "",
-        jobDescription: "",
-        startedAt: new Date().getFullYear(),
-        endedAt: null,
-      },
-    ]);
-
-  const removeExpRow = (idx: number) =>
-    setExpList((s) => s.filter((_, i) => i !== idx));
-
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0];
+  const catLabel = (c: ProfessionCategory) =>
+    (lang === "uz" ? c.nameUz : c.nameRu) || "";
   const profLabel = (p: Profession) =>
     (lang === "uz" ? (p as any).nameUz : (p as any).nameRu) || "";
 
@@ -193,38 +171,59 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
   // загрузка
   useEffect(() => {
     const ac = new AbortController();
+
     (async () => {
       try {
         setProfLoading(true);
-        const [opts, rows] = await Promise.all([
-          getProfessions(ac.signal),
+
+        // 1) тянем категории с профессиями и текущие профили воркера
+        const [cats, rows] = await Promise.all([
+          getProfessions(ac.signal), // возвращает ProfessionCategory[]
           getWorkerProfessions(ac.signal).catch(
             () => [] as WorkerProfessionRow[]
           ),
         ]);
-        setProfessions(opts);
+
+        setCategories(cats || []);
         setWorkerProfs(rows);
         setCreatedIds(new Set(rows.map((r) => r.professionId)));
 
+        // 2) если активная категория ещё не выбрана — выбираем первую
+        if (cats?.length && !activeCatId) {
+          setActiveCatId(String(cats[0].id));
+        }
+
         if (mode === "edit") {
+          // ---- EDIT MODE: заполняем поля из выбранной записи ----
           const row = rows.find((r) => r.id === rowId);
           if (row) {
             setProfessionId(row.professionId || "");
+
+            // активируем категорию, содержащую текущую профессию
+            const hostCat = cats.find((c) =>
+              c.professions?.some((p) => p.id === row.professionId)
+            );
+            if (hostCat) setActiveCatId(hostCat.id);
+
             setMinPrice(String(row.minPrice ?? ""));
             setMaxPrice(String(row.maxPrice ?? ""));
             setHasTeam(Boolean(row.hasTeam));
             setTeamMemberCount(String(row.teamMemberCount ?? "1"));
             setReadyForHugeProject(Boolean(row.readyForHugeProject));
+
             const comp = (row as any)?.competitions;
             setCompetitions(comp === "YES" || comp === "NO" ? comp : "NO");
+
             setInventory(((row as any)?.inventory as string) ?? "");
+
             setSchedule(
               (row as any)?.schedule &&
                 typeof (row as any).schedule === "object"
-                ? (row as any).schedule
+                ? ((row as any).schedule as WeekSchedule)
                 : defaultSchedule
             );
 
+            // опыт
             const exp = Array.isArray(row.experience) ? row.experience : [];
             if (exp.length) {
               setExpList(
@@ -240,7 +239,10 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
               );
             }
 
+            // формат работы
             setJobType((row.jobType as JobType) || "SOLO");
+
+            // зоны
             const locs = (row.locations || []) as any[];
             if (Array.isArray(locs) && locs.length) {
               setLocations(
@@ -251,7 +253,8 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                 }))
               );
             }
-            // демо в этой странице как плоский список
+
+            // демо (если приходит в row.demos — оставляю как у тебя)
             const rawList: RawDemo[] = ((row as any)?.demos || []) as RawDemo[];
             setDemos(
               rawList.map((raw) => ({
@@ -266,16 +269,25 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
             );
           }
         } else {
-          // create — подставить первую доступную профессию
-          const firstAvail = opts.find(
-            (p) => !rows.some((r) => r.professionId === p.id)
-          );
+          // ---- CREATE MODE: подставим первую доступную профессию, которой ещё нет у пользователя ----
+          const firstAvail = (cats || [])
+            .flatMap((c) => c.professions || [])
+            .find((p) => !rows.some((r) => r.professionId === p.id));
+
           setProfessionId(firstAvail?.id || "");
+
+          if (!activeCatId && firstAvail) {
+            const cat = cats.find((c) =>
+              c.professions?.some((p) => p.id === firstAvail.id)
+            );
+            if (cat) setActiveCatId(cat.id);
+          }
         }
       } finally {
         setProfLoading(false);
       }
     })();
+
     return () => ac.abort();
   }, [mode, rowId]);
 
@@ -432,23 +444,27 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
     const input = e.currentTarget;
     const f = input.files?.[0];
     if (!f) return;
-  
+
     // Лимит: 30 MB (десятичные мегабайты)
     const MAX_MB = 30;
     const MAX_BYTES = MAX_MB * 1_000_000; // 30,000,000
-  
+
     // Для понятного лога/сообщения
     const sizeMB = f.size / 1_000_000; // десятичные MB
-  
+
     if (f.size > MAX_BYTES) {
-      setDemoUploadErr(`Файл превышает ${MAX_MB} МБ (ваш: ${sizeMB.toFixed(2)} МБ)`);
+      setDemoUploadErr(
+        `Файл превышает ${MAX_MB} МБ (ваш: ${sizeMB.toFixed(2)} МБ)`
+      );
       input.value = ""; // сброс выбора
       return;
     }
-  
+
     // Проверка режима редактирования
     if (mode !== "edit" || !rowId) {
-      setDemoUploadErr("Сначала сохраните (или перейдите в режим редактирования)");
+      setDemoUploadErr(
+        "Сначала сохраните (или перейдите в режим редактирования)"
+      );
       input.value = "";
       return;
     }
@@ -489,6 +505,76 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
 
   const canUploadDemo = mode === "edit" && Boolean(rowId);
 
+  const Pill = (
+    props: React.ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }
+  ) => {
+    const { active, style, onClick, ...rest } = props;
+    return (
+      <button
+        type="button" // 🔴 важно
+        role="tab"
+        {...rest}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick?.(e);
+        }}
+        style={{
+          padding: "8px 14px",
+          borderRadius: "8px",
+          border: `1px solid ${active ? "#2C64FF" : "#f1f4f9"}`,
+          background: active ? "#2C64FF" : "#f1f4f9",
+          color: active ? "#fff" : "#111827",
+          fontWeight: 500,
+          transition: "all .15s",
+          cursor: "pointer",
+          userSelect: "none",
+          ...style,
+        }}
+      />
+    );
+  };
+
+  // TILE (профессия)
+  const Tile = (
+    props: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+      active?: boolean;
+      disabled?: boolean;
+    }
+  ) => {
+    const { active, disabled, style, onClick, ...rest } = props;
+    return (
+      <button
+        type="button" // 🔴 важно
+        {...rest}
+        disabled={disabled}
+        onClick={(e) => {
+          if (disabled) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onClick?.(e);
+        }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          width: "100%",
+          textAlign: "left",
+          padding: "10px 12px",
+          borderRadius: 12,
+          border: `1px solid ${active ? "#f1f4f9" : "#fff"}`,
+          background: active ? "#f1f4f9" : "#fff",
+          color: disabled ? "#9CA3AF" : "#111827",
+          opacity: disabled ? 0.6 : 1,
+          transition: "all .15s",
+          cursor: disabled ? "not-allowed" : "pointer",
+          userSelect: "none",
+          ...style,
+        }}
+      />
+    );
+  };
+
   return (
     <Page>
       <Header>
@@ -520,24 +606,91 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
           <FormGrid columns={1}>
             <Field>
               <Label>{t("worker.selectProfession")}</Label>
-              <SelectBox>
-                <CustomSelect
-                  id="worker-profession"
-                  options={profOptions}
-                  value={professionId || null}
-                  onChange={(value) => setProfessionId(String(value ?? ""))}
-                  placeholder={t("worker.selectPlaceholder")}
-                  disabled={profLoading || mode === "edit"}
-                  loading={profLoading}
-                  width="100%"
-                  menuMaxHeight={300}
-                />
-              </SelectBox>
+
+              {/* Табы категорий */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginTop: 8,
+                }}
+              >
+                {categories.map((cat) => (
+                  <Pill
+                    key={String(cat.id)}
+                    active={String(activeCatId) === String(cat.id)}
+                    onClick={() => setActiveCatId(String(cat.id))}
+                  >
+                    {catLabel(cat)}
+                  </Pill>
+                ))}
+              </div>
+
+              {/* Сетка профессий активной категории */}
+              <div
+                style={{
+                  display: "grid",
+                  gap: 8,
+                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                  marginTop: 14,
+                }}
+              >
+                {(
+                  categories.find((c) => String(c.id) === String(activeCatId))
+                    ?.professions || []
+                ).map((p) => {
+                  const disabled =
+                    mode === "create" ? createdIds.has(p.id) : false;
+                  const active = String(professionId) === String(p.id);
+                  return (
+                    <Tile
+                      key={String(p.id)}
+                      active={active}
+                      disabled={disabled || profLoading || mode === "edit"}
+                      onClick={() => {
+                        if (!disabled && mode !== "edit")
+                          setProfessionId(String(p.id));
+                      }}
+                      title={
+                        disabled && mode === "create"
+                          ? t("worker.createdDisabledHint")
+                          : undefined
+                      }
+                    >
+                      {/* Иконка слева — можно поставить заглушку/эмодзи или SVG */}
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 13,
+                          background: "#2c64ff",
+                        }}
+                      >
+                        <HardHat color="#fff" size={20} strokeWidth={1.5} />
+                        {/* placeholder icon */}
+                      </div>
+                      <div style={{ lineHeight: 1.25 }}>
+                        <div style={{ fontWeight: 400, color: "#475569" }}>
+                          {profLabel(p)}
+                        </div>
+                        {/* при желании — подсказки/описание */}
+                      </div>
+                    </Tile>
+                  );
+                })}
+              </div>
+
               {mode === "create" && (
-                <Help>{t("worker.createdDisabledHint")}</Help>
+                <Help style={{ marginTop: 8 }}>
+                  {t("worker.createdDisabledHint")}
+                </Help>
               )}
             </Field>
-
             {Array.isArray(workerProfs) &&
               mode === "edit" &&
               rowId &&

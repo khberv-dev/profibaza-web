@@ -247,17 +247,27 @@ export const WorkerProfile: React.FC = () => {
     (async () => {
       try {
         setProfLoading(true);
-        const [opts, rows] = await Promise.all([
-          getProfessions(ac.signal),
+        const [cats, rows] = await Promise.all([
+          getProfessions(ac.signal), // -> ProfessionCategory[]
           getWorkerProfessions(ac.signal).catch(
             () => [] as WorkerProfessionRow[]
           ),
         ]);
-        setProfessions(opts);
+
+        // 🔧 расплющиваем категории в список Profession[]
+        const flat: Profession[] = cats.flatMap((c) =>
+          (c.professions || []).map((p) => ({
+            ...p,
+            // на всякий случай проставим categoryId из категории, если в элементе его нет
+            categoryId: p.categoryId ?? c.id,
+          }))
+        );
+
+        setProfessions(flat); // ✅ теперь тип совпадает
         setWorkerProfs(rows);
         setCreatedIds(new Set(rows.map((r) => r.professionId)));
 
-        // <-- НОВОЕ: собираем карту демо из уже полученных rows
+        // карта демо
         setDemosByRowId(buildDemoMap(rows));
       } finally {
         setProfLoading(false);
@@ -681,32 +691,60 @@ export const WorkerProfile: React.FC = () => {
                               </Meta>
                             </div>
                           </div>
-                      
 
                           <div style={{ display: "flex", gap: 8 }}>
-                          <a href={`/app/worker/profile/${row.id}/edit`}>
-                            <EditBtn type="button">
-                              {/* <img
+                            <a href={`/app/worker/profile/${row.id}/edit`}>
+                              <EditBtn type="button">
+                                {/* <img
                               src="/pen.svg"
                               style={{
                                 width: 18,
                               }}
                             /> */}
-                              {t("worker.edit")}
+                                {t("worker.edit")}
+                              </EditBtn>
+                            </a>
+
+                            <EditBtn
+                              type="button"
+                              title={
+                                t("worker.downloadResume") || "Скачать резюме"
+                              }
+                              onClick={() =>
+                                downloadWorkerResume(
+                                  row.id,
+                                  `${label}-resume.pdf`
+                                )
+                              }
+                            >
+                              {/* простая иконка загрузки */}
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                focusable="false"
+                                aria-hidden="true"
+                                role="img"
+                                className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-primary___KhLAU_12-3-5"
+                              >
+                                <g>
+                                  <g>
+                                    <path
+                                      d="M4.1715 6.32824L7.99981 10.1566L11.8281 6.32831L10.8382 5.33837L8.69982 7.47672L8.69982 0.500001L7.29982 0.5L7.29982 7.4767L5.16146 5.3383L4.1715 6.32824Z"
+                                      fill="currentColor"
+                                    ></path>
+                                    <path
+                                      d="M8 15.5C1.4375 15.5 0.5 14.5625 0.5 8H1.9C1.9 9.6299 1.96022 10.8076 2.12482 11.6812C2.28685 12.5412 2.52558 12.9676 2.77901 13.221C3.03245 13.4744 3.45877 13.7132 4.31878 13.8752C5.19242 14.0398 6.3701 14.1 8 14.1C9.6299 14.1 10.8076 14.0398 11.6812 13.8752C12.5412 13.7132 12.9676 13.4744 13.221 13.221C13.4744 12.9676 13.7132 12.5412 13.8752 11.6812C14.0398 10.8076 14.1 9.6299 14.1 8H15.5C15.5 14.5625 14.5625 15.5 8 15.5Z"
+                                      fill="currentColor"
+                                    ></path>
+                                  </g>
+                                </g>
+                              </svg>
+                              {t("worker.downloadResume") || "Скачать резюме"}
                             </EditBtn>
-                          </a>
-
-    <EditBtn
-      type="button"
-      title={t("worker.downloadResume") || "Скачать резюме"}
-      onClick={() => downloadWorkerResume(row.id, `${label}-resume.pdf`)}
-    >
-      {/* простая иконка загрузки */}
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true" role="img" className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-primary___KhLAU_12-3-5"><g><g><path d="M4.1715 6.32824L7.99981 10.1566L11.8281 6.32831L10.8382 5.33837L8.69982 7.47672L8.69982 0.500001L7.29982 0.5L7.29982 7.4767L5.16146 5.3383L4.1715 6.32824Z" fill="currentColor"></path><path d="M8 15.5C1.4375 15.5 0.5 14.5625 0.5 8H1.9C1.9 9.6299 1.96022 10.8076 2.12482 11.6812C2.28685 12.5412 2.52558 12.9676 2.77901 13.221C3.03245 13.4744 3.45877 13.7132 4.31878 13.8752C5.19242 14.0398 6.3701 14.1 8 14.1C9.6299 14.1 10.8076 14.0398 11.6812 13.8752C12.5412 13.7132 12.9676 13.4744 13.221 13.221C13.4744 12.9676 13.7132 12.5412 13.8752 11.6812C14.0398 10.8076 14.1 9.6299 14.1 8H15.5C15.5 14.5625 14.5625 15.5 8 15.5Z" fill="currentColor"></path></g></g></svg>
-      {t("worker.downloadResume") || "Скачать резюме"}
-    </EditBtn>
-  </div>
-
+                          </div>
                         </HeadRow>
 
                         <div>
