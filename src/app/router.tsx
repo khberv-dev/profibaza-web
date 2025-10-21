@@ -40,7 +40,6 @@ import { AdminLayout } from "../layouts/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 import AdminInvoicesPage from "../features/admin/AdminInvoicesPage";
 
-
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
@@ -75,7 +74,7 @@ export const router = createBrowserRouter([
                 element: <RoleGuard allow={["LEGAL"]} />,
                 children: [
                   { path: "company/profile", element: <CompanyProfilePage /> },
-                  { path: "client/create-order", element: <CreateOrderPage /> },
+
                   { path: "legal/orders", element: <LegalOrdersPage /> },
                   { path: "legal/vacancy", element: <VacancyEditorPage /> },
                   { path: "legal/offers", element: <LegalOffersPage /> },
@@ -86,8 +85,13 @@ export const router = createBrowserRouter([
               {
                 element: <RoleGuard allow={["CLIENT"]} />,
                 children: [
-                  { path: "client/create-order", element: <CreateOrderPage /> },
                   { path: "client/orders", element: <ClientOrdersPage /> },
+                ],
+              },
+              {
+                element: <RoleGuard allow={["CLIENT", "LEGAL"]} />,
+                children: [
+                  { path: "client/create-order", element: <CreateOrderPage /> },
                 ],
               },
 
@@ -120,7 +124,6 @@ export const router = createBrowserRouter([
               },
             ],
           },
-
         ],
       },
     ],
@@ -136,7 +139,6 @@ export const router = createBrowserRouter([
             path: "/admin",
             element: <AdminLayout />,
             children: [
-
               // LEGAL
               {
                 element: <RoleGuard allow={["ADMIN"]} />,
@@ -145,11 +147,8 @@ export const router = createBrowserRouter([
                   { path: "invoices", element: <AdminInvoicesPage /> },
                 ],
               },
-
             ],
           },
-
-
         ],
       },
     ],

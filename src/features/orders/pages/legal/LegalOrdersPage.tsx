@@ -64,8 +64,6 @@ const statusView: Record<
   CANCELLED: { text: "Отменено", tone: "red" },
 };
 
-
-
 /* ================ Page ================ */
 export default function LegalOrdersPage() {
   const {
@@ -179,7 +177,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     },
   });
 
-  const canRate = order.status === "PROGRESS";
+  const canRate = order.status === "PROGRESS" || "DONE";
 
   const price = order.workerProfession
     ? `${fmtMoney(order.workerProfession.minPrice)} — ${fmtMoney(
@@ -259,86 +257,83 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
         {canRate && (
           <CommentBlock>
-
-
             {open && (
-<div>
+              <div>
+                <CommentsThread comments={order.comments ?? []} />
 
-<CommentsThread
-                          comments={order.comments ?? []}
-                        />
-                        
-              <CommentForm>
-                {/* Рейтинг */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      color:
-                        rate >= 4
-                          ? "#10b981"
-                          : rate === 3
-                          ? "#f59e0b"
-                          : rate >= 1
-                          ? "#ef4444"
-                          : "#9aa5b2",
-                    }}
+                <CommentForm>
+                  {/* Рейтинг */}
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
                   >
-                    <RatingIcon rating={rate} />
-                    {rate > 0 && <b style={{ fontSize: 12 }}>{rate}/5</b>}
-                  </span>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        color:
+                          rate >= 4
+                            ? "#10b981"
+                            : rate === 3
+                            ? "#f59e0b"
+                            : rate >= 1
+                            ? "#ef4444"
+                            : "#9aa5b2",
+                      }}
+                    >
+                      <RatingIcon rating={rate} />
+                      {rate > 0 && <b style={{ fontSize: 12 }}>{rate}/5</b>}
+                    </span>
 
-                  <StarsRow aria-label="Оценка">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <StarBtn
-                        key={n}
-                        type="button"
-                        data-active={n <= rate}
-                        onClick={() => setRate(n)}
-                        aria-label={`${n} из 5`}
-                        title={`${n} из 5`}
-                      >
-                        <Star
-                          style={{
-                            fill: n <= rate ? "currentColor" : "transparent",
-                          }}
-                        />
-                      </StarBtn>
-                    ))}
-                  </StarsRow>
-                </div>
+                    <StarsRow aria-label="Оценка">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <StarBtn
+                          key={n}
+                          type="button"
+                          data-active={n <= rate}
+                          onClick={() => setRate(n)}
+                          aria-label={`${n} из 5`}
+                          title={`${n} из 5`}
+                        >
+                          <Star
+                            style={{
+                              fill: n <= rate ? "currentColor" : "transparent",
+                            }}
+                          />
+                        </StarBtn>
+                      ))}
+                    </StarsRow>
+                  </div>
 
-                {/* Комментарий */}
-                <textarea
-                  placeholder="Zo'r ish, malades…"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  maxLength={400}
-                />
+                  {/* Комментарий */}
+                  <textarea
+                    placeholder="Zo'r ish, malades…"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    maxLength={400}
+                  />
 
-                <div className="actions">
-                  <button
-                    className="save"
-                    disabled={isPending || rate < 1}
-                    onClick={() => sendComment({ rate, comment })}
-                  >
-                    {isPending ? "Отправляем…" : "Отправить"}
-                  </button>
-                  <button
-                    className="cancel"
-                    onClick={() => {
-                      setOpen(false);
-                      setRate(0);
-                      setComment("");
-                    }}
-                  >
-                    Отменить
-                  </button>
-                </div>
-              </CommentForm>
-</div>
+                  <div className="actions">
+                    <button
+                      className="save"
+                      disabled={isPending || rate < 1}
+                      onClick={() => sendComment({ rate, comment })}
+                    >
+                      {isPending ? "Отправляем…" : "Отправить"}
+                    </button>
+                    <button
+                      className="cancel"
+                      onClick={() => {
+                        setOpen(false);
+                        setRate(0);
+                        setComment("");
+                      }}
+                    >
+                      Отменить
+                    </button>
+                  </div>
+                </CommentForm>
+              </div>
             )}
           </CommentBlock>
         )}

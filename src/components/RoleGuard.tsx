@@ -4,5 +4,9 @@ import { useAuthStore } from "../shared/stores/auth";
 
 export function RoleGuard({ allow }: { allow: UserRole[] }) {
   const role = useAuthStore((s) => s.role);
-  return role && allow.includes(role) ? <Outlet /> : <Navigate to="/" replace />;
+  return role && allow.includes(role) ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/" replace />
+  );
 }
