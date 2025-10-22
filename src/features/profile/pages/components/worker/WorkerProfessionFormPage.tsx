@@ -82,6 +82,7 @@ const demoTypeFromFileId = (fileId: string): "image" | "video" => {
   const ext = (fileId.split(".").pop() || "").toLowerCase();
   return ["mp4", "mov", "webm", "m4v"].includes(ext) ? "video" : "image";
 };
+
 const demoUrlFromFileId = (fileId: string) =>
   `https://pointer.uz/public/demo/${fileId}`;
 

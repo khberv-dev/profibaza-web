@@ -199,7 +199,6 @@ export default function NewWorkerOrdersPage() {
     closeFinishModal();
   };
 
-  const [refresh, setRefresh] = useState(false);
   const { data = [], isLoading } = useQuery({
     queryKey: ["worker", "orders", active],
     queryFn: ({ signal }) => getWorkerOrders({ status: active }, signal),
@@ -392,9 +391,6 @@ export default function NewWorkerOrdersPage() {
   const changeText = (id: string, text: string) =>
     setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), text } }));
 
-  const setRating = (id: string, rating: number) =>
-    setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), rating } }));
-
   const setReplyTarget = (id: string, t: UI["replyTarget"]) =>
     setCommentUI((s) => ({
       ...s,
@@ -430,13 +426,6 @@ export default function NewWorkerOrdersPage() {
     }));
   };
 
-  const RatingIcon = ({ rating }: { rating: number }) => {
-    if (rating >= 4) return <Smile size={16} />;
-    if (rating === 3) return <Meh size={16} />;
-    if (rating >= 1) return <Frown size={16} />;
-    return; // без оценки
-  };
-
   const selectedOrder: WorkerNewOrder | undefined = finishTargetId
     ? data?.find((o) => o.id === finishTargetId)
     : undefined;
@@ -450,19 +439,8 @@ export default function NewWorkerOrdersPage() {
 
 
       const filesCount = selectedOrder?.files?.length ?? 0;
-const canFinish = !!selectedOrder && filesCount >= 3;
+      const canFinish = !!selectedOrder && filesCount >= 3;
 
-
-const refetchActiveAndAll = async (
-  qc: ReturnType<typeof useQueryClient>,
-  activeKey: (typeof TABS)[number]["key"]
-) => {
-  await qc.invalidateQueries({ queryKey: ["worker", "orders", activeKey] });
-  await qc.refetchQueries({ queryKey: ["worker", "orders", activeKey] });
-
-  await qc.invalidateQueries({ queryKey: ["worker", "orders", "ALL"] });
-  await qc.refetchQueries({ queryKey: ["worker", "orders", "ALL"] });
-};
 
 
   return (

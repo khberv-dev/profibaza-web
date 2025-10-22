@@ -371,7 +371,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     ) : (
       <FilesGrid>
         {order.files.map((fid) => {
-          const url = `https://pointer.uz/public/demo/${fid}`;
+          const url = `https://pointer.uz/public/order/${fid}`;
           const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
 
           return (
