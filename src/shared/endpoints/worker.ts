@@ -29,6 +29,7 @@ export type WorkerNewOrder = {
   workerProfessionId: string;
   createdAt: string;
   updatedAt: string;
+  files: [] | null;
 
   client: {
     address1: string | null;

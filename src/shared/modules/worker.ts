@@ -46,6 +46,44 @@ export async function getProfessions(
   return data?.data ?? [];
 }
 
+
+export type UploadOrderMaterialResponse = {
+  ok?: boolean;
+  data?: {
+    id: string;
+    fileId: string;
+    type: "image" | "video";
+    createdAt: string;
+  };
+  message?: unknown;
+};
+
+/** Загрузка одного файла-доказательства на заказ */
+export async function uploadOrderMaterial(
+  orderId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+  signal?: AbortSignal
+): Promise<UploadOrderMaterialResponse> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const { data } = await api.post<UploadOrderMaterialResponse>(
+    `/worker/upload-order-material/${encodeURIComponent(orderId)}`,
+    form,
+    {
+      signal,
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (ev) => {
+        if (!onProgress || !ev.total) return;
+        onProgress(Math.round((ev.loaded / ev.total) * 100));
+      },
+    }
+  );
+
+  return data;
+}
+
 // ============= Worker Profession =============
 export type WorkerProfessionPayload = {
   professionId: string;

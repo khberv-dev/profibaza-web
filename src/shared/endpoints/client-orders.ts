@@ -23,6 +23,7 @@ export type ClientOrder = {
   workerProfessionId: string;
   createdAt: string;
   comments?: ClientOrderComment[];
+  files?: [] | null, 
   updatedAt: string;
   workerProfession?: {
     id: string;

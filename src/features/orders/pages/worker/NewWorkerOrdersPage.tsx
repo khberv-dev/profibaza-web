@@ -56,6 +56,7 @@ import { CommentsThread } from "../client/CommentsThread";
 import ReplyBar from "./ReplyBar";
 import { finishWorkerOrder } from "../../../../shared/modules/worker";
 import { Modal } from "../../../../components/modal/Modal";
+import OrderEvidenceUploader from "./OrderEvidenceUploader";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
@@ -121,9 +122,11 @@ export default function NewWorkerOrdersPage() {
   const [finishModalOpen, setFinishModalOpen] = useState(false);
   const [finishTargetId, setFinishTargetId] = useState<string | null>(null);
 
-  const openFinishModal = (orderId: string) => {
+  const openFinishModal = async (orderId: string) => {
     setFinishTargetId(orderId);
     setFinishModalOpen(true);
+    // гарантированно обновим список перед показом
+    await queryClient.refetchQueries({ queryKey: ["worker", "orders"], exact: false });
   };
   const closeFinishModal = () => {
     setFinishModalOpen(false);
@@ -203,30 +206,65 @@ export default function NewWorkerOrdersPage() {
     staleTime: 60_000,
   });
 
-  /** Хелперы оптимистичных апдейтов для всех табов */
-  const moveOrderBetweenTabs = (
-    orderId: string,
-    nextStatus: WorkerNewOrder["status"],
-    mutate: (list: WorkerNewOrder[]) => WorkerNewOrder[]
-  ) => {
-    // Пройдём по всем табам и аккуратно обновим кэш
-    const keys = TABS.map((t) => ["worker", "orders", t.key] as const);
-    keys.forEach((key) => {
-      const prev = queryClient.getQueryData<WorkerNewOrder[]>(key);
-      if (!prev) return;
-      const isSourceTab =
-        key[2] === "ALL" || key[2] === undefined
-          ? true
-          : key[2] === "NEW" ||
-            key[2] === "PROGRESS" ||
-            key[2] === "DONE" ||
-            key[2] === "REJECTED";
 
-      // Для таба, где элемент сейчас мог быть — меняем/удаляем
-      const updated = mutate(prev);
-      queryClient.setQueryData<WorkerNewOrder[]>(key, updated);
+  const buildOrderFileUrl = (fileId: string): string =>
+    `https://pointer.uz/public/order/${encodeURIComponent(fileId)}`;
+  
+  const isVideoName = (name: string) =>
+    /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(name);
+
+
+  const addFileOptimistic = (orderId: string, fileId: string) => {
+    // обновим все кэши, где может быть этот ордер
+    TABS.forEach((t) => {
+      const key = ["worker", "orders", t.key] as const;
+      const list = queryClient.getQueryData<WorkerNewOrder[]>(key);
+      if (!list) return;
+      const next = list.map((o) =>
+        o.id === orderId
+          ? { ...o, files: Array.isArray(o.files) ? [...o.files, fileId] : [fileId] }
+          : o
+      );
+      queryClient.setQueryData(key, next);
     });
   };
+
+  const setOrderFilesOptimistic = (
+    qc: ReturnType<typeof useQueryClient>,
+    orderId: string,
+    fileId: string
+  ) => {
+    TABS.forEach((t) => {
+      const key = ["worker", "orders", t.key] as const;
+      qc.setQueryData<WorkerNewOrder[] | undefined>(key, (prev:any) =>
+        prev?.map((o:any) =>
+          o.id === orderId
+            ? { ...o, files: Array.isArray(o.files) ? [...o.files, fileId] : [fileId] }
+            : o
+        )
+      );
+    });
+  };
+
+
+  const handleEvidenceUploaded = async (fileId?: string) => {
+    if (finishTargetId && fileId) {
+      setOrderFilesOptimistic(queryClient, finishTargetId, fileId);
+    }
+  
+    // инвалидируем ВСЕ ключи "worker/orders" и сразу рефетчим активные
+    await queryClient.invalidateQueries({
+      queryKey: ["worker", "orders"],
+      exact: false,
+      refetchType: "active",
+    });
+    await queryClient.refetchQueries({
+      queryKey: ["worker", "orders"],
+      exact: false,
+      type: "active",
+    });
+  };
+
 
   const removeFromSpecificTabAndAddToTarget = (
     orderId: string,
@@ -246,6 +284,7 @@ export default function NewWorkerOrdersPage() {
       );
     });
 
+   
     // Удалим из источников и добавим в целевые
     TABS.forEach((t) => {
       const key = ["worker", "orders", t.key] as const;
@@ -408,6 +447,23 @@ export default function NewWorkerOrdersPage() {
     [selectedOrder.address1, selectedOrder.address2, selectedOrder.address3]
       .filter(Boolean)
       .join(", ");
+
+
+      const filesCount = selectedOrder?.files?.length ?? 0;
+const canFinish = !!selectedOrder && filesCount >= 3;
+
+
+const refetchActiveAndAll = async (
+  qc: ReturnType<typeof useQueryClient>,
+  activeKey: (typeof TABS)[number]["key"]
+) => {
+  await qc.invalidateQueries({ queryKey: ["worker", "orders", activeKey] });
+  await qc.refetchQueries({ queryKey: ["worker", "orders", activeKey] });
+
+  await qc.invalidateQueries({ queryKey: ["worker", "orders", "ALL"] });
+  await qc.refetchQueries({ queryKey: ["worker", "orders", "ALL"] });
+};
+
 
   return (
     <WOPage>
@@ -667,171 +723,254 @@ export default function NewWorkerOrdersPage() {
         </WOList>
       )}
 
-      <Modal
-        open={finishModalOpen}
-        onClose={closeFinishModal}
-        title="Завершить заказ?"
-        width={520}
-        ariaLabel="Подтверждение завершения заказа"
-        /* --- ТЕЛО МОДАЛКИ: сводка заказа --- */
-        /* Если ваш Modal поддерживает children — поместите этот блок внутрь
-     между <Modal>...</Modal>. Если нет, а поддерживает проп `content`,
-     передайте этот блок через него. Ваша реализация принимает children,
-     судя по импорту — используем children. */
-      >
-        {/* --- Сводка заказа --- */}
-        <div style={{ display: "grid", gap: 12 }}>
-          {!selectedOrder ? (
-            <div style={{ color: "#9ca3af" }}>Заказ не найден.</div>
-          ) : (
-            <>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  justifyContent: "space-between",
-                }}
-              >
-                <div style={{ display: "grid", gap: 2 }}>
-                  <div style={{ fontWeight: 600, fontSize: 16 }}>
-                    {fio(selectedOrder.client?.user)}
-                  </div>
-                  <div style={{ color: "#6b7280", fontSize: 13 }}>
-                    {formatPhone(selectedOrder.client?.user?.phone)}
-                  </div>
-                </div>
-
-                {/* Чип статуса как в карточке */}
-                <WOStatus $tone={statusTone(selectedOrder.status)}>
-                  {statusLabel(selectedOrder.status)}
-                </WOStatus>
-              </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gap: 10,
-                  padding: 12,
-                  borderRadius: 12,
-                  background: "#f1f4f9",
-                }}
-              >
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <CalendarDays size={16} />
-                  <div>
-                    <div style={{ fontSize: 12, color: "#6b7280" }}>Срок</div>
-                    <div style={{ fontWeight: 600 }}>
-                      {dayjs(selectedOrder.deadline).format("DD.MM.YYYY")}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <Wallet size={16} />
-                  <div>
-                    <div style={{ fontSize: 12, color: "#6b7280" }}>Бюджет</div>
-                    <div style={{ fontWeight: 600 }}>
-                      {fmtMoney(selectedOrder.budget)}
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <MapPin size={16} />
-                  <div>
-                    <div style={{ fontSize: 12, color: "#6b7280" }}>Адрес</div>
-                    <div style={{ fontWeight: 600 }}>{selectedAddr || "—"}</div>
-                  </div>
-                </div>
-              </div>
-
-              {selectedOrder.description && (
-                <div
-                  style={{
-                    padding: 12,
-                    border: "1px dashed #e5e7eb",
-                    borderRadius: 12,
-                    background: "#fff",
-                  }}
-                >
-                  <div
-                    style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}
-                  >
-                    Описание
-                  </div>
-                  <div style={{ whiteSpace: "pre-wrap" }}>
-                    {selectedOrder.description}
-                  </div>
-                </div>
-              )}
-
-              {/* Опционально: быстрый просмотр кол-ва комментариев */}
-              {Array.isArray(selectedOrder.comments) &&
-                selectedOrder.comments.length > 0 && (
-                  <div style={{ fontSize: 12, color: "#6b7280" }}>
-                    Комментариев:{" "}
-                    <span style={{ fontWeight: 600 }}>
-                      {selectedOrder.comments.length}
-                    </span>
-                  </div>
-                )}
-
-              {/* Подсказка перед подтверждением */}
-              <div
-                style={{
-                  background: "#fff7ed",
-                  border: "1px solid #fed7aa",
-                  color: "#9a3412",
-                  padding: 10,
-                  borderRadius: 10,
-                  fontSize: 13,
-                }}
-              >
-                Проверьте данные заказа, прежде чем подтверждать завершение.
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* --- Футер --- */}
+<Modal
+  open={finishModalOpen}
+  onClose={closeFinishModal}
+  title="Завершить заказ?"
+  width={520}
+  ariaLabel="Подтверждение завершения заказа"
+>
+  <div style={{ display: "grid", gap: 12 }}>
+    {!selectedOrder ? (
+      <div style={{ color: "#9ca3af" }}>Заказ не найден.</div>
+    ) : (
+      <>
+        {/* — верх: ФИО + статус — */}
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-end",
-            gap: 8,
-            marginTop: 16,
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "space-between",
           }}
         >
-          <button
-            type="button"
-            onClick={closeFinishModal}
+          <div style={{ display: "grid", gap: 2 }}>
+            <div style={{ fontWeight: 600, fontSize: 16 }}>
+              {fio(selectedOrder.client?.user)}
+            </div>
+            <div style={{ color: "#6b7280", fontSize: 13 }}>
+              {formatPhone(selectedOrder.client?.user?.phone)}
+            </div>
+          </div>
+          <WOStatus $tone={statusTone(selectedOrder.status)}>
+            {statusLabel(selectedOrder.status)}
+          </WOStatus>
+        </div>
+
+   {/* — мета: срок/бюджет/адрес (compact) — */}
+<div
+  style={{
+    display: "grid",
+    gap: 6,              // было 10
+    padding: 8,          // было 12
+    borderRadius: 10,    // было 12
+    background: "#f1f4f9",
+  }}
+>
+  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <CalendarDays size={14} /> {/* было 16 */}
+    <div>
+      <div style={{ fontSize: 11, color: "#6b7280" }}>Срок</div>   {/* было 12 */}
+      <div style={{ fontWeight: 600, fontSize: 12 }}>
+        {dayjs(selectedOrder.deadline).format("DD.MM.YYYY")}
+      </div>
+    </div>
+  </div>
+
+  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <Wallet size={14} />
+    <div>
+      <div style={{ fontSize: 11, color: "#6b7280" }}>Бюджет</div>
+      <div style={{ fontWeight: 600, fontSize: 12 }}>
+        {fmtMoney(selectedOrder.budget)}
+      </div>
+    </div>
+  </div>
+
+  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+    <MapPin size={14} />
+    <div>
+      <div style={{ fontSize: 11, color: "#6b7280" }}>Адрес</div>
+      <div style={{ fontWeight: 600, fontSize: 12 }}>
+        {selectedAddr || "—"}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+        {/* — описание — */}
+        {selectedOrder.description && (
+          <div
             style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid #e5e7eb",
+              padding: 12,
+              border: "1px dashed #e5e7eb",
+              borderRadius: 12,
               background: "#fff",
             }}
           >
-            Отмена
-          </button>
-          <button
-            type="button"
-            onClick={confirmFinish}
-            disabled={isFinishing || !finishTargetId || !selectedOrder}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              background: "#2f6bff",
-              color: "#fff",
-              border: "1px solid #2f6bff",
-            }}
-            title={selectedOrder ? "Подтвердить завершение" : "Заказ не найден"}
-          >
-            {isFinishing ? "Завершаем…" : "Да, завершить"}
-          </button>
+            <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>
+              Описание
+            </div>
+            <div style={{ whiteSpace: "pre-wrap" }}>
+              {selectedOrder.description}
+            </div>
+          </div>
+        )}
+
+        {/* ============ НОВОЕ: ЗАГРУЗКА ДОКАЗАТЕЛЬСТВ ============ */}
+        <div
+          style={{
+            display: "grid",
+            gap: 8,
+            padding: 12,
+            borderRadius: 12,
+          }}
+        >
+      
+          {/* Подаём orderId из выбранного заказа */}
+          <OrderEvidenceUploader
+  orderId={selectedOrder.id}
+  onUploaded={handleEvidenceUploaded}
+/>
         </div>
-      </Modal>
+        {/* ======================================================== */}
+
+        {/* опциональный счётчик комментариев */}
+{/* Прикреплённые материалы */}
+<div
+  style={{
+    display: "grid",
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    background: "#fff",
+    border: "1px solid #e5e7eb",
+    overflow: 'hidden',
+    height: 180
+  }}
+>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ fontSize: 12, color: "#6b7280" }}>Прикреплённые материалы</div>
+    <div style={{ fontSize: 12 }}>
+      Всего: <strong>{selectedOrder.files?.length ?? 0}</strong> / минимум: <strong>3</strong>
+    </div>
+  </div>
+
+  {!selectedOrder.files?.length ? (
+    <div style={{ color: "#9ca3af", fontSize: 13 }}>Файлы пока не загружены.</div>
+  ) : (
+    // 🔹 контейнер-скролл
+    <div style={{minHeight: 260, overflow: "auto", paddingRight: 2 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
+          gap: 8,
+        }}
+      >
+        {selectedOrder.files.map((fid) => {
+          const url = buildOrderFileUrl(fid);
+          const video = isVideoName(fid);
+          return (
+            <div
+              key={fid}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                overflow: "hidden",
+                background: "#f9fafb",
+              }}
+            >
+              {video ? (
+                <video
+                  src={url}
+                  controls
+                  style={{ width: "100%", height: 96, objectFit: "cover", display: "block" }}
+                />
+              ) : (
+                <img
+                  src={url}
+                  alt={fid}
+                  style={{ width: "100%", height: 96, objectFit: "cover", display: "block" }}
+                  loading="lazy"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+
+  {(selectedOrder.files?.length ?? 0) < 3 && (
+    <div
+      style={{
+        marginTop: 4,
+        background: "#fef2f2",
+        border: "1px solid #fecaca",
+        color: "#991b1b",
+        padding: 8,
+        borderRadius: 8,
+        fontSize: 12,
+      }}
+    >
+      Для подтверждения завершения загрузите минимум 3 файла.
+    </div>
+  )}
+</div>
+
+
+    
+      </>
+    )}
+  </div>
+
+  {/* футер */}
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: 8,
+      marginTop: 16,
+    }}
+  >
+    <button
+      type="button"
+      onClick={closeFinishModal}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "1px solid #e5e7eb",
+        background: "#fff",
+      }}
+    >
+      Отмена
+    </button>
+    <button
+  type="button"
+  onClick={confirmFinish}
+  disabled={isFinishing || !finishTargetId || !canFinish}
+  style={{
+    padding: "10px 14px",
+    borderRadius: 10,
+    background: canFinish ? "#2f6bff" : "#94a3b8",
+    color: "#fff",
+    border: `1px solid ${canFinish ? "#2f6bff" : "#94a3b8"}`,
+    cursor: canFinish ? "pointer" : "not-allowed",
+  }}
+  title={
+    !selectedOrder
+      ? "Заказ не найден"
+      : canFinish
+      ? "Подтвердить завершение"
+      : "Нужно минимум 3 файла"
+  }
+>
+  {isFinishing ? "Завершаем…" : "Да, завершить"}
+</button>
+  </div>
+</Modal>
     </WOPage>
   );
 }

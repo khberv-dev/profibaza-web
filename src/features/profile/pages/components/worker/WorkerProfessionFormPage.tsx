@@ -1190,7 +1190,7 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                 canUploadDemo
                   ? t("worker.dragFileHere")
                   : t("worker.needSaveFirst")
-              }
+                }
             >
               <div>
                 {t("worker.dragFileHere")}

@@ -157,7 +157,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
   const s = getStatusView(order.status);
   const deadline = fmtDate(order.deadline);
   const createdAgo = fmtFromNow(order.createdAt);
-
+  const [isFilesOpen, setFilesOpen] = useState(false);
   const [isRateOpen, setRateOpen] = useState(false);
   const [rate, setRate] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
@@ -246,6 +246,12 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
               Позвонить
             </Ghost>
           )}
+
+
+<Ghost type="button" onClick={() => setFilesOpen(true)} title="Посмотреть файлы">
+    <ExternalLink size={16} />
+    Файлы ({order.files?.length ?? 0})
+  </Ghost>
 
           {canRate && (
             <CommentToggle type="button" onClick={() => setOpen((v) => !v)}>
@@ -339,6 +345,64 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
         )}
       </Mid>
 
+
+      <Modal
+  open={isFilesOpen}
+  onClose={() => setFilesOpen(false)}
+  title="Прикреплённые файлы"
+  width={720}
+  maxWidth="95vw"
+  closeOnOverlay
+  ariaLabel="Файлы заявки"
+  footer={
+    <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+      <span style={{ fontSize: 12, color: "#6b7280" }}>
+        Всего: <b>{order.files?.length ?? 0}</b>
+      </span>
+      <Ghost type="button" onClick={() => setFilesOpen(false)}>Закрыть</Ghost>
+    </div>
+  }
+>
+  <FilesWrap>
+    {!order.files?.length ? (
+      <EmptyFiles>
+        Файлы отсутствуют
+      </EmptyFiles>
+    ) : (
+      <FilesGrid>
+        {order.files.map((fid) => {
+          const url = `https://pointer.uz/public/demo/${fid}`;
+          const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
+
+          return (
+            <FileCard key={fid}>
+              <a href={url} target="_blank" rel="noreferrer" title="Открыть в новой вкладке">
+                {isVideo ? (
+                  <video
+                    src={url}
+                    preload="metadata"
+                    controls
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", borderRadius: 8 }}
+                  />
+                ) : (
+                  <img
+                    src={url}
+                    alt={fid}
+                    loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", borderRadius: 8 }}
+                  />
+                )}
+              </a>
+              <FileName title={fid}>{fid}</FileName>
+            </FileCard>
+          );
+        })}
+      </FilesGrid>
+    )}
+  </FilesWrap>
+</Modal>
+
+
       <Modal
         open={isRateOpen}
         onClose={() => setRateOpen(false)}
@@ -425,6 +489,59 @@ const Wrap = styled.div`
   display: grid;
   gap: 16px;
 `;
+
+
+const FilesWrap = styled.div`
+  /* вертикальный скролл внутри модала */
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  padding-right: 4px;
+`;
+
+const FilesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+`;
+
+const FileCard = styled.div`
+  position: relative;
+  border: 1px solid #e7ecf3;
+  border-radius: 10px;
+  background: #f9fbff;
+  padding: 8px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 6px;
+  min-height: 120px;
+
+  a {
+    display: block;
+    border-radius: 8px;
+    overflow: hidden;
+    line-height: 0;
+    background: #eef2ff;
+  }
+`;
+
+const FileName = styled.div`
+  font-size: 11px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const EmptyFiles = styled.div`
+  padding: 20px 12px;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  color: #64748b;
+  background: #fafafa;
+  text-align: center;
+  font-size: 14px;
+`;
+
 
 const Toolbar = styled.div`
   display: flex;
