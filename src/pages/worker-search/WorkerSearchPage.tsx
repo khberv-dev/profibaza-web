@@ -40,7 +40,7 @@ import {
   ProfessionCategory,
 } from "../../shared/modules/worker";
 import { SearchWorker, searchWorkers } from "../../shared/endpoints/client";
-import { Heart, Share2 } from "lucide-react";
+import { Heart, Share2, SlidersHorizontal } from "lucide-react";
 import { Rate } from "antd";
 import {
   MapLocation,
@@ -53,6 +53,8 @@ import {
   Region,
   Village,
 } from "../../shared/endpoints/location";
+import { FaChevronDown, FaXmark } from "react-icons/fa6";
+import { ProfessionsModal } from "./ProfessionsModal";
 
 /* ========== helpers ========== */
 const fmtMoney = (n?: number) =>
@@ -145,6 +147,15 @@ const emptyCSS = `
 }
 `;
 
+type AppliedFilters = {
+  professions?: string; // ← опционально
+  minPrice?: number;
+  maxPrice?: number;
+  address1?: string | null;
+  address2?: string | null;
+  address3?: string | null;
+};
+
 type PriceForm = { minPrice: string; maxPrice: string };
 
 export const WorkerSearchPage: React.FC = () => {
@@ -155,7 +166,7 @@ export const WorkerSearchPage: React.FC = () => {
   /* === Геозона === */
   const DEFAULT_RADIUS = 10; // км
   const [locations, setLocations] = useState<MapLocation[]>([]);
-  const [useMyGeo, setUseMyGeo] = useState(true);
+  const [useMyGeo, setUseMyGeo] = useState(false);
   const [geoStatus, setGeoStatus] = useState<
     "idle" | "ok" | "denied" | "error"
   >("idle");
@@ -205,7 +216,7 @@ export const WorkerSearchPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const { control, getValues, setValue } = useForm<PriceForm>({
-    defaultValues: { minPrice: "0", maxPrice: "1000000000" },
+    defaultValues: { minPrice: "", maxPrice: "" },
   });
 
   /* === Справочник профессий === */
@@ -273,14 +284,7 @@ export const WorkerSearchPage: React.FC = () => {
   );
 
   /* === Применённые фильтры === */
-  const [applied, setApplied] = useState<{
-    professions: string;
-    minPrice: number;
-    maxPrice: number;
-    address1?: string | null; // область
-    address2?: string | null; // район
-    address3?: string | null; // махалля/улица (если понадобится)
-  } | null>(null);
+  const [applied, setApplied] = useState<AppliedFilters | null>(null);
 
   const regionName = useMemo(
     () =>
@@ -317,16 +321,18 @@ export const WorkerSearchPage: React.FC = () => {
         const { latitude, longitude } = pos.coords;
         setLocations([{ latitude, longitude, radius: DEFAULT_RADIUS }]);
         setGeoStatus("ok");
+
         if (professionId) {
           const { mn, mx } = parseNums();
-          setApplied({
-            professions: professionId,
-            minPrice: mn,
-            maxPrice: mx,
+          setApplied((prev) => ({
+            ...(prev ?? {}),
+            ...(professionId ? { professions: professionId } : {}),
+            ...(mn > 0 ? { minPrice: mn } : {}),
+            ...(mx > 0 ? { maxPrice: mx } : {}),
             address1: regionName,
             address2: districtName,
             address3: villageName,
-          });
+          }));
         }
       },
       (err) =>
@@ -336,21 +342,21 @@ export const WorkerSearchPage: React.FC = () => {
   }, [useMyGeo, professionId]);
 
   /* Автоинициализация: выбрать первую профессию и запустить поиск */
-  const didInit = useRef(false);
-  useEffect(() => {
-    if (didInit.current) return;
-    if (profOptions.length) {
-      const first = String(profOptions[0].value);
-      setProfessionId(first);
-      const { minPrice, maxPrice } = getValues();
-      setApplied({
-        professions: first,
-        minPrice: Number(minPrice) || 0,
-        maxPrice: Number(maxPrice) || 1_000_000_000,
-      });
-      didInit.current = true;
-    }
-  }, [profOptions, getValues]);
+  // const didInit = useRef(false);
+  // useEffect(() => {
+  //   if (didInit.current) return;
+  //   if (profOptions.length) {
+  //     const first = String(profOptions[0].value);
+  //     setProfessionId(first);
+  //     const { minPrice, maxPrice } = getValues();
+  //     setApplied({
+  //       professions: first,
+  //       minPrice: Number(minPrice) || 0,
+  //       maxPrice: Number(maxPrice) || 1_000_000_000,
+  //     });
+  //     didInit.current = true;
+  //   }
+  // }, [profOptions, getValues]);
 
   /* Парс чисел */
   const parseNums = () => {
@@ -360,7 +366,6 @@ export const WorkerSearchPage: React.FC = () => {
     const [mn, mx] = min <= max ? [min, max] : [max, min];
     return { mn, mx };
   };
-
   /* Текущая гео-зона для запроса */
   const currentGeo = () => {
     const first = locations[0];
@@ -370,78 +375,77 @@ export const WorkerSearchPage: React.FC = () => {
 
   /* Управление фильтрами */
   const onSearch = () => {
-    if (!professionId) return;
     const { mn, mx } = parseNums();
-    setApplied({
-      professions: professionId,
-      minPrice: mn,
-      maxPrice: mx,
-      address1: regionName,
-      address2: districtName,
-      address3: villageName, // можешь не отправлять, если бек это не использует
-    });
+    const payload: AppliedFilters = {};
+    if (professionId) payload.professions = professionId;
+    if (mn > 0) payload.minPrice = mn;
+    if (mx > 0) payload.maxPrice = mx;
+    if (regionName) payload.address1 = regionName;
+    if (districtName) payload.address2 = districtName;
+    if (villageName) payload.address3 = villageName;
+    setApplied(payload);
   };
+
+  useEffect(() => {
+    // первый запрос без фильтров
+    setApplied({});
+  }, []);
+
+  // где-нибудь рядом с компонентом
+  const findById = <T extends { id: unknown }>(
+    arr: T[],
+    id: string | number | null | undefined
+  ) => (id == null ? undefined : arr.find((x) => String(x.id) === String(id)));
 
   const onChangeProfession = (v: string | number | null) => {
-    const id = String(v || "");
+    const id = String(v ?? "");
     setProfessionId(id);
-    if (!id) return;
     const { mn, mx } = parseNums();
-    setApplied({
-      professions: id,
-      minPrice: mn,
-      maxPrice: mx,
-      address1: regionName,
-      address2: districtName,
-      address3: villageName,
+
+    setApplied((prev) => {
+      const base: AppliedFilters = { ...(prev ?? {}) };
+
+      // professions — только если выбрана
+      if (professionId) base.professions = professionId;
+      else delete base.professions;
+
+      // цены — сохраняем как были
+      if (!prev?.minPrice) delete base.minPrice;
+      if (!prev?.maxPrice) delete base.maxPrice;
+
+      const region = findById(regions, id);
+      base.address1 = region ? pickName(region, lang) : null;
+      base.address2 = null;
+      base.address3 = null;
+      return base;
     });
   };
-
-  const resetAll = () => {
-    setValue("minPrice", "0");
-    setValue("maxPrice", "1000000000");
-    setLocations([]);
-
-    // сброс каскада локаций
-    setRegionId(null);
-    setDistrictId(null);
-    setVillageId(null);
-
-    if (flatProfs.length) {
-      const first = String(flatProfs[0].id);
-      setProfessionId(first);
-      setApplied({
-        professions: first,
-        minPrice: 0,
-        maxPrice: 1_000_000_000,
-        address1: regionName,
-        address2: districtName,
-        address3: villageName,
-      });
-    } else {
-      setProfessionId("");
-      setApplied(null);
-    }
-  };
-
   /* Результаты */
   const { data: results = [], isFetching } = useQuery<SearchWorker[]>({
     queryKey: ["opt", "order-search", applied, locations],
     queryFn: ({ signal }) => {
       if (!applied) return Promise.resolve([]);
       const geo = currentGeo();
-      return searchWorkers(
-        {
-          professions: applied.professions,
-          minPrice: applied.minPrice,
-          maxPrice: applied.maxPrice,
-          ...(geo ? { long: geo.long, lat: geo.lat, radius: geo.radius } : {}),
-          ...(applied.address1 ? { address1: applied.address1 } : {}),
-          ...(applied.address2 ? { address2: applied.address2 } : {}),
-          ...(applied.address3 ? { address3: applied.address3 } : {}),
-        },
-        signal
-      );
+
+      const params: any = {};
+      if (professionId) params.professions = professionId;
+      if (typeof applied.minPrice === "number" && applied.minPrice > 0) {
+        params.minPrice = applied.minPrice;
+      }
+      if (typeof applied.maxPrice === "number" && applied.maxPrice > 0) {
+        params.maxPrice = applied.maxPrice;
+      }
+      if (geo)
+        Object.assign(params, {
+          long: geo.long,
+          lat: geo.lat,
+          radius: geo.radius,
+        });
+      if (applied.address1) params.address1 = applied.address1;
+      if (applied.address2) params.address2 = applied.address2;
+      if (applied.address3) params.address3 = applied.address3;
+
+      return searchWorkers(params, signal);
     },
     enabled: Boolean(applied),
   });
@@ -449,6 +453,16 @@ export const WorkerSearchPage: React.FC = () => {
   /* Скелетоны: тулбар и список */
   const showToolbarSkeleton = profLoading;
   const showListSkeleton = isFetching && !results.length;
+
+  const [profModalOpen, setProfModalOpen] = useState(false);
+  const selectedProfLabel = useMemo(() => {
+    const found = flatProfs.find((p) => p.id === professionId);
+    return found
+      ? lang === "uz"
+        ? (found as any).nameUz
+        : (found as any).nameRu
+      : "";
+  }, [flatProfs, professionId, lang]);
 
   return (
     <PageWrap>
@@ -460,22 +474,93 @@ export const WorkerSearchPage: React.FC = () => {
       <Toolbar>
         {showToolbarSkeleton ? (
           <SearchInputWrap>
-            <div className="select-wrap" style={{ width: 280 }}>
-              <div className="skel" style={{ height: 40, borderRadius: 12 }} />
+            <div className="select-wrap" style={{ width: 320 }}>
+              <div className="skel" style={{ height: 44, borderRadius: 12 }} />
             </div>
           </SearchInputWrap>
         ) : (
           <SearchInputWrap>
-            <div className="select-wrap">
-              <CustomSelect
-                id="prof-search"
-                options={profOptions}
-                value={professionId || null}
-                onChange={(v) => onChangeProfession(v)}
-                placeholder={profLoading ? "Загрузка…" : "Профессия"}
-                loading={profLoading}
-                width="100%"
-              />
+            <div style={{ position: "relative", width: "100%" }}>
+              <button
+                type="button"
+                onClick={() => setProfModalOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={profModalOpen}
+                style={{
+                  width: "100%",
+                  height: 44,
+                  padding: "0 40px 0 14px",
+                  borderRadius: 12,
+                  border: "1px solid #e7ecf3",
+                  background: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontWeight: 500,
+                  color: selectedProfLabel ? "#0f172a" : "#94a3b8",
+                  boxShadow: "0 2px 8px rgba(2,32,71,0.04)",
+                }}
+              >
+                {/* точка/иконка слева */}
+
+                <SlidersHorizontal
+                  style={{
+                    color: selectedProfLabel ? "#2f6bff" : "#cbd5e1",
+                  }}
+                  size={16}
+                />
+
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {selectedProfLabel ||
+                    (profLoading ? "Загрузка…" : "Выберите профессию")}
+                </span>
+
+                {/* очистка выбора */}
+                {selectedProfLabel && (
+                  <span
+                    role="button"
+                    title="Очистить"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setProfessionId("");
+                      setApplied((prev) => {
+                        const next = { ...(prev ?? {}) } as any;
+                        delete next.professions;
+                        return next;
+                      });
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: 28,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 999,
+                      display: "grid",
+                      placeItems: "center",
+                      fontSize: 14,
+                      color: "#64748b",
+                      background: "#f1f5f9",
+                    }}
+                  >
+                    <FaXmark />
+                  </span>
+                )}
+
+                {/* каретка */}
+
+                <FaChevronDown
+                  style={{ position: "absolute", right: 10, opacity: 0.6 }}
+                />
+              </button>
+
+              {/* подпись под триггером (необязательно) */}
             </div>
           </SearchInputWrap>
         )}
@@ -487,12 +572,7 @@ export const WorkerSearchPage: React.FC = () => {
           Фильтры
         </FilterBtn>
 
-        <SearchBtn
-          onClick={onSearch}
-          disabled={!professionId || showToolbarSkeleton}
-        >
-          Найти
-        </SearchBtn>
+        <SearchBtn onClick={onSearch}>Найти</SearchBtn>
       </Toolbar>
 
       {/* ===== Панель фильтров (цены + карта) ===== */}
@@ -522,22 +602,18 @@ export const WorkerSearchPage: React.FC = () => {
             loading={regionsLoading}
             onChange={(v) => {
               const id = v === null ? null : Number(v);
-              setRegionId(id);
-              // сбрасываем ниже по каскаду
-              setDistrictId(null);
+              setDistrictId(id);
               setVillageId(null);
-              // обновляем applied (если уже есть профессия)
-              if (professionId) {
-                const { mn, mx } = parseNums();
-                setApplied({
-                  professions: professionId,
-                  minPrice: mn,
-                  maxPrice: mx,
-                  address1: regionName,
-                  address2: districtName,
-                  address3: villageName,
-                });
-              }
+
+              setApplied((prev) => ({
+                ...(prev ?? {}),
+                ...(professionId ? { professions: professionId } : {}),
+                address1: regionName ?? null,
+                address2: id
+                  ? pickName(districts.find((d) => d.id === id)!, lang)
+                  : null,
+                address3: null,
+              }));
             }}
             width="100%"
           />
@@ -567,7 +643,7 @@ export const WorkerSearchPage: React.FC = () => {
               if (professionId) {
                 const { mn, mx } = parseNums();
                 setApplied({
-                  professions: professionId,
+                  ...(professionId ? { professions: professionId } : {}),
                   minPrice: mn,
                   maxPrice: mx,
                   address1: regionName,
@@ -833,7 +909,14 @@ export const WorkerSearchPage: React.FC = () => {
           </>
         ) : results.length === 0 ? (
           /* ===== EMPTY STATE ===== */
-          <div className="empty" role="status" aria-live="polite">
+          <div
+            style={{
+              gridColumn: "span 2",
+            }}
+            className="empty"
+            role="status"
+            aria-live="polite"
+          >
             <h3>В выбранном регионе не нашлось специалистов</h3>
             <p>
               Попробуйте расширить радиус поиска, снять часть фильтров или
@@ -955,12 +1038,15 @@ export const WorkerSearchPage: React.FC = () => {
                   </HHStatuses>
                 </HHHead>
 
-                <HHChips>
-                  <HHChip>{profLabelById(row.professionId)}</HHChip>
-                  <HHChip>
-                    {row.jobType === "SOLO" ? "Сантехник" : "Электрик"}
-                  </HHChip>
-                </HHChips>
+                <HHRating>
+                  <Rate
+                    allowHalf
+                    disabled
+                    value={row.rating ?? 0}
+                    style={{ fontSize: 13 }}
+                  />
+                  <strong>{(row.rating ?? 0).toFixed(1)}</strong>
+                </HHRating>
 
                 <HHMeta>
                   <li>
@@ -980,18 +1066,14 @@ export const WorkerSearchPage: React.FC = () => {
                 <HHBottom>
                   <HHPrice>
                     {fmtMoney(row.minPrice)} — {fmtMoney(row.maxPrice)}{" "}
-                    <span> / за работу</span>
                   </HHPrice>
 
-                  <HHRating>
-                    <Rate
-                      allowHalf
-                      disabled
-                      value={row.rating ?? 0}
-                      style={{ fontSize: 18 }}
-                    />
-                    <strong>{(row.rating ?? 0).toFixed(1)}</strong>
-                  </HHRating>
+                  <HHChips>
+                    <HHChip>{profLabelById(row.professionId)}</HHChip>
+                    <HHChip>
+                      {row.jobType === "SOLO" ? "Сантехник" : "Электрик"}
+                    </HHChip>
+                  </HHChips>
                 </HHBottom>
               </HHMid>
 
@@ -1023,6 +1105,20 @@ export const WorkerSearchPage: React.FC = () => {
           ))
         )}
       </List>
+
+      <ProfessionsModal
+        open={profModalOpen}
+        onClose={() => setProfModalOpen(false)}
+        categories={profCats}
+        lang={lang}
+        popularIds={[]}
+        selectedId={professionId} // ← показываем текущий выбор
+        onSelect={(p: any) => {
+          setProfessionId(p.id);
+          setApplied((prev) => ({ ...(prev ?? {}), professions: p.id }));
+          setProfModalOpen(false);
+        }}
+      />
     </PageWrap>
   );
 };

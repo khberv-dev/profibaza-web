@@ -39,12 +39,18 @@ import LegalOffersPage from "../features/legal-offers/LegalOffersPage";
 import { AdminLayout } from "../layouts/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 import AdminInvoicesPage from "../features/admin/AdminInvoicesPage";
+import { FindLayout } from "../layouts/FindLayout";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/forgot", element: <ForgotPasswordPage /> },
   { path: "/register", element: <OtpPage /> },
+  {
+    path: "find",
+    element: <FindLayout />,
+    children: [{ index: true, element: <WorkerSearchPage /> }],
+  },
 
   {
     element: <InactiveOnly />,

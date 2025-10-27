@@ -4,26 +4,28 @@ import styled from "@emotion/styled";
 export const HHCard = styled.article`
   position: relative;
   display: grid;
-  grid-template-columns: 88px 1fr 172px;
-  grid-template-areas: "left mid right"; /* ← явные области на десктопе */
-  gap: 26px;
-  padding: 16px 18px;
+  grid-template-columns: 72px 1fr 140px; /* аватар / контент / экшены */
+  grid-template-areas: "left mid right";
+  column-gap: 30px;
+  row-gap: 10px;
+  padding: 14px 16px;
   border-radius: 16px;
   background: #fff;
   border: 1px solid #e7effc;
   box-shadow: 0 6px 18px rgba(2, 32, 71, 0.05);
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
-  overflow: hidden; /* ← чтобы ничего не «торчало» */
+  transition: box-shadow 0.2s, transform 0.1s;
+  overflow: hidden;
+
   &:hover {
     box-shadow: 0 12px 28px rgba(2, 32, 71, 0.08);
     transform: translateY(-1px);
   }
 
   @media (max-width: 920px) {
-    grid-template-columns: 64px 1fr;
+    grid-template-columns: 56px 1fr;
     grid-template-areas:
       "left mid"
-      "right right"; /* ← правая колонка вниз */
+      "right right"; /* правая колонка вниз на мобиле */
   }
 `;
 
@@ -48,39 +50,44 @@ export const skeletonCSS = `
 `;
 
 export const HHLeft = styled.div`
-  grid-area: left; /* ← соответствует области */
+  grid-area: left;
   display: grid;
   align-content: start;
 `;
 
 export const HHAvatar = styled.div<{ $src?: string | null }>`
-  width: 94px;
-  height: 94px;
+  width: 84px;
+  height: 84px;
   border-radius: 10%;
   background: ${({ $src }) =>
     $src
       ? `url(${$src}) center/cover no-repeat`
       : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
-  border: 1px solid #e7ecf3;
+  // border: 1px solid #e7ecf3;
   display: grid;
   place-items: center;
-  font-weight: 900;
+  font-weight: 700;
   color: #1e40af;
-  font-size: 20px;
+  font-size: 25px;
 `;
 
 export const HHMid = styled.div`
   grid-area: mid;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 `;
 
 export const HHHead = styled.div`
   display: flex;
-  justify-content: flex-start;
   gap: 12px;
   align-items: flex-start;
+  justify-content: flex-start;
+
+  .title {
+    min-width: 0;
+  }
+
   @media (max-width: 920px) {
     flex-direction: column;
     gap: 6px;
@@ -89,21 +96,22 @@ export const HHHead = styled.div`
 
 export const HHName = styled.h3`
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #12284a;
+  line-height: 1.2;
 `;
 
 export const HHSub = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7a90;
   margin-top: 2px;
 `;
-
 export const HHStatuses = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-self: flex-start;
 `;
 
 export const HHStatus = styled.span<{
@@ -112,51 +120,19 @@ export const HHStatus = styled.span<{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
+  height: 22px;
   padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-
-  color: ${({ $tone }) => {
-    switch ($tone) {
-      case "green":
-        return "#00984f";
-      case "blue":
-        return "#0070ff";
-      case "red":
-        return "#b91c1c";
-      case "gray":
-        return "#475569";
-    }
-  }};
-
-  background: ${({ $tone }) => {
-    switch ($tone) {
-      case "green":
-        return "#e9fbf2";
-      case "blue":
-        return "#edf6ff";
-      case "red":
-        return "#fef2f2";
-      case "gray":
-        return "#f1f5f9";
-    }
-  }};
-
-  /* если нужен бордер — раскомментируй */
-  /* border: 1px solid ${({ $tone }) => {
-    switch ($tone) {
-      case "green":
-        return "#bdf3d7";
-      case "blue":
-        return "#dbeafe";
-      case "red":
-        return "#fecaca";
-      case "gray":
-        return "#e2e8f0";
-    }
-  }}; */
+  color: ${({ $tone }) =>
+    ({ green: "#00984f", blue: "#0070ff", red: "#b91c1c", gray: "#475569" }[
+      $tone
+    ])};
+  background: ${({ $tone }) =>
+    ({ green: "#e9fbf2", blue: "#edf6ff", red: "#fef2f2", gray: "#f1f5f9" }[
+      $tone
+    ])};
 `;
 
 export const HHChips = styled.div`
@@ -168,19 +144,18 @@ export const HHChips = styled.div`
 export const HHChip = styled.span`
   display: inline-flex;
   align-items: center;
-  height: 24px;
+  height: 22px;
   padding: 0 10px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   color: #5e6c77;
   background: #f5f7fb;
 `;
-
 export const HHMeta = styled.ul`
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 18px;
+  gap: 4px 18px;
   list-style: none;
   margin: 4px 0 0 0;
   padding: 0;
@@ -189,7 +164,7 @@ export const HHMeta = styled.ul`
     gap: 6px;
     align-items: center;
     color: #6b7a90;
-    font-size: 14px;
+    font-size: 12px;
   }
   .k {
     color: #7b8ba5;
@@ -215,8 +190,8 @@ export const HHBottom = styled.div`
 `;
 
 export const HHPrice = styled.div`
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   color: #12284a;
   span {
     font-weight: 400;
@@ -227,13 +202,13 @@ export const HHPrice = styled.div`
 export const HHRating = styled.div`
   display: inline-flex;
   align-items: center;
+  font-size: 13px;
   gap: 8px;
   strong {
     color: #12284a;
   }
   .cnt {
     color: #6b7a90;
-    font-size: 13px;
   }
 `;
 
@@ -242,13 +217,13 @@ export const Stars = styled.div`
   grid-auto-flow: column;
   gap: 4px;
   .s {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     display: inline-block;
   }
   .s::before {
     content: "★";
-    font-size: 18px;
+    font-size: 14px;
     line-height: 1;
   }
   .s.full {
@@ -434,6 +409,22 @@ export const FiltersPanel = styled.div<{ $open?: boolean }>`
 export const List = styled.div`
   display: grid;
   gap: 12px;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(640px, 1fr)
+  ); /* по 3, адаптивно */
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr); /* ровно 3 на десктопе */
+  }
+
+  @media (max-width: 1023px) and (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr); /* 2 на планшете */
+  }
+
+  @media (max-width: 639px) {
+    grid-template-columns: 1fr; /* 1 на телефоне */
+  }
 `;
 
 export const emptyCSS = `
