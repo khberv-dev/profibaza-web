@@ -76,6 +76,58 @@ export type SearchWorkerUser = {
   avatar?: string | null;
 };
 
+export type WorkerExperience = {
+  id: string;
+  startedAt: number | null;   // 2024
+  endedAt: number | null;     // 2025 (или null — по настоящее время)
+  jobPlace: string | null;
+  jobDescription: string | null;
+  workerProfessionId: string;
+  createdAt: string;          // ISO
+  updatedAt: string;          // ISO
+};
+
+export type OrderStatus = "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "REJECTED";
+
+export type OrderBrief = {
+  id: string;
+  startAt: string | null;       // ISO
+  endAt: string | null;         // ISO
+  rejectedAt: string | null;    // ISO
+  deadline: string | null;      // ISO
+  description: string | null;
+  status: OrderStatus | string; // бэкенд может прислать кастомные
+  budget: number | null;
+  address1: string | null;      // область / город
+  address2: string | null;      // район
+  address3: string | null;      // улица / ориентир
+  files: string[];              // имена файлов/картинок
+  clientId: string | null;
+  legalId: string | null;
+  workerProfessionId: string;
+  createdAt: string;            // ISO
+  updatedAt: string;            // ISO
+};
+
+export type WorkerSchedule = {
+  id: string;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+  workerProfessionId: string;
+  createdAt: string;            // ISO
+  updatedAt: string;            // ISO
+};
+
+// если демо-материалы — это файлы, можно оставить как string[];
+// при необходимости заменить на объект с метаданными
+export type DemoFile = string;
+// export type DemoFile = { name: string; url: string; createdAt?: string };
+
 export type SearchWorker = {
   id: string; // workerProfessionId
   minPrice: number;
@@ -88,13 +140,24 @@ export type SearchWorker = {
   competitions?: "YES" | "NO";
   jobType?: "SOLO" | "COMPANY";
   professionId: string;
+  schedule?: WorkerSchedule | null;
+  experience?: WorkerExperience[];
+  // опциональные/вычисляемые
   updatedAt?: string;
   isBusy?: boolean;
   inArea?: boolean;
+
+  // вложенные сущности
   worker?: {
     id: string;
     user?: SearchWorkerUser;
   };
+
+  // новое: детальные данные
+  orders?: OrderBrief[];            // из примера JSON
+  demos?: DemoFile[];               // демо-файлы/портфолио
+  // необязательно, но удобно иметь сразу профессию
+  profession?: Profession;          // если API начинает отдавать объект
 };
 
 /* ---------- API ---------- */

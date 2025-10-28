@@ -148,7 +148,7 @@ export default function LandingPage() {
     <HeroNavLinks>
       <a href="#roles">{t("rolesTitle") || "Категории"}</a>
       <a href="#about">{t("why") || "Почему мы"}</a>
-      <a href="#contacts">{t("nav.find") || "Контакты"}</a>
+      <Link to="/find">{t("nav.find") || "Контакты"}</Link>
     </HeroNavLinks>
 
     <HeroActions>

@@ -23,6 +23,7 @@ export const Title = styled.h1`
     font-size: 28px;
     margin-bottom: 10px;
   }
+    
   @media (max-width: 640px) {
     font-size: 24px;
     margin-bottom: 8px;

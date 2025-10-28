@@ -8,6 +8,29 @@ export const DISTRICTS_QK = (regionId?: number) =>
 export const VILLAGES_QK = (districtId?: number) =>
   ["location", "villages", districtId ?? "none"] as const;
 
+
+export type LocalizedName = {
+  nameRu?: string;
+  nameUz?: string;
+  titleRu?: string;
+  titleUz?: string;
+  name?: string;
+};
+
+export function pickName(
+  obj: LocalizedName | null | undefined,
+  lang: 'ru' | 'uz' = 'ru',
+  fallback = '—'
+): string {
+  if (!obj) return fallback;
+
+  const ru = obj.nameRu || obj.titleRu || obj.name;
+  const uz = obj.nameUz || obj.titleUz || obj.name;
+
+  return lang === 'uz'
+    ? uz || ru || fallback
+    : ru || uz || fallback;
+}
 /** Регионы */
 export const useRegions = () =>
   useQuery<Region[]>({

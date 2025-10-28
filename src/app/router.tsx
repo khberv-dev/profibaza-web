@@ -40,6 +40,7 @@ import { AdminLayout } from "../layouts/admin/AdminLayout";
 import AdminDashboardPage from "../features/admin/AdminDashboardPage";
 import AdminInvoicesPage from "../features/admin/AdminInvoicesPage";
 import { FindLayout } from "../layouts/FindLayout";
+import WorkerDetailPage from "../pages/worker-search/WorkerDetailPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -49,7 +50,10 @@ export const router = createBrowserRouter([
   {
     path: "find",
     element: <FindLayout />,
-    children: [{ index: true, element: <WorkerSearchPage /> }],
+    children: [
+      { index: true, element: <WorkerSearchPage /> },
+      { path: "worker/:id", element: <WorkerDetailPage /> },
+    ],
   },
 
   {

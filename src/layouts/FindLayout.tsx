@@ -50,6 +50,9 @@ const Navbar = styled.header`
   top: 0;
   left: 0;
   width: 100%;
+      height: 56px;
+    padding: 0px 14px;
+    background: rgb(11, 11, 15);
   background: #000;
   color: #fff;
   z-index: 50;
@@ -58,11 +61,10 @@ const Navbar = styled.header`
 `;
 
 const NavInner = styled.div`
-  max-width: 1380px;
-  margin: 0 auto;
-  padding: 0 24px;
-  height: 68px;
+max-width: 1200px;
+    margin: 0px auto;
   display: flex;
+   height: 56px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -73,12 +75,11 @@ const NavInner = styled.div`
 `;
 
 const Brand = styled(Link)`
-  font-weight: 800;
-  font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    font-size: 18px;
   color: #fff;
   text-decoration: none;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
 `;
 
 const NavMenu = styled.nav`
@@ -111,11 +112,11 @@ const RightGroup = styled.div`
 `;
 
 const LangBtn = styled.button`
-  background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 6px 12px;
+     border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: rgb(229, 231, 235);
+    border-radius: 10px;
+  padding: 10px 12px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -131,7 +132,7 @@ const AuthBtn = styled.button`
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 6px 14px;
+  padding: 10px 14px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -147,7 +148,7 @@ const PrimaryBtn = styled.button`
   color: #fff;
   border: none;
   border-radius: 10px;
-  padding: 7px 18px;
+  padding: 10px 18px;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
