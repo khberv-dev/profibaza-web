@@ -427,6 +427,31 @@ export const List = styled.div`
   }
 `;
 
+export const ListSingle = styled.div`
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+  justify-items: center; /* чтобы по центру на больших экранах */
+  width: 100%;
+
+  /* на широких — оставляем одну, но центрируем и ограничиваем ширину */
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr;
+    > * {
+      max-width: 800px; /* или 720px, под твой макет */
+      width: 100%;
+    }
+  }
+
+  /* на планшете и ниже — просто одна карточка на всю ширину */
+  @media (max-width: 1023px) {
+    grid-template-columns: 1fr;
+    > * {
+      width: 100%;
+    }
+  }
+`;
+
 export const emptyCSS = `
 .empty {
   border: 1px dashed #e7ecf3;

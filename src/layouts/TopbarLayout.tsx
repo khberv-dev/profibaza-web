@@ -92,7 +92,7 @@ export function TopbarLayout() {
     <Shell>
       <Topbar>
         <Link
-          to="/app/profile"
+          to="/"
           style={{
             display: "flex",
             gap: 10,

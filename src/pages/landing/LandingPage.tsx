@@ -27,9 +27,23 @@ import {
   LangBadge,
   LangMenu,
   LangItem,
-  VideoHero, VideoBgWrap, VideoBg, VideoOverlay, HeroInner, HHTitleLightOnVideo,
-  HeroNavbar, HeroNavbarInner, HeroBrand, HeroNavLinks, HeroActions, GhostBtn,
-  FancySearch, FancyIcon, FancyInput, FancyRound, FancySubmit,
+  VideoHero,
+  VideoBgWrap,
+  VideoBg,
+  VideoOverlay,
+  HeroInner,
+  HHTitleLightOnVideo,
+  HeroNavbar,
+  HeroNavbarInner,
+  HeroBrand,
+  HeroNavLinks,
+  HeroActions,
+  GhostBtn,
+  FancySearch,
+  FancyIcon,
+  FancyInput,
+  FancyRound,
+  FancySubmit,
   HHSearchForm,
   HHSearchIcon,
   HHSearchInput,
@@ -91,8 +105,8 @@ export default function LandingPage() {
   const me = useAuthStore((s) => s.me);
 
   // ===== ui state =====
-  const [openLang, setOpenLang] = useState(false);      // язык дропдаун (desktop)
-  const [openMobile, setOpenMobile] = useState(false);  // мобильное меню
+  const [openLang, setOpenLang] = useState(false); // язык дропдаун (desktop)
+  const [openMobile, setOpenMobile] = useState(false); // мобильное меню
   const langRef = useRef<HTMLDivElement>(null);
 
   // RU / UZ метка
@@ -369,20 +383,14 @@ export default function LandingPage() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                 />
-                <FancyRound
-                  type="button"
-                  title={t("filters") || "Фильтры"}
-                >
+                <FancyRound type="button" title={t("filters") || "Фильтры"}>
                   <FiSliders size={18} />
                 </FancyRound>
                 <FancySubmit type="submit">{t("nav.find")}</FancySubmit>
               </FancySearch>
             </motion.form>
 
-            <motion.div
-              variants={fadeUp(0.1)}
-              style={{ marginTop: 10 }}
-            >
+            <motion.div variants={fadeUp(0.1)} style={{ marginTop: 10 }}>
               <HHAltLinkRow>
                 <Link
                   to="/hire"
@@ -430,6 +438,446 @@ export default function LandingPage() {
           </motion.div>
         </HeroInner>
       </VideoHero>
+
+      {/* === SECTION A: Кому подходит (минималистичная карточная сетка) === */}
+      {/* <section id="who" style={{ background: "#fff", padding: "96px 0 72px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerList(0.02, 0.025)}
+            style={{ willChange: "transform, opacity" }}
+          >
+            <motion.h2
+              variants={fadeUp(0.01)}
+              style={{
+                margin: 0,
+                marginBottom: 12,
+                fontSize: 42,
+                lineHeight: 1.1,
+                letterSpacing: "-0.02em",
+                fontWeight: 800,
+                color: "#0b1220",
+              }}
+            >
+              Кому подходит PROFIBAZA
+            </motion.h2>
+
+            <motion.p
+              variants={fadeUp(0.03)}
+              style={{
+                margin: 0,
+                marginBottom: 36,
+                color: "#5b6472",
+                fontSize: 18,
+                maxWidth: 760,
+              }}
+            >
+              Платформа для исполнителей, команд и нанимающих. Чёткая подача и
+              быстрый результат.
+            </motion.p>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(12, 1fr)",
+                gap: 16,
+              }}
+            >
+              {[
+                {
+                  t: "Индивидуальные специалисты",
+                  d: "Создайте профиль, покажите кейсы и получайте релевантные заявки без лишней рутины.",
+                },
+                {
+                  t: "Студии и команды",
+                  d: "Профиль компании, роли участников и распределение заявок внутри вашей команды.",
+                },
+                {
+                  t: "Самозанятые / ИП",
+                  d: "Реквизиты, прайс-листы, график и статусы занятости — всё в одном месте.",
+                },
+                {
+                  t: "HR / подрядчики",
+                  d: "Вакансии, фильтры под требования и быстрые отклики от подходящих специалистов.",
+                },
+                {
+                  t: "Частные заказчики",
+                  d: "Понятные карточки, опыт, цена и сроки — сравнивайте и выбирайте уверенно.",
+                },
+                {
+                  t: "Корпорации",
+                  d: "Массовый подбор, прозрачные правила и единая коммуникация по проектам.",
+                },
+              ].map((card, i) => (
+                <motion.div
+                  key={card.t}
+                  variants={fadeUp(0.04 + i * 0.015)}
+                  style={{
+                    gridColumn: "span 12",
+                    background: "#fff",
+                    border: "1px solid #e7eaf0",
+                    borderRadius: 16,
+                    padding: 20,
+                    minHeight: 142,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    transition: "transform .18s ease",
+                    willChange: "transform, opacity",
+                  }}
+                  whileHover={{ y: -2 }}
+                >
+                  <div>
+                    <h3
+                      style={{
+                        margin: 0,
+                        marginBottom: 8,
+                        fontSize: 18,
+                        fontWeight: 800,
+                        letterSpacing: "-0.01em",
+                        color: "#0b1220",
+                      }}
+                    >
+                      {card.t}
+                    </h3>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#596272",
+                        fontSize: 15.5,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {card.d}
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 18,
+                      display: "flex",
+                      gap: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 11,
+                        letterSpacing: ".06em",
+                        textTransform: "uppercase",
+                        color: "#1e3a8a",
+                        background: "rgba(37,99,235,.06)",
+                        border: "1px solid rgba(37,99,235,.18)",
+                        padding: "6px 8px",
+                        borderRadius: 999,
+                        fontWeight: 700,
+                      }}
+                    >
+                      поддерживается
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        letterSpacing: ".06em",
+                        textTransform: "uppercase",
+                        color: "#334155",
+                        background: "#f8fafc",
+                        border: "1px solid #e7eaf0",
+                        padding: "6px 8px",
+                        borderRadius: 999,
+                        fontWeight: 700,
+                      }}
+                    >
+                      лаконичный профиль
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section> */}
+
+      {/* === SECTION B: Почему PROFIBAZA (двухколоночный Apple-лайк блок) === */}
+      <section
+        id="why"
+        style={{ background: "#f6f7fb", padding: "88px 0 96px" }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+          <motion.div
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={staggerList(0.02, 0.02)}
+            style={{ willChange: "transform, opacity" }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(12, 1fr)",
+                gap: 20,
+                alignItems: "center",
+              }}
+            >
+              {/* Левая колонка: большая мысль + подзаголовок */}
+              <motion.div
+                variants={fadeUp(0.02)}
+                style={{ gridColumn: "span 12" }}
+              >
+                <h2
+                  style={{
+                    margin: 0,
+                    marginBottom: 12,
+                    fontSize: 46,
+                    lineHeight: 1.08,
+                    letterSpacing: "-0.02em",
+                    fontWeight: 800,
+                    color: "#0b1220",
+                    textWrap: "balance",
+                  }}
+                >
+                  Быстрее найти. Проще договориться.
+                </h2>
+                <p
+                  style={{
+                    margin: 0,
+                    marginBottom: 28,
+                    color: "#5b6472",
+                    fontSize: 18,
+                    maxWidth: 760,
+                  }}
+                >
+                  Мы оставили главное: чистую подачу, точные фильтры и
+                  прозрачные правила. Ничего лишнего, только скорость и
+                  качество.
+                </p>
+              </motion.div>
+
+              {/* Правая часть: фичи списком в две колонки */}
+              <motion.div
+                variants={fadeUp(0.05)}
+                style={{
+                  gridColumn: "span 12",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(12, 1fr)",
+                  gap: 16,
+                }}
+              >
+                {[
+                  {
+                    t: "Умный поиск",
+                    d: "Фильтры по бюджету, опыту, срокам и географии.",
+                  },
+                  {
+                    t: "Структурные карточки",
+                    d: "Опыт, цена, отзывы и кейсы — без визуального шума.",
+                  },
+                  {
+                    t: "Быстрые отклики",
+                    d: "Уведомления помогут не пропускать горячие предложения.",
+                  },
+                  {
+                    t: "Командные профили",
+                    d: "Студии, роли и прозрачно распределённые заявки.",
+                  },
+                  {
+                    t: "Прозрачные условия",
+                    d: "Понятные комиссии и единая коммуникация.",
+                  },
+                  {
+                    t: "RU/UZ локализация",
+                    d: "Интерфейс и категории — под локальный контекст.",
+                  },
+                ].map((f, i) => (
+                  <div
+                    key={f.t}
+                    style={{
+                      gridColumn: "span 12",
+                      background: "#fff",
+                      border: "1px solid #e7eaf0",
+                      borderRadius: 16,
+                      padding: 20,
+                      display: "flex",
+                      gap: 14,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    {/* минималистичный маркер */}
+                    <div
+                      aria-hidden
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: 999,
+                        background: "#1d4ed8",
+                        marginTop: 6,
+                        boxShadow: "0 0 0 6px rgba(29,78,216,.08)",
+                      }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "baseline",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: 17.5,
+                            fontWeight: 800,
+                            letterSpacing: "-0.01em",
+                            color: "#0b1220",
+                          }}
+                        >
+                          {f.t}
+                        </h3>
+                      </div>
+                      <p
+                        style={{
+                          margin: "8px 0 0",
+                          color: "#596272",
+                          fontSize: 15.5,
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {f.d}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+
+              {/* Низ: минимальная статистика + CTA */}
+              <motion.div
+                variants={fadeUp(0.06)}
+                style={{ gridColumn: "span 12" }}
+              >
+                <div
+                  style={{
+                    marginTop: 24,
+                    background: "#fff",
+                    border: "1px solid #e7eaf0",
+                    borderRadius: 16,
+                    padding: "18px 12px",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(12, 1fr)",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* Статистика — одна лаконичная полоса */}
+                  <div
+                    style={{
+                      gridColumn: "span 12",
+                      display: "flex",
+                      alignItems: "stretch",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {[
+                      { v: "10 000+", l: "активных вакансий" },
+                      { v: "1.6 млн+", l: "резюме специалистов" },
+                      { v: "24/7", l: "уведомления об откликах" },
+                    ].map((s, i) => (
+                      <div
+                        key={s.l}
+                        style={{
+                          flex: "1 1 260px",
+                          minWidth: 220,
+                          padding: "10px 18px",
+                          textAlign: "center",
+                          borderLeft: i === 0 ? "none" : "1px solid #e7eaf0",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 28,
+                            fontWeight: 900,
+                            letterSpacing: "-0.02em",
+                            color: "#0b1220",
+                            lineHeight: 1.1,
+                            marginBottom: 6,
+                          }}
+                        >
+                          {s.v}
+                        </div>
+                        <div style={{ color: "#6b7280", fontSize: 13.5 }}>
+                          {s.l}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Тонкая разделительная линия */}
+                  <div
+                    style={{
+                      gridColumn: "span 12",
+                      height: 1,
+                      background: "#e7eaf0",
+                      margin: "10px 8px 0",
+                    }}
+                  />
+
+                  {/* CTA — строго и компактно */}
+                  <div
+                    style={{
+                      gridColumn: "span 12",
+                      display: "flex",
+                      gap: 12,
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      padding: "14px 8px 4px",
+                    }}
+                  >
+                    <a
+                      href="/register"
+                      style={{
+                        height: 44,
+                        padding: "0 18px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 12,
+                        border: "1px solid transparent",
+                        background:
+                          "linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%)",
+                        color: "#fff",
+                        fontWeight: 800,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Стать исполнителем
+                    </a>
+                    <a
+                      href="/hire"
+                      style={{
+                        height: 44,
+                        padding: "0 18px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: 12,
+                        border: "1px solid #e7eaf0",
+                        background: "#fff",
+                        color: "#0b1220",
+                        fontWeight: 800,
+                        textDecoration: "none",
+                      }}
+                    >
+                      Найти специалиста
+                    </a>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       <AppFooter />
     </Shell>

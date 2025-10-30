@@ -31,6 +31,7 @@ import {
   HHPrice,
   HHRight,
   OpenBtn,
+  ListSingle,
 } from "../../pages/worker-search/worker-search.style";
 import { EditBtn } from "../profile/pro-profile-section.style";
 
@@ -244,13 +245,13 @@ export default function WorkerVacanciesSearchPage() {
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 340px",
-          gap: 16,
+          gap: 26,
           alignItems: "start",
         }}
       >
         {/* левая колонка — вакансии */}
         <div>
-          <List>
+          <ListSingle>
             {vacancies.map((v) => (
               <HHCard key={v.id}>
                 <HHLeft>
@@ -377,7 +378,7 @@ export default function WorkerVacanciesSearchPage() {
                 </HHRight>
               </HHCard>
             ))}
-          </List>
+          </ListSingle>
         </div>
 
         {/* правая колонка — сайдбар с откликами */}

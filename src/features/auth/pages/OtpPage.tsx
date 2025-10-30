@@ -1,6 +1,6 @@
 // pages/auth/register/RegisterPage.tsx
 import { useForm, Controller } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { isAxiosError } from "axios";
 import styled from "@emotion/styled";
@@ -310,7 +310,9 @@ const RegisterPage = () => {
     <PageWrap>
       {/* Левая часть */}
       <LeftSide>
-        <Brand>{t("brand")}</Brand>
+        <Link to="/">
+          <Brand>{t("brand")}</Brand>
+        </Link>
         <DotLottieReact
           src="https://lottie.host/44ba2cb8-1b7b-4e37-a5c5-99d9fb319ec1/SCGqvvOcYo.lottie"
           loop
@@ -359,84 +361,91 @@ const RegisterPage = () => {
             }}
           />
 
-<FieldLabel>Пол</FieldLabel>
-<div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-  <Controller
-    name="gender"
-    control={control}
-    render={({ field }) => (
-      <>
-        <label
-          style={{
-            flex: 1,
-            border: field.value === "MALE" ? "2px solid #1E5CFB" : "1px solid #ccc",
-            borderRadius: 8,
-            padding: "10px 12px",
-            textAlign: "center",
-            cursor: "pointer",
-            background: field.value === "MALE" ? "#EEF2FF" : "#fff",
-            fontWeight: 600,
-          }}
-        >
-          <input
-            type="radio"
-            value="MALE"
-            checked={field.value === "MALE"}
-            onChange={() => field.onChange("MALE")}
-            style={{ display: "none" }}
-          />
-          Мужчина
-        </label>
+          <FieldLabel>Пол</FieldLabel>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <Controller
+              name="gender"
+              control={control}
+              render={({ field }) => (
+                <>
+                  <label
+                    style={{
+                      flex: 1,
+                      border:
+                        field.value === "MALE"
+                          ? "2px solid #1E5CFB"
+                          : "1px solid #ccc",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      background: field.value === "MALE" ? "#EEF2FF" : "#fff",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      value="MALE"
+                      checked={field.value === "MALE"}
+                      onChange={() => field.onChange("MALE")}
+                      style={{ display: "none" }}
+                    />
+                    Мужчина
+                  </label>
 
-        <label
-          style={{
-            flex: 1,
-            border: field.value === "FEMALE" ? "2px solid #1E5CFB" : "1px solid #ccc",
-            borderRadius: 8,
-            padding: "10px 12px",
-            textAlign: "center",
-            cursor: "pointer",
-            background: field.value === "FEMALE" ? "#EEF2FF" : "#fff",
-            fontWeight: 600,
-          }}
-        >
-          <input
-            type="radio"
-            value="FEMALE"
-            checked={field.value === "FEMALE"}
-            onChange={() => field.onChange("FEMALE")}
-            style={{ display: "none" }}
-          />
-          Женщина
-        </label>
-      </>
-    )}
-  />
-</div>
+                  <label
+                    style={{
+                      flex: 1,
+                      border:
+                        field.value === "FEMALE"
+                          ? "2px solid #1E5CFB"
+                          : "1px solid #ccc",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      background: field.value === "FEMALE" ? "#EEF2FF" : "#fff",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      value="FEMALE"
+                      checked={field.value === "FEMALE"}
+                      onChange={() => field.onChange("FEMALE")}
+                      style={{ display: "none" }}
+                    />
+                    Женщина
+                  </label>
+                </>
+              )}
+            />
+          </div>
 
-<DatePopoverInput
-  control={control}
-  name="birthday"
-  label="Дата рождения"
-  placeholder="ГГГГ-ММ-ДД"
-  required
-  // Ограничим возраст: от 16 до 100 лет
-  min={dayjs().subtract(100, "year").format("YYYY-MM-DD")}
-  max={dayjs().subtract(16, "year").format("YYYY-MM-DD")}
-  rules={{
-    required: "Укажите дату рождения",
-    validate: (v: string) => {
-      // формат YYYY-MM-DD
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "Введите в формате YYYY-MM-DD";
-      const d = dayjs(v, "YYYY-MM-DD", true);
-      if (!d.isValid()) return "Некорректная дата";
-      const age = dayjs().diff(d, "year");
-      if (age < 16) return "Возраст должен быть 16+";
-      if (age > 100) return "Возраст не может превышать 100 лет";
-      return true;
-    },
-  }}
-/>
+          <DatePopoverInput
+            control={control}
+            name="birthday"
+            label="Дата рождения"
+            placeholder="ГГГГ-ММ-ДД"
+            required
+            // Ограничим возраст: от 16 до 100 лет
+            min={dayjs().subtract(100, "year").format("YYYY-MM-DD")}
+            max={dayjs().subtract(16, "year").format("YYYY-MM-DD")}
+            rules={{
+              required: "Укажите дату рождения",
+              validate: (v: string) => {
+                // формат YYYY-MM-DD
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(v))
+                  return "Введите в формате YYYY-MM-DD";
+                const d = dayjs(v, "YYYY-MM-DD", true);
+                if (!d.isValid()) return "Некорректная дата";
+                const age = dayjs().diff(d, "year");
+                if (age < 16) return "Возраст должен быть 16+";
+                if (age > 100) return "Возраст не может превышать 100 лет";
+                return true;
+              },
+            }}
+          />
 
           {/* Выбор основной роли */}
           <Controller

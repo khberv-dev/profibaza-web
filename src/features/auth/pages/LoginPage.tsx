@@ -19,7 +19,7 @@ import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
 import { useLogin } from "../../../shared/modules/auth";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type FormValues = {
   phone: string; // ожидаем "998900012644" (без "+")
@@ -37,10 +37,10 @@ const LoginPage = () => {
 
   const onSubmit = async (values: FormValues) => {
     const raw = values.phone.replace(/\D/g, "");
-  
+
     try {
       const user = await login({ phone: raw, password: values.password });
-  
+
       // если API возвращает роль, например user.role === "ADMIN"
       if (user?.role === "ADMIN") {
         navigate("/admin/stats");
@@ -49,7 +49,7 @@ const LoginPage = () => {
       }
     } catch (e: any) {
       let serverMsg = t("loginFailed");
-  
+
       if (isAxiosError(e) && e.response?.data) {
         const data = e.response.data;
         if (typeof data === "string") {
@@ -61,7 +61,7 @@ const LoginPage = () => {
           }
         }
       }
-  
+
       setError("phone", { message: serverMsg });
       setError("password", { message: serverMsg });
     }
@@ -71,7 +71,9 @@ const LoginPage = () => {
     <PageWrap>
       {/* Левая часть */}
       <LeftSide>
-        <Brand>{t("brand")}</Brand>
+        <Link to="/">
+          <Brand>{t("brand")}</Brand>
+        </Link>
         {/* <Illustration src="/register.svg" alt={t("welcome")} loading="lazy" /> */}
         <DotLottieReact
           src="https://lottie.host/b0146f16-302a-43d9-a258-561c491a1d02/bVM3MMUUOe.lottie"

@@ -5,10 +5,10 @@ const line = "rgba(255,255,255,.08)";
 const soft = "rgba(255,255,255,.04)";
 const glass = "rgba(255,255,255,.06)";
 const bgLight = "#ffffff";
-const fgLight = "#0f172a";      // slate-900
-const textLight = "#334155";    // slate-700
-const lineLight = "rgba(15,23,42,.08)";  // мягкая граница
-const softLight = "rgba(15,23,42,.04)";  // карточки/чипсы
+const fgLight = "#0f172a"; // slate-900
+const textLight = "#334155"; // slate-700
+const lineLight = "rgba(15,23,42,.08)"; // мягкая граница
+const softLight = "rgba(15,23,42,.04)"; // карточки/чипсы
 const glassLight = "rgba(15,23,42,.06)";
 const fg = "#e5e7eb";
 const muted = "#9aa4b2"; // холоднее текст
@@ -20,7 +20,6 @@ export const Shell = styled.div`
   background: ${bgLight};
   min-height: 100vh;
 `;
-
 
 /* TOPBAR */
 export const Topbar = styled.header`
@@ -424,7 +423,10 @@ export const FooterLink = styled.a`
   color: ${textLight};
   text-decoration: none;
   font-size: 14px;
-  &:hover { color: ${fgLight}; text-decoration: underline; }
+  &:hover {
+    color: ${fgLight};
+    text-decoration: underline;
+  }
 `;
 
 export const Copy = styled.div`
@@ -536,7 +538,7 @@ export const BurgerBtn = styled.button`
     transform: translateY(1px);
   }
 
-   @media (min-width: 768px) {
+  @media (min-width: 768px) {
     display: none;
   }
 `;
@@ -602,7 +604,6 @@ export const MobileBtnRow = styled.div`
   margin-top: 10px;
 `;
 
-
 const brandBlue = primary;
 
 /* Верхняя тонкая плашка (регион/помощь/кнопки) */
@@ -628,7 +629,10 @@ export const HHHeaderColRight = styled.div`
 export const HHRegion = styled.span`
   color: ${muted};
   font-size: 14px;
-  &:before { content: "🌍"; margin-right: 6px; }
+  &:before {
+    content: "🌍";
+    margin-right: 6px;
+  }
 `;
 export const HHHeaderLink = styled.a`
   color: ${fgLight};
@@ -636,19 +640,29 @@ export const HHHeaderLink = styled.a`
   text-decoration: none;
   padding: 6px 10px;
   border-radius: 10px;
-  &:hover { background: ${softLight}; }
+  &:hover {
+    background: ${softLight};
+  }
 `;
-
 
 /* Герой-блок */
 export const HHHero = styled.section`
   max-width: 1200px;
   margin: 10px auto 0;
   padding: 20px 16px 6px;
-  background:
-    radial-gradient(900px 420px at 75% -10%, rgba(37,99,235,.12), transparent 60%),
-    radial-gradient(700px 380px at 20% -20%, rgba(14,165,233,.10), transparent 60%);
-  @media (max-width: 860px) { padding-top: 16px; }
+  background: radial-gradient(
+      900px 420px at 75% -10%,
+      rgba(37, 99, 235, 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 380px at 20% -20%,
+      rgba(14, 165, 233, 0.1),
+      transparent 60%
+    );
+  @media (max-width: 860px) {
+    padding-top: 16px;
+  }
 `;
 export const HHTitle = styled.h1`
   margin: 0 0 16px;
@@ -669,7 +683,7 @@ export const HHSearchForm = styled.div`
   border: 1px solid ${lineLight};
   border-radius: 14px;
   padding: 8px;
-  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
 
   @media (max-width: 720px) {
     grid-template-columns: 48px 1fr;
@@ -677,8 +691,10 @@ export const HHSearchForm = styled.div`
   }
 `;
 export const HHSearchIcon = styled.div`
-  width: 52px; height: 44px;
-  display: grid; place-items: center;
+  width: 52px;
+  height: 44px;
+  display: grid;
+  place-items: center;
   border-radius: 10px;
   border: 1px solid ${lineLight};
   background: ${softLight};
@@ -693,20 +709,29 @@ export const HHSearchInput = styled.input`
   color: ${fgLight};
   padding: 0 14px;
   outline: none;
-  &::placeholder { color: #64748b; } /* slate-500 */
+  &::placeholder {
+    color: #64748b;
+  } /* slate-500 */
 `;
 
 export const HHSearchFilterBtn = styled.button`
-  height: 44px; width: 48px;
-  display: grid; place-items: center;
+  height: 44px;
+  width: 48px;
+  display: grid;
+  place-items: center;
   border-radius: 10px;
   border: 1px solid ${lineLight};
   background: ${softLight};
   color: ${fgLight};
   cursor: pointer;
-  transition: background .15s, transform .06s, border-color .15s;
-  &:hover { background: ${glassLight}; border-color: rgba(15,23,42,.14); }
-  @media (max-width: 720px) { display: none; }
+  transition: background 0.15s, transform 0.06s, border-color 0.15s;
+  &:hover {
+    background: ${glassLight};
+    border-color: rgba(15, 23, 42, 0.14);
+  }
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 export const HHSearchSubmit = styled.button`
@@ -717,8 +742,10 @@ export const HHSearchSubmit = styled.button`
   color: #fff;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: transform .06s, opacity .15s;
-  &:active { transform: translateY(1px); }
+  transition: transform 0.06s, opacity 0.15s;
+  &:active {
+    transform: translateY(1px);
+  }
 
   @media (max-width: 720px) {
     grid-column: 1 / -1;
@@ -733,7 +760,9 @@ export const HHAltLink = styled.a`
   color: ${brandBlue};
   text-decoration: none;
   font-weight: 600;
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 /* Метрики */
@@ -743,11 +772,13 @@ export const HHStatsRow = styled.div`
   gap: 12px;
   max-width: 640px;
   margin: 16px 0 0;
-  @media (max-width: 640px) { grid-template-columns: 1fr; }
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
 `;
 export const HHStatCard = styled.div`
   background: ${softLight};
-  border: 1px solid hsla(0, 0%, 100%, .5);
+  border: 1px solid hsla(0, 0%, 100%, 0.5);
   border-radius: 12px;
   padding: 14px;
 `;
@@ -761,7 +792,7 @@ export const HHLeadCard = styled.div`
   border: 1px solid ${lineLight};
   border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.05);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
 `;
 
 export const HHLeadInput = styled.input`
@@ -772,7 +803,9 @@ export const HHLeadInput = styled.input`
   color: ${fgLight};
   padding: 0 14px;
   outline: none;
-  &::placeholder { color: #64748b; }
+  &::placeholder {
+    color: #64748b;
+  }
 `;
 export const HHStatValue = styled.div`
   color: #fff;
@@ -786,27 +819,29 @@ export const HHStatLabel = styled.div`
 
 /* Бейджи маркетплейсов */
 export const HHBadgeRow = styled.div`
-  display: flex; gap: 10px; align-items: center;
+  display: flex;
+  gap: 10px;
+  align-items: center;
   margin-top: 14px;
 
   .app {
-      background-image: url(/appstore.svg);
-          background-position: 0 -45px;
+    background-image: url(/appstore.svg);
+    background-position: 0 -45px;
   }
   .google {
-      background-image: url(/appstore.svg);
-          background-position: 0 0;
+    background-image: url(/appstore.svg);
+    background-position: 0 0;
   }
   .gallery {
-      background-image: url(/appstore.svg);
-           background-position: 0 -90px;
+    background-image: url(/appstore.svg);
+    background-position: 0 -90px;
   }
 `;
 export const HHBadgeImg = styled.div`
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.35));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
   user-select: none;
   width: 140px;
-    height: 40px;
+  height: 40px;
 `;
 
 /* Карточка с вводом контакта */
@@ -833,7 +868,6 @@ export const HHLeadBtn = styled.button`
   cursor: pointer;
 `;
 
-
 // ===== HERO WITH VIDEO BG =====
 export const VideoHero = styled.section`
   position: relative;
@@ -843,14 +877,13 @@ export const VideoHero = styled.section`
   isolation: isolate; /* собственный стек */
 `;
 
-
 export const VideoBgWrap = styled.div`
   position: absolute;
   inset: 0;
-  z-index: 0;           /* было -2 */
+  z-index: 0; /* было -2 */
   overflow: hidden;
   pointer-events: none; /* фон не кликается */
-  background: #000;     /* на случай, если видео не загрузится */
+  background: #000; /* на случай, если видео не загрузится */
   border-bottom: 1px solid ${lineLight};
 `;
 
@@ -868,9 +901,9 @@ export const VideoOverlay = styled.div`
   z-index: 1; /* слой над видео */
   background: linear-gradient(
     180deg,
-    rgba(0,0,0,.55) 0%,
-    rgba(0,0,0,.45) 38%,
-    rgba(0,0,0,.35) 100%
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.45) 38%,
+    rgba(0, 0, 0, 0.35) 100%
   );
 `;
 
@@ -883,23 +916,24 @@ export const HeroInner = styled.div`
   color: #fff;
 `;
 
-
-
 export const HHTitleLightOnVideo = styled.h1`
   margin: 0 0 16px;
   font-size: clamp(28px, 5.4vw, 48px);
   font-weight: 800;
   color: #fff;
-  text-shadow: 0 2px 24px rgba(0,0,0,.45);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
 `;
-
 
 export const HeroNavbar = styled.div`
   position: absolute;
-  left: 0; right: 0; top: 0;
+  left: 0;
+  right: 0;
+  top: 0;
   z-index: 3;
   padding: 14px 16px;
-  @media (min-width: 1024px) { padding: 18px 24px; }
+  @media (min-width: 1024px) {
+    padding: 18px 24px;
+  }
 `;
 export const HeroNavbarInner = styled.div`
   max-width: 1200px;
@@ -910,42 +944,60 @@ export const HeroNavbarInner = styled.div`
   gap: 14px;
 `;
 export const HeroBrand = styled.div`
-  display: flex; align-items: center; gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: #fff;
-  img { height: 36px; }
-  span { font-weight: 800; letter-spacing: .2px; font-size: 18px; }
+  img {
+    height: 36px;
+  }
+  span {
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    font-size: 18px;
+  }
 `;
 export const HeroNavLinks = styled.nav`
   display: none;
   @media (min-width: 900px) {
-    display: flex; justify-content: center; gap: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
     a {
-      color: rgba(255,255,255,.9);
+      color: rgba(255, 255, 255, 0.9);
       text-decoration: none;
       padding: 8px 10px;
       border-radius: 10px;
       backdrop-filter: blur(4px);
-      &:hover { background: rgba(255,255,255,.08); }
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
     }
   }
 `;
 export const HeroActions = styled.div`
-  display: flex; align-items: center; gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 `;
 export const GhostBtn = styled.button`
-  height: 38px; padding: 0 12px;
+  height: 38px;
+  padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.25);
-  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   cursor: pointer;
   backdrop-filter: blur(6px);
-  transition: background .15s, border-color .15s, transform .06s;
-  &:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.35); }
-  &:active { transform: translateY(1px); }
+  transition: background 0.15s, border-color 0.15s, transform 0.06s;
+  &:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
 `;
-
-
 
 /* ===== FANCY SEARCH (стеклянная таблетка) ===== */
 export const FancySearch = styled.form`
@@ -957,9 +1009,9 @@ export const FancySearch = styled.form`
   align-items: center;
   padding: 10px;
   border-radius: 999px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.18);
-  box-shadow: 0 12px 32px rgba(0,0,0,.35);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(8px);
 
   @media (max-width: 760px) {
@@ -969,48 +1021,72 @@ export const FancySearch = styled.form`
   }
 `;
 export const FancyIcon = styled.div`
-  width: 56px; height: 48px;
-  display: grid; place-items: center;
+  width: 56px;
+  height: 48px;
+  display: grid;
+  place-items: center;
   border-radius: 999px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  @media (max-width: 760px) { width: 48px; }
+  @media (max-width: 760px) {
+    width: 48px;
+  }
 `;
 export const FancyInput = styled.input`
   height: 48px;
-  border: 1px solid rgba(255,255,255,.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
-  background: rgba(0,0,0,0);
+  background: rgba(0, 0, 0, 0);
   color: #fff;
   padding: 0 16px;
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-  &::placeholder { color: rgba(255,255,255,.8); }
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+  }
 `;
 export const FancyRound = styled.button`
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
-  display: grid; place-items: center;
-  border: 1px solid rgba(255,255,255,.22);
-  background: rgba(255,255,255,.1);
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
   cursor: pointer;
-  transition: transform .06s, background .15s, border-color .15s;
-  &:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.32); }
-  &:active { transform: translateY(1px); }
-  @media (max-width: 760px) { display: none; }
+  transition: transform 0.06s, background 0.15s, border-color 0.15s;
+  &:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.32);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  @media (max-width: 760px) {
+    display: none;
+  }
 `;
 export const FancySubmit = styled.button`
-  height: 48px; padding: 0 18px;
+  height: 48px;
+  padding: 0 18px;
   border-radius: 999px;
   background: ${primary};
-  color: #fff; border: 0;
+  color: #fff;
+  border: 0;
   font-weight: 700;
   cursor: pointer;
-  transition: transform .06s, opacity .15s, box-shadow .15s;
-  box-shadow: 0 10px 24px rgba(37,99,235,.45);
-  &:hover { opacity: .95; box-shadow: 0 12px 28px rgba(37,99,235,.55); }
-  &:active { transform: translateY(1px); }
-  @media (max-width: 760px) { grid-column: 1 / -1; }
+  transition: transform 0.06s, opacity 0.15s, box-shadow 0.15s;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+  &:hover {
+    opacity: 0.95;
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.55);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  @media (max-width: 760px) {
+    grid-column: 1 / -1;
+  }
 `;
