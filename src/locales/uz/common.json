@@ -161,6 +161,11 @@
     "experienceTitle": "Ish tajribasi",
     "back": "Orqaga",
     "serviceZones": "Xizmat ko‘rsatish zonalari",
+    "jobTypes": {
+  "SOLO": "Individual (yakka tartibdagi ishchi)",
+  "EMPLOYEE": "Kompaniya (jamoada ishlovchi)",
+  "ABROAD": "Chet elda ishlovchi"
+},
     "jobFormat": "Ish formati",
     "mapHint": "Xaritaga bosish yangi zonani qo‘shadi. Markazni o‘zgartirish uchun pinni suring. Radiusni pastdagi slayder yoki maydonda o‘zgartiring.",
     "myProfs": "Mening kasblarim",

@@ -535,6 +535,10 @@ export const BurgerBtn = styled.button`
   &:active {
     transform: translateY(1px);
   }
+
+   @media (min-width: 768px) {
+    display: none;
+  }
 `;
 export const MobileMenuBackdrop = styled.div`
   position: fixed;

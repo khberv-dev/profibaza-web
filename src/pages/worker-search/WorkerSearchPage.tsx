@@ -57,6 +57,7 @@ import { FaChevronDown, FaXmark } from "react-icons/fa6";
 import { ProfessionsModal } from "./ProfessionsModal";
 import { useDistricts, useRegions, useVillages } from "../../shared/modules/location";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 /* ========== helpers ========== */
 const fmtMoney = (n?: number) =>
@@ -161,6 +162,7 @@ type AppliedFilters = {
 type PriceForm = { minPrice: string; maxPrice: string };
 
 export const WorkerSearchPage: React.FC = () => {
+    const { t } = useTranslation();
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0] as
     | "ru"
     | "uz";
@@ -974,7 +976,7 @@ export const WorkerSearchPage: React.FC = () => {
               <HHMid>
                 <HHHead>
                   <div>
-                  <Link to={{ pathname: `/find/worker/${encodeURIComponent(row.id)}` }}>
+                  <Link style={{textDecoration: 'none'}} to={{ pathname: `/find/worker/${encodeURIComponent(row.id)}` }}>
                     <HHName>{fio(row.worker?.user)}</HHName>
                   </Link>
                     <HHSub>
@@ -1021,7 +1023,7 @@ export const WorkerSearchPage: React.FC = () => {
                   <li>
                     <span className="k">Занятость:</span>
                     <span className="v">
-                      {row.jobType === "SOLO" ? "подряд" : "команда"}
+                    {t(`worker.jobTypes.${row.jobType}`)}
                     </span>
                   </li>
                   <li>
@@ -1039,9 +1041,6 @@ export const WorkerSearchPage: React.FC = () => {
 
                   <HHChips>
                     <HHChip>{profLabelById(row.professionId)}</HHChip>
-                    <HHChip>
-                      {row.jobType === "SOLO" ? "Сантехник" : "Электрик"}
-                    </HHChip>
                   </HHChips>
                 </HHBottom>
               </HHMid>
