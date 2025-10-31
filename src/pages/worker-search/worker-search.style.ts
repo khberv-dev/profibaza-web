@@ -301,7 +301,7 @@ export const PageWrap = styled.div`
 /* Тулбар фильтров */
 export const Toolbar = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px 140px;
+  grid-template-columns: minmax(0, 1fr) 140px 140px 140px;
   gap: 12px;
   align-items: center;
   margin-bottom: 14px;
@@ -343,6 +343,7 @@ export const FilterBtn = styled.button`
 
 export const SearchBtn = styled.button`
   height: 38px;
+  width: 140px;
   border-radius: 12px;
   border: 1px solid #2f6bff;
   background: #2f6bff;

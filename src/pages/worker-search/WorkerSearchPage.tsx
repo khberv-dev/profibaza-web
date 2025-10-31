@@ -83,7 +83,7 @@ const fmtUpdated = (d?: string) => {
   });
 };
 
-/* ========== lightweight skeleton CSS (одноразовая вставка на странице) ========== */
+/* ========== lightweight skeleton CSS ========== */
 const skeletonCSS = `
 .skel {
   position: relative;
@@ -151,7 +151,7 @@ const emptyCSS = `
 `;
 
 type AppliedFilters = {
-  professions?: string; // ← опционально
+  professions?: string;
   minPrice?: number;
   maxPrice?: number;
   address1?: string | null;
@@ -162,7 +162,7 @@ type AppliedFilters = {
 type PriceForm = { minPrice: string; maxPrice: string };
 
 export const WorkerSearchPage: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0] as
     | "ru"
     | "uz";
@@ -177,10 +177,14 @@ export const WorkerSearchPage: React.FC = () => {
   const [regionId, setRegionId] = useState<number | null>(null);
   const [districtId, setDistrictId] = useState<number | null>(null);
   const [villageId, setVillageId] = useState<number | null>(null);
-  
+
   const { data: regions = [], isLoading: regionsLoading } = useRegions();
-  const { data: districts = [], isLoading: districtsLoading } = useDistricts(regionId ?? undefined);
-  const { data: villages = [], isLoading: villagesLoading } = useVillages(districtId ?? undefined);
+  const { data: districts = [], isLoading: districtsLoading } = useDistricts(
+    regionId ?? undefined
+  );
+  const { data: villages = [], isLoading: villagesLoading } = useVillages(
+    districtId ?? undefined
+  );
 
   const onAddLoc = (loc: MapLocation) => setLocations([loc]);
   const onChangeLoc = (index: number, next: MapLocation) =>
@@ -204,7 +208,7 @@ export const WorkerSearchPage: React.FC = () => {
     ProfessionCategory[]
   >({
     queryKey: ["opt", "professions"],
-    queryFn: ({ signal }) => getProfessions(signal), // -> ProfessionCategory[]
+    queryFn: ({ signal }) => getProfessions(signal),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -213,14 +217,12 @@ export const WorkerSearchPage: React.FC = () => {
       profCats.flatMap((c) =>
         (c.professions || []).map((p) => ({
           ...p,
-          // гарантируем наличие categoryId: если вдруг нет — ставим id категории
           categoryId: p.categoryId ?? c.id,
         }))
       ),
     [profCats]
   );
 
-  // 4) Опции селекта строим из flatProfs
   const profOptions: SelectOption[] = useMemo(
     () =>
       flatProfs.map((p) => ({
@@ -237,17 +239,26 @@ export const WorkerSearchPage: React.FC = () => {
   };
 
   const regionOptions: SelectOption[] = useMemo(
-    () => (regions ?? []).map(r => ({ value: r.id, label: pickName(r, lang) })),
+    () =>
+      (regions ?? []).map((r) => ({ value: r.id, label: pickName(r, lang) })),
     [regions, lang]
   );
-  
+
   const districtOptions: SelectOption[] = useMemo(
-    () => (districts ?? []).map(d => ({ value: d.id, label: pickName(d, lang) })),
+    () =>
+      (districts ?? []).map((d) => ({
+        value: d.id,
+        label: pickName(d, lang),
+      })),
     [districts, lang]
   );
-  
+
   const villageOptions: SelectOption[] = useMemo(
-    () => (villages ?? []).map(v => ({ value: v.id, label: pickName(v, lang) })),
+    () =>
+      (villages ?? []).map((v) => ({
+        value: v.id,
+        label: pickName(v, lang),
+      })),
     [villages, lang]
   );
 
@@ -256,19 +267,19 @@ export const WorkerSearchPage: React.FC = () => {
 
   const regionName = useMemo(() => {
     if (regionId == null) return null;
-    const obj = regions.find(r => r.id === regionId);
+    const obj = regions.find((r) => r.id === regionId);
     return obj ? pickName(obj, lang) : null;
   }, [regions, regionId, lang]);
-  
+
   const districtName = useMemo(() => {
     if (districtId == null) return null;
-    const obj = districts.find(d => d.id === districtId);
+    const obj = districts.find((d) => d.id === districtId);
     return obj ? pickName(obj, lang) : null;
   }, [districts, districtId, lang]);
-  
+
   const villageName = useMemo(() => {
     if (villageId == null) return null;
-    const obj = villages.find(v => v.id === villageId);
+    const obj = villages.find((v) => v.id === villageId);
     return obj ? pickName(obj, lang) : null;
   }, [villages, villageId, lang]);
 
@@ -305,23 +316,6 @@ export const WorkerSearchPage: React.FC = () => {
     );
   }, [useMyGeo, professionId]);
 
-  /* Автоинициализация: выбрать первую профессию и запустить поиск */
-  // const didInit = useRef(false);
-  // useEffect(() => {
-  //   if (didInit.current) return;
-  //   if (profOptions.length) {
-  //     const first = String(profOptions[0].value);
-  //     setProfessionId(first);
-  //     const { minPrice, maxPrice } = getValues();
-  //     setApplied({
-  //       professions: first,
-  //       minPrice: Number(minPrice) || 0,
-  //       maxPrice: Number(maxPrice) || 1_000_000_000,
-  //     });
-  //     didInit.current = true;
-  //   }
-  // }, [profOptions, getValues]);
-
   /* Парс чисел */
   const parseNums = () => {
     const { minPrice, maxPrice } = getValues();
@@ -330,6 +324,7 @@ export const WorkerSearchPage: React.FC = () => {
     const [mn, mx] = min <= max ? [min, max] : [max, min];
     return { mn, mx };
   };
+
   /* Текущая гео-зона для запроса */
   const currentGeo = () => {
     const first = locations[0];
@@ -350,12 +345,27 @@ export const WorkerSearchPage: React.FC = () => {
     setApplied(payload);
   };
 
+  // <<< add: resetAll
+  const resetAll = () => {
+    // сбрасываем локальные стейты фильтров
+    setProfessionId("");
+    setRegionId(null);
+    setDistrictId(null);
+    setVillageId(null);
+    setLocations([]);
+    // сбрасываем цены в форме
+    setValue("minPrice", "");
+    setValue("maxPrice", "");
+    // applied -> пустой объект, чтобы дернулся запрос без фильтров
+    setApplied({});
+  };
+  // >>> end add
+
   useEffect(() => {
     // первый запрос без фильтров
     setApplied({});
   }, []);
 
-  // где-нибудь рядом с компонентом
   const findById = <T extends { id: unknown }>(
     arr: T[],
     id: string | number | null | undefined
@@ -368,12 +378,9 @@ export const WorkerSearchPage: React.FC = () => {
 
     setApplied((prev) => {
       const base: AppliedFilters = { ...(prev ?? {}) };
-
-      // professions — только если выбрана
       if (professionId) base.professions = professionId;
       else delete base.professions;
 
-      // цены — сохраняем как были
       if (!prev?.minPrice) delete base.minPrice;
       if (!prev?.maxPrice) delete base.maxPrice;
 
@@ -384,6 +391,7 @@ export const WorkerSearchPage: React.FC = () => {
       return base;
     });
   };
+
   /* Результаты */
   const { data: results = [], isFetching } = useQuery<SearchWorker[]>({
     queryKey: ["opt", "order-search", applied, locations],
@@ -414,7 +422,7 @@ export const WorkerSearchPage: React.FC = () => {
     enabled: Boolean(applied),
   });
 
-  /* Скелетоны: тулбар и список */
+  /* Скелетоны */
   const showToolbarSkeleton = profLoading;
   const showListSkeleton = isFetching && !results.length;
 
@@ -430,7 +438,6 @@ export const WorkerSearchPage: React.FC = () => {
 
   return (
     <PageWrap>
-      {/* одноразовая вставка стилей */}
       <style>{skeletonCSS}</style>
       <style>{emptyCSS}</style>
 
@@ -466,8 +473,6 @@ export const WorkerSearchPage: React.FC = () => {
                   boxShadow: "0 2px 8px rgba(2,32,71,0.04)",
                 }}
               >
-                {/* точка/иконка слева */}
-
                 <SlidersHorizontal
                   style={{
                     color: selectedProfLabel ? "#2f6bff" : "#cbd5e1",
@@ -486,7 +491,6 @@ export const WorkerSearchPage: React.FC = () => {
                     (profLoading ? "Загрузка…" : "Выберите профессию")}
                 </span>
 
-                {/* очистка выбора */}
                 {selectedProfLabel && (
                   <span
                     role="button"
@@ -511,20 +515,17 @@ export const WorkerSearchPage: React.FC = () => {
                       fontSize: 14,
                       color: "#64748b",
                       background: "#f1f5f9",
+                      cursor: "pointer",
                     }}
                   >
                     <FaXmark />
                   </span>
                 )}
 
-                {/* каретка */}
-
                 <FaChevronDown
                   style={{ position: "absolute", right: 10, opacity: 0.6 }}
                 />
               </button>
-
-              {/* подпись под триггером (необязательно) */}
             </div>
           </SearchInputWrap>
         )}
@@ -535,12 +536,24 @@ export const WorkerSearchPage: React.FC = () => {
         >
           Фильтры
         </FilterBtn>
+        <FilterBtn
+            onClick={resetAll}
+        >
+          Сбросить
+        </FilterBtn>
 
         <SearchBtn onClick={onSearch}>Найти</SearchBtn>
+
+
+
+        {/* <<< add: кнопка сброса фильтров */}
+       
+        {/* >>> end add */}
       </Toolbar>
 
-      {/* ===== Панель фильтров (цены + карта) ===== */}
+      {/* ===== Панель фильтров ===== */}
       <FiltersPanel $open={showFilters}>
+   
         <div className="field">
           <CustomInput
             control={control}
@@ -559,28 +572,32 @@ export const WorkerSearchPage: React.FC = () => {
             Область
           </label>
           <CustomSelect
-  id="region"
-  placeholder={regionsLoading ? "Загрузка…" : "Выберите область"}
-  options={regions.map(r => ({ value: r.id, label: pickName(r, lang) }))}
-  value={regionId ?? null}
-  loading={regionsLoading}
-  onChange={(v) => {
-    const id = v === null ? null : Number(v);
-    setRegionId(id);
-    setDistrictId(null);
-    setVillageId(null);
+            id="region"
+            placeholder={regionsLoading ? "Загрузка…" : "Выберите область"}
+            options={regions.map((r) => ({
+              value: r.id,
+              label: pickName(r, lang),
+            }))}
+            value={regionId ?? null}
+            loading={regionsLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setRegionId(id);
+              setDistrictId(null);
+              setVillageId(null);
 
-    const selectedRegion = id == null ? null : regions.find(r => r.id === id);
-    setApplied((prev) => ({
-      ...(prev ?? {}),
-      ...(professionId ? { professions: professionId } : {}),
-      address1: selectedRegion ? pickName(selectedRegion, lang) : null,
-      address2: null,
-      address3: null,
-    }));
-  }}
-  width="100%"
-/>
+              const selectedRegion =
+                id == null ? null : regions.find((r) => r.id === id);
+              setApplied((prev) => ({
+                ...(prev ?? {}),
+                ...(professionId ? { professions: professionId } : {}),
+                address1: selectedRegion ? pickName(selectedRegion, lang) : null,
+                address2: null,
+                address3: null,
+              }));
+            }}
+            width="100%"
+          />
         </div>
 
         <div className="field" style={{ minWidth: 240 }}>
@@ -588,38 +605,47 @@ export const WorkerSearchPage: React.FC = () => {
             Район
           </label>
           <CustomSelect
-  id="district"
-  placeholder={
-    regionId == null
-      ? "Сначала выберите область"
-      : districtsLoading
-      ? "Загрузка…"
-      : "Выберите район"
-  }
-  disabled={regionId == null}
-  options={districts.map(d => ({ value: d.id, label: pickName(d, lang) }))}
-  value={districtId ?? null}
-  loading={districtsLoading}
-  onChange={(v) => {
-    const id = v === null ? null : Number(v);
-    setDistrictId(id);
-    setVillageId(null);
+            id="district"
+            placeholder={
+              regionId == null
+                ? "Сначала выберите область"
+                : districtsLoading
+                ? "Загрузка…"
+                : "Выберите район"
+            }
+            disabled={regionId == null}
+            options={districts.map((d) => ({
+              value: d.id,
+              label: pickName(d, lang),
+            }))}
+            value={districtId ?? null}
+            loading={districtsLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setDistrictId(id);
+              setVillageId(null);
 
-    const selectedRegion   = regionId == null ? null : regions.find(r => r.id === regionId);
-    const selectedDistrict = id == null ? null : districts.find(d => d.id === id);
-    const { mn, mx } = parseNums();
+              const selectedRegion =
+                regionId == null
+                  ? null
+                  : regions.find((r) => r.id === regionId);
+              const selectedDistrict =
+                id == null ? null : districts.find((d) => d.id === id);
+              const { mn, mx } = parseNums();
 
-    setApplied({
-      ...(professionId ? { professions: professionId } : {}),
-      ...(mn > 0 ? { minPrice: mn } : {}),
-      ...(mx > 0 ? { maxPrice: mx } : {}),
-      address1: selectedRegion ? pickName(selectedRegion, lang) : null,
-      address2: selectedDistrict ? pickName(selectedDistrict, lang) : null,
-      address3: null,
-    });
-  }}
-  width="100%"
-/>
+              setApplied({
+                ...(professionId ? { professions: professionId } : {}),
+                ...(mn > 0 ? { minPrice: mn } : {}),
+                ...(mx > 0 ? { maxPrice: mx } : {}),
+                address1: selectedRegion ? pickName(selectedRegion, lang) : null,
+                address2: selectedDistrict
+                  ? pickName(selectedDistrict, lang)
+                  : null,
+                address3: null,
+              });
+            }}
+            width="100%"
+          />
         </div>
 
         <div className="field" style={{ minWidth: 240 }}>
@@ -627,38 +653,52 @@ export const WorkerSearchPage: React.FC = () => {
             Махалля
           </label>
           <CustomSelect
-  id="village"
-  placeholder={
-    districtId == null
-      ? "Сначала выберите район"
-      : villagesLoading
-      ? "Загрузка…"
-      : "Выберите махаллю"
-  }
-  disabled={districtId == null}
-  options={villages.map(v => ({ value: v.id, label: pickName(v, lang) }))}
-  value={villageId ?? null}
-  loading={villagesLoading}
-  onChange={(v) => {
-    const id = v === null ? null : Number(v);
-    setVillageId(id);
+            id="village"
+            placeholder={
+              districtId == null
+                ? "Сначала выберите район"
+                : villagesLoading
+                ? "Загрузка…"
+                : "Выберите махаллю"
+            }
+            disabled={districtId == null}
+            options={villages.map((v) => ({
+              value: v.id,
+              label: pickName(v, lang),
+            }))}
+            value={villageId ?? null}
+            loading={villagesLoading}
+            onChange={(v) => {
+              const id = v === null ? null : Number(v);
+              setVillageId(id);
 
-    const selectedRegion   = regionId == null ? null : regions.find(r => r.id === regionId);
-    const selectedDistrict = districtId == null ? null : districts.find(d => d.id === districtId);
-    const selectedVillage  = id == null ? null : villages.find(vl => vl.id === id);
-    const { mn, mx } = parseNums();
+              const selectedRegion =
+                regionId == null
+                  ? null
+                  : regions.find((r) => r.id === regionId);
+              const selectedDistrict =
+                districtId == null
+                  ? null
+                  : districts.find((d) => d.id === districtId);
+              const selectedVillage =
+                id == null ? null : villages.find((vl) => vl.id === id);
+              const { mn, mx } = parseNums();
 
-    setApplied({
-      ...(professionId ? { professions: professionId } : {}),
-      ...(mn > 0 ? { minPrice: mn } : {}),
-      ...(mx > 0 ? { maxPrice: mx } : {}),
-      address1: selectedRegion ? pickName(selectedRegion, lang) : null,
-      address2: selectedDistrict ? pickName(selectedDistrict, lang) : null,
-      address3: selectedVillage ? pickName(selectedVillage, lang) : null,
-    });
-  }}
-  width="100%"
-/>
+              setApplied({
+                ...(professionId ? { professions: professionId } : {}),
+                ...(mn > 0 ? { minPrice: mn } : {}),
+                ...(mx > 0 ? { maxPrice: mx } : {}),
+                address1: selectedRegion ? pickName(selectedRegion, lang) : null,
+                address2: selectedDistrict
+                  ? pickName(selectedDistrict, lang)
+                  : null,
+                address3: selectedVillage
+                  ? pickName(selectedVillage, lang)
+                  : null,
+              });
+            }}
+            width="100%"
+          />
         </div>
 
         <div className="field">
@@ -751,7 +791,6 @@ export const WorkerSearchPage: React.FC = () => {
       {/* ===== Список ===== */}
       <List>
         {showListSkeleton ? (
-          /* Скелетон карточек */
           <>
             {Array.from({ length: 4 }).map((_, i) => (
               <HHCard key={`skel-${i}`}>
@@ -794,7 +833,11 @@ export const WorkerSearchPage: React.FC = () => {
                   <HHChips>
                     <div
                       className="skel"
-                      style={{ width: 120, height: 22, borderRadius: 999 }}
+                      style={{
+                        width: 120,
+                        height: 22,
+                        borderRadius: 999,
+                      }}
                     />
                     <div
                       className="skel"
@@ -877,7 +920,6 @@ export const WorkerSearchPage: React.FC = () => {
             ))}
           </>
         ) : results.length === 0 ? (
-          /* ===== EMPTY STATE ===== */
           <div
             style={{
               gridColumn: "span 2",
@@ -902,9 +944,14 @@ export const WorkerSearchPage: React.FC = () => {
             />
 
             <div className="actions">
-              {/* <button type="button" className="btn" onClick={resetAll}>
+              {/* теперь эта кнопка реально работает */}
+              <button
+                type="button"
+                className="btn"
+                onClick={resetAll} // <<< add
+              >
                 Сбросить фильтры
-              </button> */}
+              </button>
 
               <button
                 type="button"
@@ -923,8 +970,8 @@ export const WorkerSearchPage: React.FC = () => {
                         ) || 0;
                       const max =
                         Number(
-                          (getValues().maxPrice || "").replace(/\D/g, "")
-                        ) || 1_000_000_000;
+                          (getValues().maxPrice || "").replace(/\D/g, ""
+                          )) || 1_000_000_000;
                       const [mn, mx] = min <= max ? [min, max] : [max, min];
                       setApplied({
                         professions: professionId,
@@ -950,7 +997,6 @@ export const WorkerSearchPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          /* ===== Обычные карточки ===== */
           results.map((row: SearchWorker) => (
             <HHCard
               key={row.id}
@@ -959,7 +1005,6 @@ export const WorkerSearchPage: React.FC = () => {
                 row.professionId
               )}`}
             >
-              {/* LEFT */}
               <HHLeft>
                 <HHAvatar
                   $src={
@@ -972,13 +1017,17 @@ export const WorkerSearchPage: React.FC = () => {
                 </HHAvatar>
               </HHLeft>
 
-              {/* CENTER */}
               <HHMid>
                 <HHHead>
                   <div>
-                  <Link style={{textDecoration: 'none'}} to={{ pathname: `/find/worker/${encodeURIComponent(row.id)}` }}>
-                    <HHName>{fio(row.worker?.user)}</HHName>
-                  </Link>
+                    <Link
+                      style={{ textDecoration: "none" }}
+                      to={{
+                        pathname: `/find/worker/${encodeURIComponent(row.id)}`,
+                      }}
+                    >
+                      <HHName>{fio(row.worker?.user)}</HHName>
+                    </Link>
                     <HHSub>
                       {fmtUpdated(row.updatedAt) !== "—"
                         ? "Обновлено " + fmtUpdated(row.updatedAt)
@@ -1000,7 +1049,6 @@ export const WorkerSearchPage: React.FC = () => {
                       </HHStatus>
                     )}
 
-                    {/* необязательно, но удобно показывать попадание в зону */}
                     {typeof (row as any).inArea === "boolean" && (
                       <HHStatus $tone={row.inArea ? "blue" : "gray"}>
                         {row.inArea ? "В радиусе" : "Далеко"}
@@ -1023,7 +1071,7 @@ export const WorkerSearchPage: React.FC = () => {
                   <li>
                     <span className="k">Занятость:</span>
                     <span className="v">
-                    {t(`worker.jobTypes.${row.jobType}`)}
+                      {t(`worker.jobTypes.${row.jobType}`)}
                     </span>
                   </li>
                   <li>
@@ -1045,7 +1093,6 @@ export const WorkerSearchPage: React.FC = () => {
                 </HHBottom>
               </HHMid>
 
-              {/* RIGHT */}
               <HHRight>
                 <IconBtn title="Поделиться" aria-label="Поделиться">
                   <Share2 size={18} />
@@ -1080,7 +1127,7 @@ export const WorkerSearchPage: React.FC = () => {
         categories={profCats}
         lang={lang}
         popularIds={[]}
-        selectedId={professionId} // ← показываем текущий выбор
+        selectedId={professionId}
         onSelect={(p: any) => {
           setProfessionId(p.id);
           setApplied((prev) => ({ ...(prev ?? {}), professions: p.id }));
