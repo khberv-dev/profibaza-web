@@ -383,17 +383,19 @@ export default function LandingPage() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                 />
+                <Link to='/find'>
                 <FancyRound type="button" title={t("filters") || "Фильтры"}>
                   <FiSliders size={18} />
-                </FancyRound>
-                <FancySubmit type="submit">{t("nav.find")}</FancySubmit>
+                </FancyRound></Link>
+                
+                <Link to='/find'><FancySubmit>{t("nav.find")}</FancySubmit></Link>
               </FancySearch>
             </motion.form>
 
             <motion.div variants={fadeUp(0.1)} style={{ marginTop: 10 }}>
               <HHAltLinkRow>
                 <Link
-                  to="/hire"
+                  to="/register"
                   style={{
                     textDecoration: "none",
                     color: "#fff",
@@ -602,7 +604,7 @@ export default function LandingPage() {
 
       {/* === SECTION B: Почему PROFIBAZA (двухколоночный Apple-лайк блок) === */}
       <section
-        id="why"
+        id="about"
         style={{ background: "#f6f7fb", padding: "88px 0 96px" }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
@@ -754,6 +756,7 @@ export default function LandingPage() {
 
               {/* Низ: минимальная статистика + CTA */}
               <motion.div
+               id="roles"
                 variants={fadeUp(0.06)}
                 style={{ gridColumn: "span 12" }}
               >

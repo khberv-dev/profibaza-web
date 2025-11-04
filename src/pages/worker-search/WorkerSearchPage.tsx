@@ -544,8 +544,6 @@ export const WorkerSearchPage: React.FC = () => {
 
         <SearchBtn onClick={onSearch}>Найти</SearchBtn>
 
-
-
         {/* <<< add: кнопка сброса фильтров */}
        
         {/* >>> end add */}
