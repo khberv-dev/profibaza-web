@@ -12,6 +12,7 @@ import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
 import { userApi } from "../../../shared/endpoints/user";
+import { authApi } from "../../../shared/endpoints/auth"; // 👈 NEW
 import OTPCode from "./components/OTPCode";
 
 /* ---------- оформление страницы ---------- */
@@ -111,6 +112,8 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("phone");
   const [sending, setSending] = useState(false);
   const [phoneDigits, setPhoneDigits] = useState<string>("");
+
+  // 👇 нужны для resetPassword по старому типу
   const [requestId, setRequestId] = useState<string>("");
   const [codeValue, setCodeValue] = useState<string>("");
 
@@ -122,7 +125,7 @@ export default function ForgotPasswordPage() {
     reset: resetPhone,
   } = useForm<PhoneForm>({ defaultValues: { phone: "" }, mode: "onChange" });
 
-  // шаг 2 — код (эмуляция)
+  // шаг 2 — код
   const {
     control: codeControl,
     handleSubmit: submitCode,
@@ -143,7 +146,9 @@ export default function ForgotPasswordPage() {
   });
   const pwd = watchPwd("password");
 
-  /* ====== Шаг 1: телефон ====== */
+  /* ====== Шаг 1: телефон ======
+     тут оставляем userApi.requestResetPassword,
+     чтобы получить requestId, а код в SMS отправляет бэкенд */
   const onSendPhone = async (v: PhoneForm) => {
     const digits = v.phone.replace(/\D/g, "");
     if (digits.length !== 12) {
@@ -152,9 +157,12 @@ export default function ForgotPasswordPage() {
     }
     try {
       setSending(true);
+
+      // старый сценарий: получаем requestId (он нужен для resetPassword)
       const reqId = await userApi.requestResetPassword(digits);
       setRequestId(reqId);
       setPhoneDigits(digits);
+
       setStep("code");
       resetCode({ code: "" });
     } catch (e: any) {
@@ -173,22 +181,47 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  /* ====== Шаг 2: код ====== */
-  const onCheckCode = (v: CodeForm) => {
-    if (!/^\d{5}$/.test(v.code)) {
-      setCodeError("code", { message: t("otpHelper") as string });
+  /* ====== Шаг 2: код ======
+     теперь вместо '00000' используем твой /auth/verify-otp */
+  const onCheckCode = async (v: CodeForm) => {
+    const code = v.code.replace(/\D/g, "");
+
+    if (!/^\d{5}$/.test(code)) {
+      setCodeError("code", { message: t("otpRequired" as any) as string });
       return;
     }
-    if (v.code !== "00000") {
-      setCodeError("code", { message: t("wrongCode") as string });
-      return;
+
+    try {
+      setSending(true);
+
+      // ✅ реальная проверка кода
+      await authApi.verifyOtp({
+        phone: phoneDigits,
+        code,
+      });
+
+      // сохраним код, он нужен для resetPassword (тип { requestId, code, password })
+      setCodeValue(code);
+      setStep("password");
+      resetPwd({ password: "", confirm: "" });
+    } catch (e: any) {
+      let msg = t("otpInvalid" as any) as string;
+      if (isAxiosError(e) && e.response?.data) {
+        const data = e.response.data;
+        if (typeof data === "string") msg = data;
+        else if (typeof data === "object") {
+          const firstVal = Object.values(data)[0];
+          if (typeof firstVal === "string") msg = firstVal;
+        }
+      }
+      setCodeError("code", { message: msg });
+    } finally {
+      setSending(false);
     }
-    setCodeValue(v.code);
-    setStep("password");
-    resetPwd({ password: "", confirm: "" });
   };
 
-  /* ====== Шаг 3: пароль ====== */
+  /* ====== Шаг 3: пароль ======
+     ничего не ломаем: используем { requestId, code: codeValue, password } */
   const onSetPassword = async (v: PwdForm) => {
     if (v.password.length < 8) {
       setPwdError("password", { message: t("passwordHelper") as string });
@@ -200,11 +233,13 @@ export default function ForgotPasswordPage() {
     }
     try {
       setSending(true);
+
       await userApi.resetPassword({
         requestId,
         code: codeValue,
         password: v.password,
       });
+
       navigate("/login", { state: { phone: phoneDigits } });
     } catch (e: any) {
       let msg = t("loginFailed");
@@ -291,9 +326,10 @@ export default function ForgotPasswordPage() {
             </Stepper>
           </Header>
 
+          {/* компонент с 5 ячейками кода */}
           <OTPCode control={codeControl} name="code" length={5} />
 
-          <CustomButton fullWidth type="submit">
+          <CustomButton fullWidth type="submit" loading={sending}>
             {t("continue")}
           </CustomButton>
 
@@ -315,8 +351,6 @@ export default function ForgotPasswordPage() {
               {t("changePhone")}
             </button>
           </LinksRow>
-
-          <ErrorMsg style={{ color: "#6b7280" }}>{t("demoCodeHint")}</ErrorMsg>
         </AuthCard>
       )}
 

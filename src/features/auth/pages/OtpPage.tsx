@@ -7,7 +7,7 @@ import styled from "@emotion/styled";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { FaUserTie, FaUser } from "react-icons/fa6";
 import { PiCheckBold } from "react-icons/pi";
-
+import { authApi } from "../../../shared/endpoints/auth";
 import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
@@ -30,6 +30,7 @@ import {
 } from "../login-style";
 import { DatePopoverInput } from "../../../components/custom-date-input/DatePopoverInput";
 import dayjs from "dayjs";
+import { useState, useEffect } from "react";
 
 /* ---------- типы формы ---------- */
 type FormValues = {
@@ -43,9 +44,10 @@ type FormValues = {
   clientKind?: "PERSON" | "LEGAL";
   gender: "MALE" | "FEMALE";
   birthday: string;
+  otp: string;
 };
 
-/* ---------- стили выбора роли (карточки) ---------- */
+/* ---------- стили ---------- */
 const RoleWrap = styled.div`
   display: grid;
   gap: 8px;
@@ -63,22 +65,74 @@ const RoleGrid = styled.div`
   gap: 12px;
 `;
 
+const PhoneRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+`;
+
+const PhoneCol = styled.div`
+  flex: 1;
+`;
+
+const SmallButton = styled.button<{ loading?: boolean }>`
+  margin-top: 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #1e5cfb;
+  background: #1e5cfb;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: ${({ loading }) => (loading ? 0.7 : 1)};
+  pointer-events: ${({ loading }) => (loading ? "none" : "auto")};
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+
+  &:hover {
+    background: #234fe0;
+    box-shadow: 0 8px 18px rgba(30, 92, 251, 0.25);
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    box-shadow: none;
+  }
+`;
+
+const OtpHint = styled.div`
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+`;
+
+const OtpSuccess = styled.div`
+  font-size: 12px;
+  color: #16a34a;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
 const RoleCard = styled.label<{ active?: boolean; hasError?: boolean }>`
   position: relative;
   display: grid;
   grid-template-columns: 44px 1fr;
   gap: 12px;
   align-items: center;
-  /* место под галочку справа */
   padding: 12px 44px 12px 12px;
 
-  /* при active — прозрачная граница, ободок рисуем через background */
   border: 1px solid
     ${({ active, hasError }) =>
       hasError ? "#ef4444" : active ? "transparent" : "rgba(15,18,25,.12)"};
   border-radius: 12px;
 
-  /* красивый активный ободок */
   background: ${({ active }) =>
     active
       ? "linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, #7aa2ff, #1E5CFB) border-box"
@@ -88,7 +142,6 @@ const RoleCard = styled.label<{ active?: boolean; hasError?: boolean }>`
   transition: border-color 0.15s, box-shadow 0.15s, transform 0.06s,
     background 0.2s;
 
-  /* тень при активной карточке */
   box-shadow: ${({ active }) =>
     active
       ? "0 8px 24px rgba(30,92,251,0.12)"
@@ -154,7 +207,6 @@ const ErrorMsg = styled.div`
   margin-top: 4px;
 `;
 
-/* синяя галочка в правом верхнем углу карточки */
 const RoleTick = styled.span`
   position: absolute;
   top: 10px;
@@ -169,7 +221,6 @@ const RoleTick = styled.span`
   box-shadow: 0 6px 16px rgba(30, 92, 251, 0.3);
 `;
 
-/* ——— компактный сегмент «Юр / Физ» (CLIENT) ——— */
 const MiniSegWrap = styled.div`
   margin-top: 8px;
   display: grid;
@@ -235,23 +286,112 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { mutateAsync: register, isPending } = useRegister();
 
-  const { control, handleSubmit, setError, watch } = useForm<FormValues>({
-    defaultValues: {
-      name: "",
-      surname: "",
-      middleName: "",
-      phone: "",
-      password: "",
-      confirmPassword: "",
-      role: "",
-      clientKind: "PERSON",
-      gender: "MALE",
-      birthday: "",
-    },
-    mode: "onChange",
-  });
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+
+  // NEW: статус верификации
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  const { control, handleSubmit, setError, watch, setValue, clearErrors } =
+    useForm<FormValues>({
+      defaultValues: {
+        name: "",
+        surname: "",
+        middleName: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+        role: "",
+        clientKind: "PERSON",
+        gender: "MALE",
+        birthday: "",
+        otp: "",
+      },
+      mode: "onChange",
+    });
 
   const pwd = watch("password");
+  const phoneValue = watch("phone");
+  const otpValue = watch("otp");
+
+  const handleSendOtp = async () => {
+    if (isOtpVerified) return;
+
+    const rawPhone = phoneValue.replace(/\D/g, "");
+
+    if (rawPhone.length !== 12) {
+      setError("phone", { message: t("phoneInvalid") });
+      return;
+    }
+
+    try {
+      setIsSendingOtp(true);
+      await authApi.sendOtp(rawPhone);
+      setOtpSent(true);
+    } catch (e: any) {
+      let msg =
+        (t("otpSendFailed" as any) as string) || "Не удалось отправить код";
+      if (isAxiosError(e) && e.response?.data) {
+        const data = e.response.data;
+        if (typeof data === "string") msg = data;
+        else if (typeof data === "object") {
+          const firstVal = Object.values(data)[0];
+          if (firstVal && typeof firstVal === "string") msg = firstVal;
+        }
+      }
+      setError("phone", { message: msg });
+      setOtpSent(false);
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  // helper для проверки кода — без изменения value инпута
+  const verifyOtpAuto = async (codeDigits: string) => {
+    const rawPhone = phoneValue.replace(/\D/g, "");
+    if (rawPhone.length !== 12) {
+      setError("phone", { message: t("phoneInvalid") });
+      return;
+    }
+
+    try {
+      setIsVerifyingOtp(true);
+      await authApi.verifyOtp({
+        phone: rawPhone,
+        code: codeDigits,
+      });
+
+      setIsOtpVerified(true);
+      clearErrors("otp");
+    } catch (e: any) {
+      setIsOtpVerified(false);
+
+      let msg = t("otpInvalid" as any) || "Неверный или просроченный код";
+      if (isAxiosError(e) && e.response?.data) {
+        const data = e.response.data;
+        if (typeof data === "string") msg = data;
+        else if (typeof data === "object") {
+          const firstVal = Object.values(data)[0];
+          if (firstVal && typeof firstVal === "string") msg = firstVal;
+        }
+      }
+      setError("otp", { message: msg });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // 💡 авто-verify при 5 цифрах, без setValue → ничего не дёргается
+  useEffect(() => {
+    if (!otpValue) return;
+    const digits = otpValue.replace(/\D/g, "");
+
+    // не трогаем value, только проверяем
+    if (digits.length === 5 && otpSent && !isOtpVerified && !isVerifyingOtp) {
+      void verifyOtpAuto(digits);
+    }
+  }, [otpValue, otpSent, isOtpVerified, isVerifyingOtp]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onSubmit = async (values: FormValues) => {
     const rawPhone = values.phone.replace(/\D/g, "");
@@ -269,9 +409,14 @@ const RegisterPage = () => {
       return;
     }
 
-    // Итоговая роль:
-    // CLIENT -> (PERSON => CLIENT, LEGAL => LEGAL)
-    // WORKER -> WORKER
+    if (!isOtpVerified) {
+      setError("otp", {
+        message:
+          (t("otpRequired" as any) as string) || "Avval SMS kodini tasdiqlang",
+      });
+      return;
+    }
+
     let roleToSend: "CLIENT" | "LEGAL" | "WORKER";
     if (values.role === "WORKER") {
       roleToSend = "WORKER";
@@ -290,6 +435,7 @@ const RegisterPage = () => {
         gender: values.gender,
         birthday: values.birthday,
       });
+
       navigate("/login", { state: { phone: rawPhone } });
     } catch (e: any) {
       let serverMsg = t("loginFailed");
@@ -348,17 +494,67 @@ const RegisterPage = () => {
             placeholder={t("middleName")}
           />
 
+          {/* Телефон + кнопка */}
+          <PhoneRow>
+            <PhoneCol>
+              <CustomInput
+                control={control}
+                name="phone"
+                type="phone"
+                placeholder="+998 (__) ___-__-__"
+                disabled={isOtpVerified}
+                rules={{
+                  required: t("phoneRequired") as string,
+                  validate: (v: string) =>
+                    v.replace(/\D/g, "").length === 12 ||
+                    (t("phoneInvalid") as string),
+                }}
+              />
+            </PhoneCol>
+
+            <SmallButton
+              type="button"
+              onClick={handleSendOtp}
+              loading={isSendingOtp}
+              disabled={isSendingOtp || isOtpVerified}
+            >
+              {isOtpVerified
+                ? t("otpVerifiedBtn" as any) || "Tasdiqlandi"
+                : isSendingOtp
+                ? t("otpSending" as any) || "Отправка..."
+                : t("otpSend" as any) || "Отправить код"}
+            </SmallButton>
+          </PhoneRow>
+
+          {otpSent && !isOtpVerified && (
+            <OtpHint>
+              {t("otpSentHint" as any) ||
+                "Kod ko‘rsatilgan raqamga yuborildi. Quyida kiriting."}
+            </OtpHint>
+          )}
+
+          {isOtpVerified && (
+            <OtpSuccess>
+              {t("otpVerified" as any) || "Kod muvaffaqiyatli tasdiqlandi"}
+            </OtpSuccess>
+          )}
+
+          {/* OTP — маска "_____", максимум 5 цифр */}
           <CustomInput
             control={control}
-            name="phone"
-            type="phone"
-            placeholder="+998 (__) ___-__-__"
+            name="otp"
+            placeholder="_ _ _ _ _"
+            disabled={isOtpVerified}
             rules={{
-              required: t("phoneRequired") as string,
+              required:
+                (t("otpRequired" as any) as string) || "SMS kodini kiriting",
               validate: (v: string) =>
-                v.replace(/\D/g, "").length === 12 ||
-                (t("phoneInvalid") as string),
+                /^\d{5}$/.test(v) ||
+                (t("otpRequired" as any) as string) ||
+                "SMS kodini kiriting",
             }}
+            // если CustomInput поддерживает inputProps, можно передать:
+            // inputMode="numeric"
           />
 
           <FieldLabel>Пол</FieldLabel>
@@ -428,13 +624,11 @@ const RegisterPage = () => {
             label="Дата рождения"
             placeholder="ГГГГ-ММ-ДД"
             required
-            // Ограничим возраст: от 16 до 100 лет
             min={dayjs().subtract(100, "year").format("YYYY-MM-DD")}
             max={dayjs().subtract(16, "year").format("YYYY-MM-DD")}
             rules={{
               required: "Укажите дату рождения",
               validate: (v: string) => {
-                // формат YYYY-MM-DD
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(v))
                   return "Введите в формате YYYY-MM-DD";
                 const d = dayjs(v, "YYYY-MM-DD", true);
@@ -447,7 +641,7 @@ const RegisterPage = () => {
             }}
           />
 
-          {/* Выбор основной роли */}
+          {/* Выбор роли */}
           <Controller
             name="role"
             control={control}
@@ -458,7 +652,6 @@ const RegisterPage = () => {
                 <RoleWrap>
                   <FieldLabel>{t("role")}</FieldLabel>
                   <RoleGrid>
-                    {/* CLIENT */}
                     <RoleCard
                       active={field.value === "CLIENT"}
                       hasError={hasError}
@@ -485,7 +678,6 @@ const RegisterPage = () => {
                       </RoleText>
                     </RoleCard>
 
-                    {/* WORKER */}
                     <RoleCard
                       active={field.value === "WORKER"}
                       hasError={hasError}
@@ -513,7 +705,6 @@ const RegisterPage = () => {
                     </RoleCard>
                   </RoleGrid>
 
-                  {/* Подблок выбора подтипа — только при CLIENT */}
                   {field.value === "CLIENT" && (
                     <Controller
                       name="clientKind"
@@ -528,7 +719,6 @@ const RegisterPage = () => {
                           </MiniSegLabel>
 
                           <MiniSegGroup>
-                            {/* ЮР лицо — слева */}
                             <MiniSegOption active={cField.value === "LEGAL"}>
                               <MiniHiddenRadio
                                 type="radio"
@@ -540,7 +730,6 @@ const RegisterPage = () => {
                               {t("workerKindLegal")}
                             </MiniSegOption>
 
-                            {/* Физ лицо — справа */}
                             <MiniSegOption active={cField.value === "PERSON"}>
                               <MiniHiddenRadio
                                 type="radio"
