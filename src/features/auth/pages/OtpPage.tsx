@@ -5,7 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { isAxiosError } from "axios";
 import styled from "@emotion/styled";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
-import { FaUserTie, FaUser } from "react-icons/fa6";
+import { FaUserTie, FaUser, FaHandHoldingDollar } from "react-icons/fa6";
 import { PiCheckBold } from "react-icons/pi";
 import { authApi } from "../../../shared/endpoints/auth";
 import { CustomInput } from "../../../components/custom-input";
@@ -40,13 +40,18 @@ type FormValues = {
   phone: string;
   password: string;
   confirmPassword: string;
-  role: "CLIENT" | "WORKER" | "";
+
+  role: "CLIENT" | "WORKER" | "INVESTOR" | ""; // ✅ добавили
+
   clientKind?: "PERSON" | "LEGAL";
   gender: "MALE" | "FEMALE";
   birthday: string;
   otp: string;
-};
 
+  // ✅ новые необязательные поля
+  activityType?: string;
+  investmentAmount?: number;
+};
 /* ---------- стили ---------- */
 const RoleWrap = styled.div`
   display: grid;
@@ -307,6 +312,8 @@ const RegisterPage = () => {
         gender: "MALE",
         birthday: "",
         otp: "",
+        activityType: "",
+        investmentAmount: undefined,
       },
       mode: "onChange",
     });
@@ -417,12 +424,10 @@ const RegisterPage = () => {
       return;
     }
 
-    let roleToSend: "CLIENT" | "LEGAL" | "WORKER";
-    if (values.role === "WORKER") {
-      roleToSend = "WORKER";
-    } else {
-      roleToSend = values.clientKind === "LEGAL" ? "LEGAL" : "CLIENT";
-    }
+    let roleToSend: "CLIENT" | "LEGAL" | "WORKER" | "INVESTOR";
+    if (values.role === "WORKER") roleToSend = "WORKER";
+    else if (values.role === "INVESTOR") roleToSend = "INVESTOR";
+    else roleToSend = values.clientKind === "LEGAL" ? "LEGAL" : "CLIENT";
 
     try {
       await register({
@@ -434,6 +439,18 @@ const RegisterPage = () => {
         role: roleToSend,
         gender: values.gender,
         birthday: values.birthday,
+
+        ...(roleToSend === "INVESTOR"
+          ? {
+              activityType: values.activityType?.trim() || undefined,
+              investmentAmount:
+                values.investmentAmount === undefined ||
+                values.investmentAmount === null ||
+                values.investmentAmount === ("" as any)
+                  ? undefined
+                  : Number(values.investmentAmount),
+            }
+          : {}),
       });
 
       navigate("/login", { state: { phone: rawPhone } });
@@ -703,6 +720,40 @@ const RegisterPage = () => {
                         <RoleDesc>{t("roleWorkerDesc")}</RoleDesc>
                       </RoleText>
                     </RoleCard>
+
+                    <RoleCard active={field.value === "INVESTOR"} hasError={hasError}>
+  <HiddenRadioMain
+    type="radio"
+    value="INVESTOR"
+    checked={field.value === "INVESTOR"}
+    onChange={() => {
+      field.onChange("INVESTOR");
+      // если переключились на инвестора — clientKind нам не нужен
+      setValue("clientKind", "PERSON");
+      clearErrors(["activityType", "investmentAmount"]);
+    }}
+    onBlur={field.onBlur}
+    name={field.name}
+  />
+
+  {field.value === "INVESTOR" && (
+    <RoleTick aria-hidden>
+      <PiCheckBold />
+    </RoleTick>
+  )}
+
+  <RoleIconBox>
+    <FaHandHoldingDollar />
+  </RoleIconBox>
+
+  <RoleText>
+    <RoleTitle>{t("roleInvestor" as any) || "Инвестор"}</RoleTitle>
+    <RoleDesc>
+      {t("roleInvestorDesc" as any) || "Партнёр / инвестор проекта"}
+    </RoleDesc>
+  </RoleText>
+</RoleCard>
+
                   </RoleGrid>
 
                   {field.value === "CLIENT" && (
@@ -745,6 +796,40 @@ const RegisterPage = () => {
                       )}
                     />
                   )}
+
+{watch("role") === "INVESTOR" && (
+  <>
+    <CustomInput
+      control={control}
+      name="activityType"
+      placeholder={t("activityType" as any) || "Вид деятельности (необязательно)"}
+      rules={{
+        // ❗ не required
+        validate: (v?: string) =>
+          !v || v.trim().length >= 2 || "Минимум 2 символа",
+      }}
+    />
+
+    <CustomInput
+      control={control}
+      name="investmentAmount"
+      type="number"
+      placeholder={
+        t("investmentAmount" as any) || "Сумма инвестиций (необязательно)"
+      }
+      rules={{
+        // ❗ не required
+        valueAsNumber: true as any, // если CustomInput прокидывает rules напрямую в RHF
+        validate: (v: any) =>
+          v === undefined ||
+          v === null ||
+          v === "" ||
+          (Number(v) > 0 || "Сумма должна быть больше 0"),
+      }}
+    />
+  </>
+)}
+
 
                   {hasError && <ErrorMsg>{fieldState.error?.message}</ErrorMsg>}
                 </RoleWrap>

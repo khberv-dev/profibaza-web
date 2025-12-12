@@ -3,6 +3,16 @@
   "forgotTitle": "Восстановление пароля",
   "forgotSubtitle": "Введите номер телефона — пришлём код для смены пароля",
   "demoCodeHint": "Тестовый код: 00000",
+  "roleInvestor": "Я инвестор",
+  "roleInvestorDesc": "Хочу инвестировать и развивать проекты на платформе",
+
+  "activityType": "Сфера деятельности",
+  "activityTypePlaceholder": "Напр.: строительство, IT, производство",
+  "activityTypeOptional": "Необязательно",
+
+  "investmentAmount": "Сумма инвестиций",
+  "investmentAmountPlaceholder": "Напр.: 50000000",
+  "investmentAmountOptional": "Необязательно",
   "newPasswordTitle": "Новый пароль",
   "otpSend": "Отправить код",
   "otpSending": "Отправка...",
@@ -255,7 +265,8 @@
     "roles": {
       "CLIENT": "Заказчик",
       "LEGAL": "Клиент (юр. лицо)",
-      "WORKER": "Исполнитель"
+      "WORKER": "Исполнитель",
+      "INVESTOR": "Инвестор"
     },
     "settings": "Настройки",
     "uploadAvatar": "Загрузить аватар",

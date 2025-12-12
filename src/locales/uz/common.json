@@ -4,6 +4,16 @@
   "forgotSubtitle": "Telefon raqamingizni kiriting — parolni almashtirish uchun kod yuboramiz",
   "forgotSend": "Kod yuborish",
   "remembered": "Parol esingizdami?",
+  "roleInvestor": "Men investor(man)",
+  "roleInvestorDesc": "Platformadagi loyihalarni rivojlantirish uchun investitsiya kiritaman",
+
+  "activityType": "Faoliyat turi",
+  "activityTypePlaceholder": "Masalan: qurilish, IT, ishlab chiqarish",
+  "activityTypeOptional": "Ixtiyoriy",
+
+  "investmentAmount": "Investitsiya summasi",
+  "investmentAmountPlaceholder": "Masalan: 50000000",
+  "investmentAmountOptional": "Ixtiyoriy",
   "newPassword": "Yangi parol",
   "otpSend": "Kod yuborish",
   "otpSending": "Yuborilmoqda...",
@@ -255,7 +265,8 @@
     "roles": {
       "CLIENT": "Buyurtmachi",
       "WORKER": "Ijrochi",
-      "LEGAL": "Buyurtmachi (yuridik shaxs)"
+      "LEGAL": "Buyurtmachi (yuridik shaxs)",
+      "INVESTOR": "Investor"
     },
     "settings": "Sozlamalar",
     "uploadAvatar": "Avatar yuklash",
