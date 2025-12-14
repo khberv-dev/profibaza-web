@@ -42,6 +42,7 @@ import AdminInvoicesPage from "../features/admin/AdminInvoicesPage";
 import { FindLayout } from "../layouts/FindLayout";
 import WorkerDetailPage from "../pages/worker-search/WorkerDetailPage";
 import { FindOrTopbarLayout } from "../layouts/FindOrTopbarLayout";
+import InvestorCreateProject from "../features/profile/pages/components/InvestorCreateProject";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -97,6 +98,15 @@ export const router = createBrowserRouter([
                 element: <RoleGuard allow={["CLIENT"]} />,
                 children: [
                   { path: "client/orders", element: <ClientOrdersPage /> },
+                ],
+              },
+              {
+                element: <RoleGuard allow={["INVESTOR"]} />,
+                children: [
+                  {
+                    path: "investor/projects/create",
+                    element: <InvestorCreateProject />,
+                  },
                 ],
               },
               {

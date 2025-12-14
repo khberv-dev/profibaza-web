@@ -727,6 +727,7 @@ export default function ProfilePage() {
       {data?.role === "WORKER" && <ProProfileSection role="WORKER" />}
       {data?.role === "LEGAL" && <ProProfileSection role="LEGAL" />}
       {data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
+      {data?.role === "INVESTOR" && <ProProfileSection role="INVESTOR" />}
       <div style={{ padding: 16 }}>
         {/* <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
         <AddLink href="#">{t("profile.add")}</AddLink>
