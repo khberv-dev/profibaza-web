@@ -6,14 +6,17 @@ import { updateLegalProfile } from "../endpoints/legal";
 export const LEGAL_ADDR_QK = ["legal", "address"] as const;
 export const LEGAL_ME_QK = ["legal", "me"] as const;
 
-/* PUT /client/update-address */
+// ✅ NEW
+export const INVESTOR_ME_QK = ["investor", "me"] as const;
+
 export const useUpdateLegalAddress = () =>
   useMutation({
     mutationFn: (dto: UpdateAddressDto) => clientApi.updateAddressLegal(dto),
-    onSuccess: () => {
-      // Попутно можно инвалиди́ровать /client/me, если используешь где-то ещё
-      // queryClient.invalidateQueries({ queryKey: CLIENT_ME_QK });
-    },
+  });
+
+export const useUpdateInvestorAddress = () =>
+  useMutation({
+    mutationFn: (dto: UpdateAddressDto) => clientApi.updateAddressInvestor(dto),
   });
 
 export const useLegalMe = (enabled: boolean) =>
@@ -24,6 +27,8 @@ export const useLegalMe = (enabled: boolean) =>
     staleTime: 5 * 60 * 1000,
     retry: 0,
   });
+
+// ✅ NEW
 
 export function useUpdateLegalProfile() {
   return useMutation({

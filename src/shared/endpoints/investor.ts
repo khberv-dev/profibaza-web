@@ -1,6 +1,8 @@
 // src/shared/modules/investor/endpoints/investor.ts
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { pickMessage } from "../../lib/pickMessage";
 import { api } from "../api/client";
+import { clientApi, UpdateAddressDto } from "./client";
 
 export type InvestorContact = {
   id?: string;
@@ -50,3 +52,19 @@ export async function getInvestorMe(
 
   return (data?.data ?? null) as InvestorMe | null;
 }
+
+export const INVESTOR_ME_QK = ["investor", "me"] as const;
+
+export const useInvestorMe = (enabled: boolean) =>
+  useQuery({
+    queryKey: INVESTOR_ME_QK,
+    queryFn: ({ signal }) => getInvestorMe(signal), // ✅ важно: пробрасываем signal
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
+
+export const useUpdateInvestorAddress = () =>
+  useMutation({
+    mutationFn: (dto: UpdateAddressDto) => clientApi.updateAddressInvestor(dto),
+  });

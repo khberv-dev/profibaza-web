@@ -78,35 +78,40 @@ export type SearchWorkerUser = {
 
 export type WorkerExperience = {
   id: string;
-  startedAt: number | null;   // 2024
-  endedAt: number | null;     // 2025 (или null — по настоящее время)
+  startedAt: number | null; // 2024
+  endedAt: number | null; // 2025 (или null — по настоящее время)
   jobPlace: string | null;
   jobDescription: string | null;
   workerProfessionId: string;
-  createdAt: string;          // ISO
-  updatedAt: string;          // ISO
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
 };
 
-export type OrderStatus = "NEW" | "IN_PROGRESS" | "DONE" | "CANCELED" | "REJECTED";
+export type OrderStatus =
+  | "NEW"
+  | "IN_PROGRESS"
+  | "DONE"
+  | "CANCELED"
+  | "REJECTED";
 
 export type OrderBrief = {
   id: string;
-  startAt: string | null;       // ISO
-  endAt: string | null;         // ISO
-  rejectedAt: string | null;    // ISO
-  deadline: string | null;      // ISO
+  startAt: string | null; // ISO
+  endAt: string | null; // ISO
+  rejectedAt: string | null; // ISO
+  deadline: string | null; // ISO
   description: string | null;
   status: OrderStatus | string; // бэкенд может прислать кастомные
   budget: number | null;
-  address1: string | null;      // область / город
-  address2: string | null;      // район
-  address3: string | null;      // улица / ориентир
-  files: string[];              // имена файлов/картинок
+  address1: string | null; // область / город
+  address2: string | null; // район
+  address3: string | null; // улица / ориентир
+  files: string[]; // имена файлов/картинок
   clientId: string | null;
   legalId: string | null;
   workerProfessionId: string;
-  createdAt: string;            // ISO
-  updatedAt: string;            // ISO
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
 };
 
 export type WorkerSchedule = {
@@ -119,8 +124,8 @@ export type WorkerSchedule = {
   saturday: boolean;
   sunday: boolean;
   workerProfessionId: string;
-  createdAt: string;            // ISO
-  updatedAt: string;            // ISO
+  createdAt: string; // ISO
+  updatedAt: string; // ISO
 };
 
 // если демо-материалы — это файлы, можно оставить как string[];
@@ -154,10 +159,10 @@ export type SearchWorker = {
   };
 
   // новое: детальные данные
-  orders?: OrderBrief[];            // из примера JSON
-  demos?: DemoFile[];               // демо-файлы/портфолио
+  orders?: OrderBrief[]; // из примера JSON
+  demos?: DemoFile[]; // демо-файлы/портфолио
   // необязательно, но удобно иметь сразу профессию
-  profession?: Profession;          // если API начинает отдавать объект
+  profession?: Profession; // если API начинает отдавать объект
 };
 
 /* ---------- API ---------- */
@@ -233,6 +238,22 @@ export const clientApi = {
   updateAddressLegal: async (dto: UpdateAddressDto): Promise<boolean> => {
     const { data } = await api.put<UpdateAddressResp>(
       "/legal/update-address",
+      dto
+    );
+    if (!data?.ok) {
+      let msg = "Не удалось сохранить адрес";
+      const m = data?.message;
+      if (typeof m === "string") msg = m;
+      else if (m && typeof m === "object") {
+        msg = (m as any).ru || (m as any).uz || Object.values(m)[0] || msg;
+      }
+      throw new Error(msg);
+    }
+    return true;
+  },
+  updateAddressInvestor: async (dto: UpdateAddressDto): Promise<boolean> => {
+    const { data } = await api.put<UpdateAddressResp>(
+      "/investor/update-address",
       dto
     );
     if (!data?.ok) {

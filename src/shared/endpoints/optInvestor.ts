@@ -8,6 +8,17 @@ export type InvestorContactRow = {
   type?: string | null; // "PHONE" | "EMAIL" | "TELEGRAM"
 };
 
+export type InvestorEmploymentRow = {
+  id: string;
+  profession?: string | null;
+  count?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  employmentType?: string | null;
+  workGraph?: string | null;
+  projectId?: string | null;
+};
+
 export type InvestorProjectRow = {
   id: string;
   status?: string | null; // PLANNED / CONSTRUCTION / LAUNCH / OPERATING
@@ -15,6 +26,8 @@ export type InvestorProjectRow = {
   partners?: string[] | null;
   description?: string | null;
   investorId: string;
+
+  employment?: InvestorEmploymentRow[] | null;
 };
 
 export type InvestorRow = {
@@ -46,13 +59,17 @@ type Resp = {
   message?: any;
 };
 
-export async function getInvestors(signal?: AbortSignal): Promise<InvestorRow[]> {
+export async function getInvestors(
+  signal?: AbortSignal
+): Promise<InvestorRow[]> {
   const { data } = await api.get<Resp>("/opt/investor", { signal });
 
   if (data?.ok !== true) {
     const msg =
       pickMessage?.(data?.message) ??
-      (typeof (data as any)?.message === "string" ? (data as any).message : null) ??
+      (typeof (data as any)?.message === "string"
+        ? (data as any).message
+        : null) ??
       "Не удалось загрузить инвесторов";
     throw new Error(msg);
   }

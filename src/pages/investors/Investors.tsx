@@ -5,12 +5,13 @@ import { FiSearch, FiMapPin, FiClock, FiLock } from "react-icons/fi";
 
 import { useAuthStore } from "../../shared/stores/auth";
 
-
 import * as S from "./style";
-import {   getInvestors,
-    InvestorRow,
-    InvestorContactRow,
-    InvestorProjectRow, } from "../../shared/endpoints/optInvestor";
+import {
+  getInvestors,
+  InvestorRow,
+  InvestorContactRow,
+  InvestorProjectRow,
+} from "../../shared/endpoints/optInvestor";
 
 /* ================= helpers ================= */
 
@@ -59,7 +60,11 @@ const normalizeContact = (c: InvestorContactRow) => {
   const raw = (c?.contact ?? "").trim();
   const type = (c?.type ?? "").toUpperCase();
   const label =
-    type === "PHONE" ? "Телефон" : type === "EMAIL" ? "Email" : type || "Контакт";
+    type === "PHONE"
+      ? "Телефон"
+      : type === "EMAIL"
+      ? "Email"
+      : type || "Контакт";
   return { label, value: raw };
 };
 
@@ -112,6 +117,33 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 /* ================= page ================= */
+
+const clean = (s?: string | null) => (s ?? "").trim();
+
+const getProfessionPreview = (
+  inv: InvestorRow,
+  max = 5
+): { text: string; rest: number; total: number } => {
+  const projs = Array.isArray(inv.projects) ? inv.projects : [];
+
+  const all = projs.flatMap((p) =>
+    Array.isArray((p as any).employment) ? (p as any).employment : []
+  );
+
+  const names = Array.from(
+    new Set(all.map((e: any) => clean(e?.profession)).filter(Boolean))
+  );
+
+  const total = names.length;
+  const head = names.slice(0, max);
+  const rest = Math.max(0, total - head.length);
+
+  return {
+    text: head.length ? head.join(", ") : "—",
+    rest,
+    total,
+  };
+};
 
 export default function InvestorsPage() {
   const navigate = useNavigate();
@@ -171,7 +203,8 @@ export default function InvestorsPage() {
           .toLowerCase()
           .includes(q);
 
-      const byAct = f.activity === "ANY" || (it.activityType ?? "") === f.activity;
+      const byAct =
+        f.activity === "ANY" || (it.activityType ?? "") === f.activity;
 
       const byStatus =
         f.status === "ANY" ||
@@ -196,7 +229,8 @@ export default function InvestorsPage() {
           <S.TitleRow>
             <S.Title>Инвесторы</S.Title>
             <S.Subtitle>
-              Проекты, которые ищут специалистов на этапе строительства и запуска.
+              Проекты, которые ищут специалистов на этапе строительства и
+              запуска.
             </S.Subtitle>
           </S.TitleRow>
 
@@ -318,7 +352,9 @@ export default function InvestorsPage() {
               const status = proj?.status ?? null;
 
               const contacts = Array.isArray(inv.contacts) ? inv.contacts : [];
-              const normalized = contacts.map(normalizeContact).filter((x) => x.value);
+              const normalized = contacts
+                .map(normalizeContact)
+                .filter((x) => x.value);
 
               const viewHref = `/investors/${inv.id}`; // сделаем detail позже, но кнопка уже готова
               const applyHref = `/app/investors/apply?investorId=${inv.id}`; // можешь заменить на свой роут
@@ -328,7 +364,9 @@ export default function InvestorsPage() {
                   <S.CardHead>
                     <S.LogoCircle>
                       {/* если появится logoUrl — поставим img */}
-                      <span>{(inv.name ?? "INV").slice(0, 2).toUpperCase()}</span>
+                      <span>
+                        {(inv.name ?? "INV").slice(0, 2).toUpperCase()}
+                      </span>
                     </S.LogoCircle>
 
                     <div style={{ minWidth: 0 }}>
@@ -371,10 +409,26 @@ export default function InvestorsPage() {
 
                   <S.Block>
                     <S.BlockTitle>Требуемые специалисты</S.BlockTitle>
-                    <S.Badges>
-                      {/* пока API не даёт — заглушка */}
-                      <S.Badge>—</S.Badge>
-                    </S.Badges>
+
+                    {(() => {
+                      const p = getProfessionPreview(inv, 5);
+
+                      return (
+                        <S.Badges>
+                          <S.Badge
+                            title={
+                              p.total > 0 ? `Всего: ${p.total}` : undefined
+                            }
+                          >
+                            {p.text}
+                          </S.Badge>
+
+                          {p.rest > 0 && (
+                            <S.Badge title="Ещё специалисты">+{p.rest}</S.Badge>
+                          )}
+                        </S.Badges>
+                      );
+                    })()}
                   </S.Block>
 
                   <S.Block>
@@ -388,8 +442,14 @@ export default function InvestorsPage() {
                               <S.ContactLabel>{c.label}</S.ContactLabel>
                               <S.ContactValue
                                 href={contactToHref(c.label, c.value)}
-                                target={c.value.startsWith("@") ? "_blank" : undefined}
-                                rel={c.value.startsWith("@") ? "noreferrer" : undefined}
+                                target={
+                                  c.value.startsWith("@") ? "_blank" : undefined
+                                }
+                                rel={
+                                  c.value.startsWith("@")
+                                    ? "noreferrer"
+                                    : undefined
+                                }
                               >
                                 {c.value}
                               </S.ContactValue>
@@ -405,7 +465,10 @@ export default function InvestorsPage() {
                         <span>Контакты доступны после входа</span>
                         <S.GateBtn
                           onClick={() => {
-                            const url = new URL("/login", window.location.origin);
+                            const url = new URL(
+                              "/login",
+                              window.location.origin
+                            );
                             url.searchParams.set("redirect", "/investors");
                             window.location.href = url.toString();
                           }}

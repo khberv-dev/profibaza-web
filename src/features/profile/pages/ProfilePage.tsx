@@ -58,6 +58,11 @@ import {
   useUpdateLegalAddress,
 } from "../../../shared/modules/legal";
 
+import {
+  useInvestorMe,
+  INVESTOR_ME_QK as INVESTOR_ME_QUERY_KEY,
+} from "../../../shared/modules/useInvestor";
+
 // Клиентское API: адрес + /client/me
 import {
   useUpdateClientAddress,
@@ -71,6 +76,7 @@ import CustomSelect, {
 import ProProfileSection from "./ProProfileSection";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditBtn } from "../pro-profile-section.style";
+import { useUpdateInvestorAddress } from "../../../shared/endpoints/investor";
 
 /* — аккуратная карточка адреса — */
 /* — hh-like address card — */
@@ -249,7 +255,16 @@ export default function ProfilePage() {
   const isLegal = data?.role === "LEGAL";
   const { data: legalMe } = useLegalMe(!!isLegal);
 
-  const activeProfile = isClient ? clientMe : isLegal ? legalMe : undefined;
+  const isInvestor = data?.role === "INVESTOR";
+  const { data: investorMe } = useInvestorMe(!!isInvestor);
+
+  const activeProfile = isClient
+    ? clientMe
+    : isLegal
+    ? legalMe
+    : isInvestor
+    ? investorMe
+    : undefined;
 
   const [regionId, setRegionId] = useState<number | undefined>(undefined);
   const [districtId, setDistrictId] = useState<number | undefined>(undefined);
@@ -299,7 +314,7 @@ export default function ProfilePage() {
   // 1: region
   useEffect(() => {
     if (!isEditingAddress) return;
-    if (!(isClient || isLegal)) return;
+    if (!(isClient || isLegal || isInvestor)) return;
     if (!activeProfile) return;
     if (!regions) return;
     if (hydrateStage !== 0) return;
@@ -383,8 +398,18 @@ export default function ProfilePage() {
     useUpdateClientAddress();
   const { mutate: saveLegalAddress, isPending: savingLegalAddress } =
     useUpdateLegalAddress();
+
+  const { mutate: saveInvestorAddress, isPending: savingInvestorAddress } =
+    useUpdateInvestorAddress();
+
   const savingAddress = (
-    isClient ? savingClientAddress : isLegal ? savingLegalAddress : false
+    isClient
+      ? savingClientAddress
+      : isLegal
+      ? savingLegalAddress
+      : isInvestor
+      ? savingInvestorAddress
+      : false
   ) as boolean;
 
   const [addrSaved, setAddrSaved] = useState<null | "ok" | "err">(null);
@@ -411,6 +436,8 @@ export default function ProfilePage() {
       ? saveClientAddress
       : isLegal
       ? saveLegalAddress
+      : isInvestor
+      ? saveInvestorAddress
       : null;
     if (!mutate) return;
 
@@ -426,7 +453,13 @@ export default function ProfilePage() {
           await Promise.allSettled([
             qc.invalidateQueries({ queryKey: USER_QUERY_KEY }),
             qc.invalidateQueries({
-              queryKey: isClient ? CLIENT_ME_QUERY_KEY : LEGAL_ME_QUERY_KEY,
+              queryKey: isClient
+                ? CLIENT_ME_QUERY_KEY
+                : isLegal
+                ? LEGAL_ME_QUERY_KEY
+                : isInvestor
+                ? INVESTOR_ME_QUERY_KEY
+                : USER_QUERY_KEY,
             }),
           ]);
 
@@ -462,20 +495,19 @@ export default function ProfilePage() {
     return safeFormatDate(activeProfile?.updatedAt || activeProfile?.createdAt);
   }, [activeProfile?.updatedAt, activeProfile?.createdAt]);
 
-
   const navigate = useNavigate();
 
-const handleLogout = () => {
-  try {
-    localStorage.removeItem("pb_auth");
-    sessionStorage.removeItem("pb_auth");
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("pb_auth");
+      sessionStorage.removeItem("pb_auth");
 
-    // если есть другие auth-ключи — можно добавить тут
-    // localStorage.removeItem("token");
-  } finally {
-    navigate("/login", { replace: true });
-  }
-};
+      // если есть другие auth-ключи — можно добавить тут
+      // localStorage.removeItem("token");
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  };
 
   return (
     <Wrap>
@@ -599,8 +631,8 @@ const handleLogout = () => {
                 </NavLink>
 
                 <LogoutBtn type="button" onClick={handleLogout}>
-    {t("common.logout") || "Выйти"}
-  </LogoutBtn>
+                  {t("common.logout") || "Выйти"}
+                </LogoutBtn>
               </Actions>
 
               {(avatarLoading || uploading) && (
@@ -646,7 +678,7 @@ const handleLogout = () => {
         </Grid2>
       </div>
 
-      {(isClient || isLegal) && (
+      {(isClient || isLegal || isInvestor) && (
         <AddressCard>
           <AddressHeader>
             <div style={{ display: "grid", gap: 2 }}>
@@ -765,5 +797,3 @@ const handleLogout = () => {
     </Wrap>
   );
 }
-
-
