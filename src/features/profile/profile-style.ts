@@ -48,16 +48,20 @@ export const CardBody = styled.div`
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
-    text-align: center;
     justify-items: center;
+    text-align: center;
     gap: 14px;
+    padding: 16px;
   }
 `;
-
 export const AvatarWrap = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 720px) {
+    width: 100%;
+  }
 `;
 
 export const Avatar = styled.div`
@@ -67,10 +71,15 @@ export const Avatar = styled.div`
   border: 2px solid ${border};
   background: #f1f5f9 url(${userSvg}) center/100% no-repeat;
 `;
-
 export const Info = styled.div`
   display: grid;
   gap: 8px;
+  min-width: 0; /* важно для ellipsis */
+
+  @media (max-width: 720px) {
+    width: 100%;
+    justify-items: center; /* ✅ центр */
+  }
 `;
 
 export const Name = styled.h1`
@@ -90,7 +99,22 @@ export const NameRow = styled.div`
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
+
+  @media (max-width: 720px) {
+    width: 100%;
+    justify-content: center; /* ✅ центр */
+  }
+
+  /* имя не ломает верстку */
+  span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 `;
+
 
 export const CompanyBadge = styled.span`
   display: inline-flex;
@@ -99,14 +123,19 @@ export const CompanyBadge = styled.span`
   height: 28px;
   padding: 0 10px;
   border-radius: 999px;
-  // background: #f2f6ff; /* нежно-синий фон */
-  color: #000; /* тёмно-синий текст */
+  color: #000;
   font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.02em;
   line-height: 1;
+  max-width: 100%;
+  min-width: 0;
 
-  /* SVG отдельно окрашиваем */
+  /* ✅ чтобы длинное название не вылазило */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
   svg {
     color: #0070ff;
     flex-shrink: 0;
@@ -122,8 +151,11 @@ export const MetaRow = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-`;
 
+  @media (max-width: 720px) {
+    justify-content: center; /* ✅ центр */
+  }
+`;
 export const Badge = styled.span<{ tone?: "muted" | "solid" }>`
   font-size: 12px;
   padding: 6px 10px;
@@ -132,14 +164,14 @@ export const Badge = styled.span<{ tone?: "muted" | "solid" }>`
   color: ${({ tone }) => (tone === "muted" ? sub : ink)};
   background: ${({ tone }) => (tone === "muted" ? "#F5F7FB" : "#fff")};
 `;
-
 export const Actions = styled.div`
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 
   @media (max-width: 720px) {
-    justify-content: center;
+    width: 100%;
+    justify-content: center; /* ✅ центр */
   }
 `;
 
@@ -153,11 +185,18 @@ export const PrimaryBtn = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.06s ease;
+
   &:hover {
     background: ${primaryHover};
   }
   &:active {
     transform: translateY(1px);
+  }
+
+  @media (max-width: 720px) {
+    width: 100%;
+    max-width: 360px; /* чтобы не растягивалось на планшетах */
+    justify-content: center;
   }
 `;
 
@@ -171,6 +210,7 @@ export const GhostBtn = styled.button`
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease,
     transform 0.06s ease;
+
   &:hover {
     border-color: #dfe7f1;
     box-shadow: 0 6px 16px rgba(2, 32, 71, 0.06);
@@ -178,7 +218,41 @@ export const GhostBtn = styled.button`
   &:active {
     transform: translateY(1px);
   }
+
+  @media (max-width: 720px) {
+    width: 100%;
+    max-width: 360px;
+  }
 `;
+
+
+export const LogoutBtn = styled.button`
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #fee2e2;
+  background: #fff;
+  color: #b91c1c;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.06s ease;
+
+  &:hover {
+    background: #fef2f2;
+    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.15);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  @media (max-width: 720px) {
+    width: 100%;
+    max-width: 360px;
+  }
+`;
+
 
 /* секции */
 export const SectionTitle = styled.h2`

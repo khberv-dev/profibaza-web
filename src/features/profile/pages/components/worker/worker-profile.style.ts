@@ -1,4 +1,5 @@
 import styled from "@emotion/styled";
+import { EditBtn } from "../../../pro-profile-section.style";
 const iconCss = `
   & .icon {
 width: 18px; height: 18px; opacity: .9;
@@ -27,24 +28,57 @@ export const UI = {
 };
 
 export const JobItem = styled.div`
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+
   border: 1px solid ${UI.line};
   border-radius: 21px;
   background: ${UI.bg};
   padding: 16px;
-  transition: box-shadow 0.15s ease, transform 0.05s ease,
-    border-color 0.15s ease;
+  transition: box-shadow 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
+
   &:hover {
     box-shadow: ${UI.shadow};
     border-color: #dbe2ea;
   }
-`;
 
+  @media (max-width: 520px) {
+    padding: 12px;
+    border-radius: 16px;
+  }
+`;
 export const JobTitle = styled.h3`
   font-size: 18px;
   font-weight: 800;
   margin: 0 0 4px 0;
+  min-width: 0;
+
+  /* чтобы длинные названия не ломали */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 520px) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
 `;
 
+export const Meta = styled.div`
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: ${UI.textMuted};
+  min-width: 0;
+
+  /* длинная дата не должна толкать layout */
+  flex-wrap: wrap;
+  word-break: break-word;
+`;
 export const Subtle = styled.div`
   font-size: 12px;
   color: ${UI.textMuted};
@@ -123,15 +157,18 @@ export const MutedBar = styled.div`
   margin-top: 12px;
   padding: 12px;
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 8px;
   border-radius: ${UI.rMd}px;
   background: #f1f4f9;
-  // border: 1px solid ${UI.lineSoft};
   color: ${UI.textMuted};
   font-size: 13px;
-`;
 
+  min-width: 0;
+  overflow: hidden;
+  flex-wrap: wrap;
+  word-break: break-word;
+`;
 export const TagList = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -154,12 +191,30 @@ export const Tag = styled.span`
 export const Page = styled.div`
   max-width: ${UI.max}px;
   margin: 0 auto;
+
   padding: 24px;
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  padding-top: max(18px, env(safe-area-inset-top));
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
+
   color: ${UI.text};
+  box-sizing: border-box;
+  overflow-x: hidden;
+
   @media (max-width: 960px) {
-    // padding: 16px;
+    padding: 16px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+  }
+
+  @media (max-width: 420px) {
+    padding: 12px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
   }
 `;
+
 
 export const Header = styled.header`
   display: flex;
@@ -228,8 +283,78 @@ export const FormGrid = styled.div<{ columns?: number }>`
   display: grid;
   grid-template-columns: repeat(${(p) => p.columns ?? 2}, 1fr);
   gap: 12px 16px;
+
   @media (max-width: 820px) {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+`;
+
+export const Input = styled.input`
+  height: 40px;
+  width: 100%;
+  min-width: 0;
+  padding: 0 12px;
+  background: ${UI.bg};
+  border: 1px solid ${UI.line};
+  border-radius: ${UI.rSm}px;
+  font-size: 16px; /* ✅ iOS no-zoom */
+  color: ${UI.text};
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover { border-color: #d7dce3; }
+  &:focus { border-color: ${UI.primary}; box-shadow: ${UI.focus}; }
+
+  &::placeholder { color: #9ca3af; }
+
+  @media (min-width: 821px) {
+    font-size: 14px;
+  }
+`;
+
+export const ZoneRow = styled.div`
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+`;
+
+export const RadiusBlock = styled.div`
+  display: grid;
+  gap: 6px;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
+`;
+
+export const RadiusRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    input {
+      width: 100% !important;
+    }
+  }
+`;
+
+export const RemoveBtn = styled(EditBtn)`
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
@@ -251,43 +376,72 @@ export const Help = styled.span`
 `;
 
 /* ===== Inputs ===== */
-export const Input = styled.input`
-  height: 40px;
-  padding: 0 12px;
-  background: ${UI.bg};
-  border: 1px solid ${UI.line};
-  border-radius: ${UI.rSm}px;
-  font-size: 14px;
-  color: ${UI.text};
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  &:hover {
-    border-color: #d7dce3;
-  }
-  &:focus {
-    border-color: ${UI.primary};
-    box-shadow: ${UI.focus};
-  }
-  &::placeholder {
-    color: #9ca3af;
-  }
-`;
+
 
 export const HeadRow = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
+
+  min-width: 0;
+
+  /* важно: разрешаем перенос строк */
+  flex-wrap: wrap;
+
+  /* левая часть должна уметь сжиматься */
+  > :first-child {
+    min-width: 0;
+    flex: 1 1 60px;
+  }
+
+  /* правая часть (кнопки) */
+  > :last-child {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex: 0 1 auto;
+  }
+
+  @media (max-width: 520px) {
+    /* на мобиле кнопки всегда вниз */
+    flex-direction: column;
+    align-items: stretch;
+
+    > :last-child {
+      justify-content: flex-start;
+    }
+  }
 `;
 
-export const Meta = styled.div`
-  display: inline-flex;
+
+
+export const HeadActions = styled.div`
+  display: flex;
   gap: 8px;
-  align-items: center;
-  font-size: 12px;
-  color: ${UI.textMuted};
+  flex-wrap: wrap;
+
+  a {
+    text-decoration: none;
+  }
+
+  @media (max-width: 520px) {
+    width: 100%;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    a {
+      width: 100%;
+    }
+  }
 `;
+
+
 
 export const SelectBox = styled.div`
   position: relative;

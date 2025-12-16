@@ -32,6 +32,10 @@ import {
   HHRight,
   OpenBtn,
   ListSingle,
+  FiltersCard,
+  Grid2,
+  MobileOffersBar,
+  StickyAside,
 } from "../../pages/worker-search/worker-search.style";
 import { EditBtn } from "../profile/pro-profile-section.style";
 
@@ -144,114 +148,55 @@ export default function WorkerVacanciesSearchPage() {
     setApplied({ search: "", minSalary: 0, maxSalary: 20_000_000 });
   };
 
+  const [offersModalOpen, setOffersModalOpen] = useState(false);
+
   return (
     <PageWrap>
       {/* панель фильтров */}
-      <div
-        style={{
-          background: "#fff",
-          border: "1px solid #e7ecf3",
-          borderRadius: 14,
-          padding: 20,
-          marginBottom: 20,
-          boxShadow: "0 4px 18px rgba(30,92,251,0.05)",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 16,
-          alignItems: "flex-end",
-        }}
-      >
-        <div style={{ flex: "1 1 280px", minWidth: 260 }}>
-          <CustomInput
-            control={control}
-            name="search"
-            label="Поиск по названию"
-            placeholder="bekendchi, backend, сантехник..."
-          />
-        </div>
+      <FiltersCard>
+  <div>
+    <CustomInput
+      control={control}
+      name="search"
+      label="Поиск по названию"
+      placeholder="backend, сантехник..."
+    />
+  </div>
 
-        <div style={{ flex: "0 0 160px" }}>
-          <CustomInput
-            control={control}
-            name="minSalary"
-            label="Мин. зарплата"
-            placeholder="0"
-            rules={{
-              validate: (v: any) => /^\d*$/.test(v ?? "") || "Только цифры",
-            }}
-          />
-        </div>
+  <div>
+    <CustomInput
+      control={control}
+      name="minSalary"
+      label="Мин. зарплата"
+      placeholder="0"
+      rules={{ validate: (v: any) => /^\d*$/.test(v ?? "") || "Только цифры" }}
+    />
+  </div>
 
-        <div style={{ flex: "0 0 160px" }}>
-          <CustomInput
-            control={control}
-            name="maxSalary"
-            label="Макс. зарплата"
-            placeholder="20000000"
-            rules={{
-              validate: (v: any) => /^\d*$/.test(v ?? "") || "Только цифры",
-            }}
-          />
-        </div>
+  <div>
+    <CustomInput
+      control={control}
+      name="maxSalary"
+      label="Макс. зарплата"
+      placeholder="20000000"
+      rules={{ validate: (v: any) => /^\d*$/.test(v ?? "") || "Только цифры" }}
+    />
+  </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
-            marginLeft: "auto",
-          }}
-        >
-          <button
-            onClick={resetAll}
-            style={{
-              height: 42,
-              padding: "0 16px",
-              borderRadius: 10,
-              border: "1px solid #e7ecf3",
-              background: "#fff",
-              color: "#0f172a",
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all .15s ease",
-            }}
-          >
-            Сбросить
-          </button>
+  <div className="actions" style={{ display: "flex", gap: 10, marginLeft: "auto" }}>
+    <button onClick={resetAll} style={{ height: 42, padding: "0 16px", borderRadius: 12, border: "1px solid #e7ecf3", background: "#fff", fontWeight: 800 }}>
+      Сбросить
+    </button>
+    <button onClick={onSearch} style={{ height: 42, padding: "0 18px", borderRadius: 12, border: "1px solid #1e5cfb", background: "#1e5cfb", color: "#fff", fontWeight: 900 }}>
+      Найти
+    </button>
+  </div>
+</FiltersCard>
 
-          <button
-            onClick={onSearch}
-            style={{
-              height: 42,
-              padding: "0 18px",
-              borderRadius: 10,
-              border: "1px solid #1e5cfb",
-              background: "#1e5cfb",
-              color: "#fff",
-              fontWeight: 800,
-              letterSpacing: ".01em",
-              cursor: "pointer",
-              transition: "all .15s ease",
-            }}
-          >
-            Найти
-          </button>
-        </div>
-      </div>
 
-      {/* ДВЕ КОЛОНКИ: список + сайдбар */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 340px",
-          gap: 26,
-          alignItems: "start",
-        }}
-      >
-        {/* левая колонка — вакансии */}
-        <div>
-          <ListSingle>
+<Grid2>
+  <div>
+  <ListSingle>
             {vacancies.map((v) => (
               <HHCard key={v.id}>
                 <HHLeft>
@@ -379,22 +324,24 @@ export default function WorkerVacanciesSearchPage() {
               </HHCard>
             ))}
           </ListSingle>
-        </div>
 
-        {/* правая колонка — сайдбар с откликами */}
-        <aside
-          style={{
-            position: "sticky",
-            top: 12,
-            background: "#fff",
-            border: "1px solid #e7ecf3",
-            borderRadius: 14,
-            boxShadow: "0 6px 18px rgba(2,6,23,0.06)",
-            padding: 14,
-          }}
-          aria-label="Мои отклики"
-        >
-          <div
+    {/* ✅ моб. панель откликов */}
+    <MobileOffersBar
+      type="button"
+      onClick={() => setOffersModalOpen(true)} // ❗️не helpOpen, сделай offersModalOpen
+    >
+      <div className="left">
+        <div className="title">Мои отклики</div>
+        <div className="sub">
+          {offersLoading ? "Загрузка..." : offers.length ? "Отклики: " + offers.length : "Пока нет откликов"}
+        </div>
+      </div>
+      <div className="badge">{offers.length}</div>
+    </MobileOffersBar>
+  </div>
+
+  <StickyAside aria-label="Мои отклики">
+  <div
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -618,8 +565,244 @@ export default function WorkerVacanciesSearchPage() {
               })}
             </div>
           )}
-        </aside>
-      </div>
+  </StickyAside>
+</Grid2>
+
+
+      {/* ДВЕ КОЛОНКИ: список + сайдбар */}
+   
+
+      <Modal
+  open={offersModalOpen}
+  title="Мои отклики"
+  onClose={() => setOffersModalOpen(false)}
+  width={560}
+>
+<div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#0f172a",
+              }}
+            >
+              Мои отклики
+            </h3>
+            <EditBtn onClick={() => refetchOffers()}>Обновить</EditBtn>
+          </div>
+
+          {offersLoading ? (
+            <div style={{ color: "#64748b", fontSize: 14 }}>Загрузка…</div>
+          ) : offers.length === 0 ? (
+            <div
+              style={{
+                border: "1px dashed #e7ecf3",
+                borderRadius: 12,
+                padding: 12,
+                color: "#64748b",
+                fontSize: 14,
+                textAlign: "center",
+              }}
+            >
+              Здесь появятся ваши отклики
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {offers.map((o) => {
+                const vac = o.vacancy;
+                const prof = o.workerProfession?.profession;
+                const lang = (i18n.language || "ru").split("-")[0] as
+                  | "ru"
+                  | "uz";
+                const profName = lang === "uz" ? prof?.nameUz : prof?.nameRu;
+
+                return (
+                  <div
+                    key={o.id}
+                    style={{
+                      border: "1px solid #e7ecf3",
+                      borderRadius: 12,
+                      padding: 10,
+                      background: "#fff",
+                      display: "grid",
+                      gap: 6,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          border: "1px solid #E5E7EB",
+                          background: "#F9FAFB",
+                          color: "#374151",
+                        }}
+                      >
+                        {o.status === "NEW"
+                          ? "Новый"
+                          : o.status === "VIEWED"
+                          ? "Просмотрен"
+                          : o.status === "ACCEPTED"
+                          ? "Принят"
+                          : o.status === "REJECTED"
+                          ? "Отклонён"
+                          : o.status}
+                      </span>
+
+                      <small style={{ color: "#6b7280" }}>
+                        {new Date(o.createdAt).toLocaleDateString("ru-RU")}
+                      </small>
+                    </div>
+
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        color: "#0f172a",
+                        fontSize: 14,
+                      }}
+                    >
+                      {vac.title}
+                    </div>
+
+                    {vac.legal?.name && (
+                      <div
+                        style={{
+                          color: "#475569",
+                          fontSize: 13,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {vac.legal.name}
+                      </div>
+                    )}
+
+                    {vac.salary ? (
+                      <div
+                        style={{
+                          color: "#1e5cfb",
+                          fontWeight: 700,
+                          fontSize: 14,
+                        }}
+                      >
+                        {vac.salary.toLocaleString("ru-RU")} сум
+                      </div>
+                    ) : null}
+
+                    {vac.description && (
+                      <div style={{ marginTop: 2 }}>
+                        <div
+                          id={`offer-desc-${o.id}`}
+                          style={{
+                            color: "#64748b",
+                            fontSize: 13,
+                            lineHeight: 1.5,
+                            display: "-webkit-box",
+                            WebkitLineClamp: offersExpanded[o.id]
+                              ? ("unset" as any)
+                              : 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            whiteSpace: offersExpanded[o.id]
+                              ? "pre-wrap"
+                              : "normal",
+                          }}
+                        >
+                          {vac.description}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleOfferExpand(o.id)}
+                          aria-expanded={!!offersExpanded[o.id]}
+                          aria-controls={`offer-desc-${o.id}`}
+                          style={{
+                            marginTop: 6,
+                            padding: 0,
+                            background: "transparent",
+                            border: "none",
+                            color: "#1a73e8",
+                            fontWeight: 600,
+                            fontSize: 13,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {offersExpanded[o.id]
+                            ? "Свернуть"
+                            : "Показать полностью"}
+                          <span
+                            aria-hidden
+                            style={{
+                              display: "inline-flex",
+                              transition: "transform .15s ease",
+                              transform: offersExpanded[o.id]
+                                ? "rotate(180deg)"
+                                : "rotate(0deg)",
+                            }}
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                            >
+                              <path
+                                d="M8 11.5L13 6.5L12.01 5.51L8 9.52L3.99 5.51L3 6.5L8 11.5Z"
+                                fill="currentColor"
+                              />
+                            </svg>
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        color: "#475569",
+                        fontSize: 13,
+                      }}
+                    >
+                      Профессия: <b>{profName}</b>
+                    </div>
+
+                    {o.message ? (
+                      <div
+                        style={{
+                          marginTop: 4,
+                          padding: 8,
+                          background: "#f8fafc",
+                          borderRadius: 8,
+                          border: "1px solid #eef2f7",
+                          color: "#334155",
+                          fontSize: 13,
+                        }}
+                      >
+                        {o.message}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+</Modal>
 
       {/* модалка отклика */}
       <Modal

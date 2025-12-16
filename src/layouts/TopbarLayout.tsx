@@ -16,6 +16,7 @@ import {
   Burger,
   Main,
   Content,
+  NavOverlay,
 } from "./topbar-layout.style";
 import { useAuthStore } from "../shared/stores/auth";
 import { Modal } from "../components/modal/Modal";
@@ -48,7 +49,10 @@ export function TopbarLayout() {
   const NAV_ITEMS: NavDef[] = useMemo(() => {
     const items: NavDef[] = [
       { to: "/app/find", label: t("nav.find") },
-      { to: ORDERS_TO, label: t("nav.orders") },
+      { to: "/find/investors", label: t("nav.investors") },
+      ...(role !== "INVESTOR"
+        ? [{ to: ORDERS_TO, label: t("nav.orders") } as NavDef]
+        : []),
       ...(ORDERS_TO !== "/app/worker/jobs"
         ? [
             {
@@ -60,7 +64,7 @@ export function TopbarLayout() {
         : []),
 
       // 🔹 показываем "Для мастеров" только WORKER
-      ...(role === "WORKER"
+      ...(role === "WORKER" || role === "INVESTOR"
         ? [{ to: "/app/worker/vacancies", label: t("nav.forMasters") }]
         : []),
 
@@ -106,7 +110,12 @@ export function TopbarLayout() {
           </Brand>
         </Link>
 
-        <Nav data-open={open ? "true" : "false"}>
+        <NavOverlay
+  data-open={open ? "true" : "false"}
+  onClick={() => setOpen(false)}
+/>
+
+<Nav data-open={open ? "true" : "false"}>
           {NAV_ITEMS.map((item) => {
             const isHelp = item.to === "/app/help";
             return (

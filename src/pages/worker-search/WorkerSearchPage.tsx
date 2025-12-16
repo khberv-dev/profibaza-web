@@ -1092,13 +1092,15 @@ export const WorkerSearchPage: React.FC = () => {
               </HHMid>
 
               <HHRight>
-                <IconBtn title="Поделиться" aria-label="Поделиться">
+              <div className="actions-share">
+              <IconBtn title="Поделиться" aria-label="Поделиться">
                   <Share2 size={18} />
                 </IconBtn>
 
                 <IconBtn title="В избранное" aria-label="В избранное">
                   <Heart size={18} />
                 </IconBtn>
+              </div>
 
                 <OpenBtn
                   type="button"

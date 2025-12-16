@@ -1,33 +1,162 @@
 import styled from "@emotion/styled";
 
+
+export const FiltersCard = styled.div`
+  background: #fff;
+  border: 1px solid #e7ecf3;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 18px rgba(30, 92, 251, 0.05);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 160px auto;
+  gap: 12px;
+  align-items: end;
+
+  @media (max-width: 980px) {
+    grid-template-columns: minmax(0, 1fr) 1fr;
+    .actions {
+      grid-column: 1 / -1;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 640px) {
+    padding: 14px;
+    grid-template-columns: 1fr;
+
+    .actions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+  }
+`;
+
+export const Grid2 = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 22px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr; /* ✅ на мобилке/планшете одна колонка */
+  }
+`;
+
+export const StickyAside = styled.aside`
+  position: sticky;
+  top: 12px;
+  background: #fff;
+  border: 1px solid #e7ecf3;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
+  padding: 14px;
+
+  @media (max-width: 1024px) {
+    display: none; /* ✅ скрываем правую колонку на мобилке */
+  }
+`;
+
+/* ✅ моб. нижняя панель "Мои отклики" */
+export const MobileOffersBar = styled.button`
+  display: none;
+
+  @media (max-width: 1024px) {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    z-index: 30;
+
+    border: 1px solid #e7ecf3;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(10px);
+
+    border-radius: 14px;
+    padding: 12px 12px;
+    margin-top: 12px;
+
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    cursor: pointer;
+  }
+
+  .left {
+    display: grid;
+    gap: 2px;
+    text-align: left;
+    min-width: 0;
+  }
+  .title {
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .sub {
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .badge {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #1e5cfb;
+    color: #fff;
+    font-weight: 900;
+    font-size: 12px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+  }
+`;
+
 /* Карточка */
 export const HHCard = styled.article`
   position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+
   display: grid;
-  grid-template-columns: 72px 1fr 140px; /* аватар / контент / экшены */
+  grid-template-columns: 72px minmax(0, 1fr) 140px;
   grid-template-areas: "left mid right";
-  column-gap: 30px;
+  column-gap: 16px;
   row-gap: 10px;
+
   padding: 14px 16px;
   border-radius: 16px;
   background: #fff;
   border: 1px solid #e7effc;
   box-shadow: 0 6px 18px rgba(2, 32, 71, 0.05);
-  transition: box-shadow 0.2s, transform 0.1s;
+
   overflow: hidden;
 
-  &:hover {
-    box-shadow: 0 12px 28px rgba(2, 32, 71, 0.08);
-    transform: translateY(-1px);
-  }
-
   @media (max-width: 920px) {
-    grid-template-columns: 56px 1fr;
+    grid-template-columns: 56px minmax(0, 1fr);
     grid-template-areas:
       "left mid"
-      "right right"; /* правая колонка вниз на мобиле */
+      "right right";
+    column-gap: 12px;
+    padding: 12px;
+  }
+
+  /* ✅ телефон: делаем всё “в столбик”, чтобы ничего не наезжало */
+  @media (max-width: 520px) {
+    grid-template-columns: 56px minmax(0, 1fr);
+    row-gap: 12px;
   }
 `;
+
 
 export const skeletonCSS = `
 .skel {
@@ -53,29 +182,67 @@ export const HHLeft = styled.div`
   grid-area: left;
   display: grid;
   align-content: start;
+  justify-items: center; /* ✅ чтобы аватар не уезжал */
 `;
 
+
 export const HHAvatar = styled.div<{ $src?: string | null }>`
-  width: 84px;
-  height: 84px;
-  border-radius: 10%;
+  width: 72px;  /* ✅ ровно под колонку 72px */
+  height: 72px;
+  border-radius: 14px;
   background: ${({ $src }) =>
     $src
       ? `url(${$src}) center/cover no-repeat`
       : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
-  // border: 1px solid #e7ecf3;
   display: grid;
   place-items: center;
-  font-weight: 700;
+  font-weight: 800;
   color: #1e40af;
-  font-size: 25px;
+  font-size: 22px;
+
+  img {
+    width: 72px;     /* ✅ если внутри <img> */
+    height: 72px;
+    object-fit: cover;
+    border-radius: 14px;
+    display: block;
+  }
+
+  @media (max-width: 920px) {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    font-size: 18px;
+
+    img {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+    }
+  }
 `;
+
 
 export const HHMid = styled.div`
   grid-area: mid;
   display: grid;
   gap: 6px;
   min-width: 0;
+
+  /* ✅ фикс “криво”: всегда влево */
+  justify-items: start;
+  text-align: left;
+`;
+
+export const HHName = styled.h3`
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: #12284a;
+  line-height: 1.2;
+
+  text-align: left;
+  width: 100%;
 `;
 
 export const HHHead = styled.div`
@@ -94,13 +261,6 @@ export const HHHead = styled.div`
   }
 `;
 
-export const HHName = styled.h3`
-  margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  color: #12284a;
-  line-height: 1.2;
-`;
 
 export const HHSub = styled.div`
   font-size: 12px;
@@ -240,17 +400,17 @@ export const Stars = styled.div`
 `;
 
 export const HHRight = styled.aside`
-  grid-area: right; /* ← явная область справа */
+  grid-area: right;
   display: grid;
   gap: 10px;
   align-content: start;
   justify-items: end;
+
   @media (max-width: 920px) {
-    grid-auto-flow: column;
-    justify-items: start;
-    align-items: center;
+    justify-items: stretch;
   }
 `;
+
 
 export const IconBtn = styled.button`
   width: 36px;
@@ -279,15 +439,14 @@ export const OpenBtn = styled.button`
   border: 1px solid #2f6bff;
   background: #2f6bff;
   color: #fff;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.06s ease;
   box-shadow: 0 8px 22px rgba(47, 107, 255, 0.25);
-  &:hover {
-    box-shadow: 0 10px 26px rgba(47, 107, 255, 0.32);
-  }
-  &:active {
-    transform: translateY(1px);
+
+  @media (max-width: 920px) {
+    width: 100%;          /* ✅ на мобилке кнопка во всю ширину */
+    height: 44px;         /* ✅ зона тапа */
+    border-radius: 14px;
   }
 `;
 
@@ -296,6 +455,8 @@ export const PageWrap = styled.div`
   max-width: 1120px; /* ширина как на HH */
   margin: 0 auto; /* центрируем */
   padding: 20px 20px 28px; /* общий внутренний отступ */
+
+  *, *::before, *::after { box-sizing: border-box; }
 `;
 
 /* Тулбар фильтров */
@@ -343,7 +504,8 @@ export const FilterBtn = styled.button`
 
 export const SearchBtn = styled.button`
   height: 38px;
-  width: 140px;
+  // width: 140px;
+  width: 100%;
   border-radius: 12px;
   border: 1px solid #2f6bff;
   background: #2f6bff;

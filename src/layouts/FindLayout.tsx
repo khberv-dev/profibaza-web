@@ -81,25 +81,33 @@ const Navbar = styled.header`
   left: 0;
   width: 100%;
   height: 56px;
-  padding: 0px 14px;
+  padding: 0 14px;
   background: #000;
   color: #fff;
   z-index: 50;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 640px) {
+    height: auto;          /* важно: позволяем 2 строки */
+    padding: 10px 12px;
+  }
 `;
 
 const NavInner = styled.div`
   max-width: 1200px;
-  margin: 0px auto;
+  margin: 0 auto;
   display: flex;
   height: 56px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
 
-  @media (max-width: 768px) {
-    padding: 0 16px;
+  @media (max-width: 640px) {
+    height: auto;
+    align-items: stretch;
+    flex-direction: column;  /* 2 строки: верх/низ */
+    gap: 10px;
   }
 `;
 
@@ -109,6 +117,23 @@ const Brand = styled(Link)`
   font-size: 18px;
   color: #fff;
   text-decoration: none;
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+  }
+`;
+
+const RightGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    justify-content: space-between;
+    gap: 8px;
+    white-space: normal;
+  }
 `;
 
 const NavMenu = styled.nav`
@@ -133,12 +158,7 @@ const NavItem = styled(Link)`
   }
 `;
 
-const RightGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  white-space: nowrap;
-`;
+
 
 const LangBtn = styled.button`
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -146,13 +166,18 @@ const LangBtn = styled.button`
   color: rgb(229, 231, 235);
   border-radius: 10px;
   padding: 10px 12px;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (max-width: 640px) {
+    padding: 9px 10px;
+    border-radius: 9px;
   }
 `;
 
@@ -160,15 +185,21 @@ const AuthBtn = styled.button`
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 14px;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
+  }
+
+  @media (max-width: 640px) {
+    padding: 9px 12px;
+    border-radius: 9px;
+    flex: 1;              /* вход + язык красиво делят строку */
   }
 `;
 
@@ -178,13 +209,18 @@ const PrimaryBtn = styled.button`
   border: none;
   border-radius: 10px;
   padding: 10px 18px;
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
 
   &:hover {
     background: #1d4ed8;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;          /* вторая строка */
+    padding: 11px 14px;
   }
 `;
 

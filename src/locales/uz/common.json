@@ -181,6 +181,7 @@
   "nav": {
     "find": "Ustani topish",
     "legalOffers": "Arizalar",
+    "investors": "Investorlar",
     "orders": "Buyurtmalar",
     "jobs": "Kompaniyalar uchun vakansiyalar",
     "forMasters": "Vakansiyalar",
@@ -195,6 +196,11 @@
   },
   "common": {
     "save": "Saqlash",
+    "logout": "Chiqish",
+    "logoutConfirmTitle": "Akkauntdan chiqasizmi?",
+    "logoutConfirmText": "Haqiqatan ham chiqmoqchimisiz?",
+    "logoutConfirmYes": "Chiqish",
+    "logoutConfirmNo": "Bekor qilish",
     "saving": "Saqlanmoqda...",
     "cancel": "Bekor qilish",
     "change": "O'zgartirish"

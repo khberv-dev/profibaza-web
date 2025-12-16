@@ -174,71 +174,75 @@ export default function LandingPage() {
           </HeroNavLinks>
 
           <HeroActions>
-            {/* === ЯЗЫК (desktop) === */}
-            <div style={{ position: "relative" }} ref={langRef}>
-              <GhostBtn
-                onClick={() => setOpenLang((v) => !v)}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <FiGlobe />
-                {currentLangLabel}
-              </GhostBtn>
+  {/* DESKTOP: язык + auth */}
+  <DesktopOnly>
+    <div style={{ position: "relative" }} ref={langRef}>
+      <GhostBtn
+        onClick={() => setOpenLang((v) => !v)}
+        style={{ display: "flex", alignItems: "center", gap: 6 }}
+      >
+        <FiGlobe />
+        {currentLangLabel}
+      </GhostBtn>
 
-              <AnimatePresence>
-                {openLang && (
-                  <MotionLangMenu
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <LangItem onClick={() => switchTo("ru")}>RU</LangItem>
-                    <LangItem onClick={() => switchTo("uz")}>UZ</LangItem>
-                  </MotionLangMenu>
-                )}
-              </AnimatePresence>
-            </div>
+      <AnimatePresence>
+        {openLang && (
+          <MotionLangMenu
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+          >
+            <LangItem onClick={() => switchTo("ru")}>RU</LangItem>
+            <LangItem onClick={() => switchTo("uz")}>UZ</LangItem>
+          </MotionLangMenu>
+        )}
+      </AnimatePresence>
+    </div>
 
-            {/* === AUTH / PROFILE (desktop) === */}
-            {isAuthed ? (
-              <Link to={profileHref} style={{ textDecoration: "none" }}>
-                <GhostBtn
-                  style={{
-                    background: "rgba(37,99,235,.9)",
-                    borderColor: "transparent",
-                  }}
-                >
-                  {t("goProfile", "Мой профиль")}
-                </GhostBtn>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" style={{ textDecoration: "none" }}>
-                  <GhostBtn>{t("loginCta") || "Войти"}</GhostBtn>
-                </Link>
+    {isAuthed ? (
+      <Link to={profileHref} style={{ textDecoration: "none" }}>
+        <GhostBtn
+          style={{
+            background: "rgba(37,99,235,.9)",
+            borderColor: "transparent",
+          }}
+        >
+          {t("goProfile", "Мой профиль")}
+        </GhostBtn>
+      </Link>
+    ) : (
+      <>
+        <Link to="/login" style={{ textDecoration: "none" }}>
+          <GhostBtn>{t("loginCta") || "Войти"}</GhostBtn>
+        </Link>
 
-                <Link to="/register" style={{ textDecoration: "none" }}>
-                  <GhostBtn
-                    style={{
-                      background: "rgba(37,99,235,.9)",
-                      borderColor: "transparent",
-                    }}
-                  >
-                    {t("ctaExec") || "Стать исполнителем"}
-                  </GhostBtn>
-                </Link>
-              </>
-            )}
+        <Link to="/register" style={{ textDecoration: "none" }}>
+          <GhostBtn
+            style={{
+              background: "rgba(37,99,235,.9)",
+              borderColor: "transparent",
+            }}
+          >
+            {t("ctaExec") || "Стать исполнителем"}
+          </GhostBtn>
+        </Link>
+      </>
+    )}
+  </DesktopOnly>
 
-            {/* бургер (mobile trigger). желательно завернуть в <MobileOnly> в стилях */}
-            <BurgerBtn
-              aria-label="Open menu"
-              onClick={() => setOpenMobile(true)}
-              style={{ marginLeft: 8 }}
-            >
-              <FiMenu />
-            </BurgerBtn>
-          </HeroActions>
+  {/* MOBILE: только бургер */}
+  <MobileOnly>
+    <BurgerBtn
+      aria-label="Open menu"
+      onClick={() => setOpenMobile(true)}
+      style={{ marginLeft: 8 }}
+    >
+      <FiMenu />
+    </BurgerBtn>
+  </MobileOnly>
+</HeroActions>
+
         </HeroNavbarInner>
       </HeroNavbar>
 

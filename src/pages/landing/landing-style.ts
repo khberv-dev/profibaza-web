@@ -508,13 +508,13 @@ export const LangItem = styled.button`
 /* ===== MOBILE TOPBAR ===== */
 export const MobileOnly = styled.div`
   display: none;
-  @media (max-width: 880px) {
+  @media (max-width: 899px) {
     display: block;
   }
 `;
 export const DesktopOnly = styled.div`
   display: block;
-  @media (max-width: 880px) {
+  @media (max-width: 899px) {
     display: none;
   }
 `;
@@ -538,9 +538,6 @@ export const BurgerBtn = styled.button`
     transform: translateY(1px);
   }
 
-  @media (min-width: 768px) {
-    display: none;
-  }
 `;
 export const MobileMenuBackdrop = styled.div`
   position: fixed;
@@ -823,25 +820,27 @@ export const HHBadgeRow = styled.div`
   gap: 10px;
   align-items: center;
   margin-top: 14px;
+  flex-wrap: wrap;
 
-  .app {
-    background-image: url(/appstore.svg);
-    background-position: 0 -45px;
+  @media (max-width: 420px) {
+    gap: 8px;
   }
-  .google {
-    background-image: url(/appstore.svg);
-    background-position: 0 0;
-  }
-  .gallery {
-    background-image: url(/appstore.svg);
-    background-position: 0 -90px;
-  }
+
+  .app { background-image: url(/appstore.svg); background-position: 0 -45px; }
+  .google { background-image: url(/appstore.svg); background-position: 0 0; }
+  .gallery { background-image: url(/appstore.svg); background-position: 0 -90px; }
 `;
+
 export const HHBadgeImg = styled.div`
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
   user-select: none;
   width: 140px;
   height: 40px;
+
+  @media (max-width: 420px) {
+    width: 124px;
+    height: 36px;
+  }
 `;
 
 /* Карточка с вводом контакта */
@@ -874,7 +873,24 @@ export const VideoHero = styled.section`
   min-height: 620px;
   display: grid;
   align-items: center;
-  isolation: isolate; /* собственный стек */
+  isolation: isolate;
+
+  @media (max-width: 760px) {
+    min-height: 520px;
+  }
+`;
+
+export const HeroInner = styled.div`
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 16px;
+  color: #fff;
+
+  @media (max-width: 760px) {
+    padding: 34px 14px;
+  }
 `;
 
 export const VideoBgWrap = styled.div`
@@ -907,14 +923,6 @@ export const VideoOverlay = styled.div`
   );
 `;
 
-export const HeroInner = styled.div`
-  position: relative;
-  z-index: 2; /* контент сверху */
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 48px 16px;
-  color: #fff;
-`;
 
 export const HHTitleLightOnVideo = styled.h1`
   margin: 0 0 16px;
@@ -922,8 +930,17 @@ export const HHTitleLightOnVideo = styled.h1`
   font-weight: 800;
   color: #fff;
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
-`;
 
+  /* mobile */
+  @media (max-width: 760px) {
+    margin: 18px 0 14px; /* ↑ сверху больше */
+  }
+
+  /* very small phones */
+  @media (max-width: 420px) {
+    margin: 22px 0 12px;
+  }
+`;
 export const HeroNavbar = styled.div`
   position: absolute;
   left: 0;
@@ -942,6 +959,11 @@ export const HeroNavbarInner = styled.div`
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 14px;
+
+  @media (max-width: 899px) {
+    grid-template-columns: auto auto;
+    gap: 10px;
+  }
 `;
 export const HeroBrand = styled.div`
   display: flex;
@@ -978,7 +1000,12 @@ export const HeroNavLinks = styled.nav`
 export const HeroActions = styled.div`
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
+
+  @media (max-width: 899px) {
+    gap: 8px;
+  }
 `;
 export const GhostBtn = styled.button`
   height: 38px;
@@ -1041,9 +1068,27 @@ export const FancyInput = styled.input`
   color: #fff;
   padding: 0 16px;
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.8);
+
+  @media (max-width: 760px) {
+    border-radius: 14px;
+    height: 46px;
+  }
+`;
+
+export const FancySubmit = styled.button`
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: ${primary};
+  color: #fff;
+  border: 0;
+  font-weight: 700;
+  cursor: pointer;
+
+  @media (max-width: 760px) {
+    grid-column: 1 / -1;
+    border-radius: 14px;
+    height: 46px;
   }
 `;
 export const FancyRound = styled.button`
@@ -1066,27 +1111,5 @@ export const FancyRound = styled.button`
   }
   @media (max-width: 760px) {
     display: none;
-  }
-`;
-export const FancySubmit = styled.button`
-  height: 48px;
-  padding: 0 18px;
-  border-radius: 999px;
-  background: ${primary};
-  color: #fff;
-  border: 0;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.06s, opacity 0.15s, box-shadow 0.15s;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
-  &:hover {
-    opacity: 0.95;
-    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.55);
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-  @media (max-width: 760px) {
-    grid-column: 1 / -1;
   }
 `;

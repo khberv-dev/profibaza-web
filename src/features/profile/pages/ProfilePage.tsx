@@ -1,6 +1,6 @@
 // src/features/profile/pages/ProfilePage.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
@@ -34,6 +34,7 @@ import {
   SkeletonLine,
   NameRow,
   CompanyBadge,
+  LogoutBtn,
 } from "../profile-style";
 
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
@@ -461,6 +462,21 @@ export default function ProfilePage() {
     return safeFormatDate(activeProfile?.updatedAt || activeProfile?.createdAt);
   }, [activeProfile?.updatedAt, activeProfile?.createdAt]);
 
+
+  const navigate = useNavigate();
+
+const handleLogout = () => {
+  try {
+    localStorage.removeItem("pb_auth");
+    sessionStorage.removeItem("pb_auth");
+
+    // если есть другие auth-ключи — можно добавить тут
+    // localStorage.removeItem("token");
+  } finally {
+    navigate("/login", { replace: true });
+  }
+};
+
   return (
     <Wrap>
       <div style={{ padding: 16 }}>
@@ -581,6 +597,10 @@ export default function ProfilePage() {
                     {t("profile.settings")}
                   </EditBtn>
                 </NavLink>
+
+                <LogoutBtn type="button" onClick={handleLogout}>
+    {t("common.logout") || "Выйти"}
+  </LogoutBtn>
               </Actions>
 
               {(avatarLoading || uploading) && (
@@ -745,3 +765,5 @@ export default function ProfilePage() {
     </Wrap>
   );
 }
+
+

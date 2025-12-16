@@ -4,6 +4,7 @@ import React from "react";
 export function AppFooter() {
   return (
     <footer
+    className="app-footer"
       style={{
         paddingTop: 40,
         borderTop: "1px solid #e5e7eb",

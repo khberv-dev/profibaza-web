@@ -43,6 +43,7 @@ import { FindLayout } from "../layouts/FindLayout";
 import WorkerDetailPage from "../pages/worker-search/WorkerDetailPage";
 import { FindOrTopbarLayout } from "../layouts/FindOrTopbarLayout";
 import InvestorCreateProject from "../features/profile/pages/components/InvestorCreateProject";
+import InvestorsPage from "../pages/investors/Investors";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <WorkerSearchPage /> },
       { path: "worker/:id", element: <WorkerDetailPage /> },
+      { path: "investors", element: <InvestorsPage /> },
     ],
   },
 
@@ -118,7 +120,7 @@ export const router = createBrowserRouter([
 
               // WORKER
               {
-                element: <RoleGuard allow={["WORKER"]} />,
+                element: <RoleGuard allow={["WORKER", "INVESTOR"]} />,
                 children: [
                   { path: "worker/jobs", element: <NewWorkerOrdersPage /> },
                   {

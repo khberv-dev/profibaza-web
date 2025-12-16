@@ -26,6 +26,10 @@ import {
   Progress,
   Small,
   HeadRow,
+  ZoneRow,
+  RadiusBlock,
+  RadiusRow,
+  RemoveBtn,
 } from "./worker-profile.style"; // реюз твоих стилей
 import CustomSelect, {
   SelectOption,
@@ -1012,7 +1016,7 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
               </Inline>
             </Field>
 
-            <Field style={{ gridColumn: "1 / -1" }}>
+            <Field style={{ gridColumn: "1 / -1", minWidth: 0, width: "100%" }}>
               <Label>{t("worker.serviceZones") || "Зоны обслуживания"}</Label>
               <Help>
                 {t("worker.mapHint") ||
@@ -1038,85 +1042,74 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
                 />
               </div>
 
-              <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-                {locations.map((l, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr auto",
-                      gap: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Input
-                      placeholder="Широта"
-                      inputMode="decimal"
-                      value={l.latitude}
-                      onChange={(e) =>
-                        changeLocation(idx, "latitude", e.target.value)
-                      }
-                    />
-                    <Input
-                      placeholder="Долгота"
-                      inputMode="decimal"
-                      value={l.longitude}
-                      onChange={(e) =>
-                        changeLocation(idx, "longitude", e.target.value)
-                      }
-                    />
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <label style={{ fontSize: 12, color: "#6b7a90" }}>
-                          Радиус, км
-                        </label>
-                        <Input
-                          placeholder="км"
-                          inputMode="decimal"
-                          value={l.radius}
-                          onChange={(e) =>
-                            changeLocation(idx, "radius", e.target.value)
-                          }
-                          style={{ width: 90 }}
-                        />
-                      </div>
-                      <input
-                        type="range"
-                        min={1}
-                        max={100}
-                        step={1}
-                        value={Number(l.radius) || 0}
-                        onChange={(e) =>
-                          changeLocation(idx, "radius", e.target.value)
-                        }
-                      />
-                    </div>
-                    <EditBtn
-                      type="button"
-                      onClick={() => removeLocation(idx)}
-                      disabled={locations.length === 1}
-                      title={
-                        locations.length === 1
-                          ? "Нужна хотя бы одна зона"
-                          : "Удалить"
-                      }
-                    >
-                      Удалить
-                    </EditBtn>
-                  </div>
-                ))}
-                <div>
-                  <EditBtn type="button" onClick={addLocation}>
-                    + {t("worker.addZone") || "Добавить зону"}
-                  </EditBtn>
-                </div>
-              </div>
+              <div style={{ display: "grid", gap: 10, marginTop: 12, width: "100%", minWidth: 0 }}>
+  {locations.map((l, idx) => (
+    <ZoneRow key={idx}>
+      <Input
+        placeholder="Широта"
+        inputMode="decimal"
+        value={l.latitude}
+        style={{ minWidth: 0, width: "100%" }}
+        onChange={(e) =>
+          changeLocation(idx, "latitude", e.target.value)
+        }
+      />
+
+      <Input
+        placeholder="Долгота"
+        inputMode="decimal"
+        value={l.longitude}
+        style={{ minWidth: 0, width: "100%" }}
+        onChange={(e) =>
+          changeLocation(idx, "longitude", e.target.value)
+        }
+      />
+
+      <RadiusBlock>
+        <RadiusRow>
+          <label style={{ fontSize: 12, color: "#6b7a90" }}>
+            Радиус, км
+          </label>
+          <Input
+            placeholder="км"
+            inputMode="decimal"
+            value={l.radius}
+            onChange={(e) =>
+              changeLocation(idx, "radius", e.target.value)
+            }
+            style={{ width: 90 }}
+          />
+        </RadiusRow>
+
+        <input
+          type="range"
+          min={1}
+          max={100}
+          step={1}
+          value={Number(l.radius) || 0}
+          onChange={(e) =>
+            changeLocation(idx, "radius", e.target.value)
+          }
+        />
+      </RadiusBlock>
+
+      <RemoveBtn
+        type="button"
+        onClick={() => removeLocation(idx)}
+        disabled={locations.length === 1}
+      >
+        Удалить
+      </RemoveBtn>
+    </ZoneRow>
+  ))}
+
+  <div>
+    <EditBtn type="button" onClick={addLocation}>
+      + {t("worker.addZone") || "Добавить зону"}
+    </EditBtn>
+  </div>
+</div>
+
             </Field>
 
             <Field>
