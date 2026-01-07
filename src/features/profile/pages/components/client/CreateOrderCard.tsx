@@ -29,7 +29,7 @@ import {
 import CustomSelect, {
   SelectOption,
 } from "../../../../../components/custom-select/CustomSelect";
-import { useCreateOrder, useCreateOrderLegal  } from "../../../api";
+import { useCreateOrder, useCreateOrderInvestor, useCreateOrderLegal  } from "../../../api";
 import { CustomInput } from "../../../../../components/custom-input";
 import { DatePopoverInput } from "../../../../../components/custom-date-input/DatePopoverInput";
 import { useDistricts, useRegions, useVillages } from "../../../../../shared/modules/location";
@@ -161,21 +161,32 @@ export const CreateOrderCard: React.FC<Props> = ({
   const me = useAuthStore((s) => s.role);
   const createClient = useCreateOrder();
   const createLegal  = useCreateOrderLegal();
+  const createInvestor  = useCreateOrderInvestor();
   
   const isClient = me === "CLIENT";
   const isLegal  = me === "LEGAL";
+  const isInvestor  = me === "INVESTOR";
   
   // правильный выбор хука по роли:
-  const mutateAsync = isLegal ? createLegal.mutateAsync : createClient.mutateAsync;
-  const isPending   = isLegal ? createLegal.isPending   : createClient.isPending;
+  const mutateAsync = isInvestor
+  ? createInvestor.mutateAsync
+  : isLegal
+    ? createLegal.mutateAsync
+    : createClient.mutateAsync;
 
-  const canSubmit =
-  // LEGAL может без workerProfessionId (если у тебя так задумано)
-  (!!workerProfessionId || isLegal) &&
-  description.trim().length >= 8 &&
-  !!deadline &&
-  budgetNum >= 0 &&
-  !isPending;
+const isPending = isInvestor
+  ? createInvestor.isPending
+  : isLegal
+    ? createLegal.isPending
+    : createClient.isPending;
+
+
+    const canSubmit =
+    (!!workerProfessionId || isLegal || isInvestor) &&
+    description.trim().length >= 8 &&
+    !!deadline &&
+    budgetNum >= 0 &&
+    !isPending;
 
   const addBudget = (v: number) =>
     setValue("budget", String(v), { shouldDirty: true, shouldValidate: true });
@@ -193,7 +204,7 @@ export const CreateOrderCard: React.FC<Props> = ({
         toast.error("Опишите задачу подробнее (минимум 8 символов)");
         return;
       }
-      if (!isLegal && !workerProfessionId) {
+      if (!isLegal && !isInvestor && !workerProfessionId) {
         toast.error("Не указан профиль мастера");
         return;
       }
@@ -219,16 +230,19 @@ export const CreateOrderCard: React.FC<Props> = ({
       };
   
       // различия по роли
-      const dto = isLegal
-        ? baseDto                                   // LEGAL — без workerProfessionId
-        : { ...baseDto, workerProfessionId: workerProfessionId.trim() }; // CLIENT — обязателен
+      const dto =
+      isLegal || isInvestor
+        ? baseDto
+        : { ...baseDto, workerProfessionId: workerProfessionId.trim() };
   
       const res = await mutateAsync(dto as any);
   
       if (res?.ok) {
         toast.success("Заявка создана и отправлена");
   
-        navigate(isLegal ? "/app/legal/orders" : "/app/client/orders");
+        navigate(
+          isInvestor ? "/app/investor/orders" : isLegal ? "/app/legal/orders" : "/app/client/orders"
+        );
   
         // сброс формы/локалок
         reset({
@@ -284,7 +298,7 @@ export const CreateOrderCard: React.FC<Props> = ({
           borderRadius: 12,
           border: "1px solid #e7ecf3",
           background: workerBrief?.worker?.user?.avatar
-            ? `url(https://pointer.uz/public/avatar/${workerBrief.worker.user.avatar}) center/cover no-repeat`
+            ? `url(https://profibaza.uz/public/avatar/${workerBrief.worker.user.avatar}) center/cover no-repeat`
             : "linear-gradient(180deg,#eef2ff,#f8fafc)",
           display: "grid",
           placeItems: "center",

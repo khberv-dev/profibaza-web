@@ -81,6 +81,21 @@ export async function postLegalComment(
   }
 }
 
+export async function postInvestorComment(
+  orderId: string,
+  body: LegalCommentPayload,
+  signal?: AbortSignal
+): Promise<void> {
+  const { data } = await api.post<CommentResp>(
+    `/investor/comment/${encodeURIComponent(orderId)}`,
+    body,
+    { signal }
+  );
+  if (!takeOk(data)) {
+    throw new Error("Не удалось отправить отзыв");
+  }
+}
+
 /** Универсальная распаковка, если вдруг обёртка двойная */
 const takeList = (payload: Resp): LegalOrder[] => {
   // @ts-ignore
@@ -95,5 +110,11 @@ export const getLegalOrders = async (
   signal?: AbortSignal
 ): Promise<LegalOrder[]> => {
   const { data } = await api.get<Resp>("/legal/orders", { signal });
+  return takeList(data);
+};
+export const getInvestorOrders = async (
+  signal?: AbortSignal
+): Promise<LegalOrder[]> => {
+  const { data } = await api.get<Resp>("/investor/orders", { signal });
   return takeList(data);
 };

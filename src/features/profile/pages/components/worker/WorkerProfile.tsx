@@ -212,7 +212,7 @@ export const WorkerProfile: React.FC = () => {
   );
 
   const demoUrlFromFileId = (fileId: string) =>
-    `https://pointer.uz/public/demo/${fileId}`; // твой CDN/endpoint
+    `https://profibaza.uz/public/demo/${fileId}`; // твой CDN/endpoint
   const demoTypeFromFileId = (fileId: string): "image" | "video" => {
     const ext = (fileId.split(".").pop() || "").toLowerCase();
     const vid = ["mp4", "mov", "webm", "m4v"];

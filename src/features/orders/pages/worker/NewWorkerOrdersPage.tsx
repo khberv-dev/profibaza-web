@@ -207,7 +207,7 @@ export default function NewWorkerOrdersPage() {
 
 
   const buildOrderFileUrl = (fileId: string): string =>
-    `https://pointer.uz/public/order/${encodeURIComponent(fileId)}`;
+    `https://profibaza.uz/public/order/${encodeURIComponent(fileId)}`;
   
   const isVideoName = (name: string) =>
     /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(name);
@@ -480,7 +480,7 @@ export default function NewWorkerOrdersPage() {
             const u = row.client?.user || undefined;
             const ui = getUI(row.id);
             const avatar = u?.avatar
-              ? `https://pointer.uz/public/avatar/${u.avatar}`
+              ? `https://profibaza.uz/public/avatar/${u.avatar}`
               : null;
             const addr = [row.address1, row.address2, row.address3]
               .filter(Boolean)
@@ -552,6 +552,7 @@ export default function NewWorkerOrdersPage() {
                             display: "flex",
                             gap: 10,
                             alignItems: "center",
+                            flexWrap: "wrap"
                           }}
                         >
                           <CommentToggle onClick={() => openComment(row.id)}>
@@ -590,6 +591,7 @@ export default function NewWorkerOrdersPage() {
                               display: "flex",
                               gap: 10,
                               alignItems: "center",
+                              flexWrap: "wrap"
                             }}
                           >
                             <CommentToggle onClick={() => closeComment(row.id)}>

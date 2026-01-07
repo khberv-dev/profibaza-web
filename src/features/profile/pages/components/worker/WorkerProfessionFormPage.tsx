@@ -88,7 +88,7 @@ const demoTypeFromFileId = (fileId: string): "image" | "video" => {
 };
 
 const demoUrlFromFileId = (fileId: string) =>
-  `https://pointer.uz/public/demo/${fileId}`;
+  `https://profibaza.uz/public/demo/${fileId}`;
 
 export default function WorkerProfessionFormPage({ mode }: Props) {
   const { rowId } = useParams();

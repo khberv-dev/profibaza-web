@@ -3,6 +3,10 @@ import styled from "@emotion/styled";
 /* Страница */
 export const WOPage = styled.div`
   padding: 20px;
+
+  @media (max-width: 520px) {
+    padding: 14px;
+  }
 `;
 
 /* Верхняя панель */
@@ -12,6 +16,12 @@ export const WOToolbar = styled.div`
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+
+  @media (max-width: 520px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 `;
 export const WOTitle = styled.h1`
   margin: 0;
@@ -37,9 +47,8 @@ export const WOCard = styled.article`
   padding: 20px 22px;
   border-radius: 20px;
   background: #fff;
-  border: 1px solid #e9eef6; /* тонкая светлая рамка */
-  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04),
-    /* верхний hairline */ 0 8px 24px rgba(2, 32, 71, 0.05);
+  border: 1px solid #e9eef6;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04), 0 8px 24px rgba(2, 32, 71, 0.05);
   transition: box-shadow 0.2s ease, transform 0.1s ease;
 
   .inner {
@@ -50,19 +59,38 @@ export const WOCard = styled.article`
   }
 
   &:hover {
-    box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04),
-      0 12px 28px rgba(2, 32, 71, 0.08);
+    box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04), 0 12px 28px rgba(2, 32, 71, 0.08);
     transform: translateY(-1px);
   }
 
+  /* tablet */
   @media (max-width: 920px) {
-    grid-template-columns: 64px minmax(0, 1fr);
-    grid-template-areas:
-      "left mid"
-      "right right";
     padding: 16px;
+
+    .inner {
+      grid-template-columns: 64px minmax(0, 1fr);
+      grid-template-areas:
+        "left mid"
+        "right right";
+      gap: 12px 14px;
+    }
+  }
+
+  /* mobile */
+  @media (max-width: 520px) {
+    padding: 14px;
+    border-radius: 16px;
+
+    .inner {
+      grid-template-columns: 52px minmax(0, 1fr);
+      grid-template-areas:
+        "left mid"
+        "right right";
+      gap: 10px 12px;
+    }
   }
 `;
+
 
 /* Левая колонка (аватар) */
 export const WOLeft = styled.div`
@@ -72,20 +100,31 @@ export const WOLeft = styled.div`
   justify-items: center; /* чтобы аватар не «лип» к левому краю */
 `;
 export const WOAvatar = styled.div<{ $src?: string | null }>`
-  grid-area: left;
   border-radius: 24px;
   height: 96px;
   width: 96px;
   background: ${({ $src }) =>
-    $src
-      ? `url(${$src}) center/cover no-repeat`
-      : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
+    $src ? `url(${$src}) center/cover no-repeat` : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
   border: 1px solid #e6ebf2;
   display: grid;
   place-items: center;
   font-weight: 800;
-  color: #95a3b5; /* мягкий серый для инициалов */
+  color: #95a3b5;
   font-size: 32px;
+
+  @media (max-width: 920px) {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    font-size: 22px;
+  }
+
+  @media (max-width: 520px) {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    font-size: 18px;
+  }
 `;
 
 /* Центр */
@@ -181,7 +220,7 @@ export const WOMeta = styled.ul`
 
   li {
     display: grid;
-    grid-template-columns: 18px auto; /* ← иконка + текстовая колонка */
+    grid-template-columns: 18px auto;
     align-items: start;
     column-gap: 10px;
     min-height: 20px;
@@ -190,12 +229,11 @@ export const WOMeta = styled.ul`
     line-height: 1.35;
   }
 
-  /* Внутри текстовой колонки: ключ и значение в строку, не ломаются */
   li > div {
     display: inline-flex;
     gap: 6px;
     align-items: baseline;
-    min-width: 0; /* ← важно для ellipsis */
+    min-width: 0;
     white-space: nowrap;
   }
 
@@ -209,18 +247,37 @@ export const WOMeta = styled.ul`
     color: #0f1f3f;
     font-weight: 500;
     flex: 1 1 auto;
-    min-width: 0; /* ← чтобы работал ellipsis */
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-variant-numeric: tabular-nums; /* ровные цифры */
+    font-variant-numeric: tabular-nums;
     -moz-font-feature-settings: "tnum" 1;
     -webkit-font-feature-settings: "tnum" 1;
     font-feature-settings: "tnum" 1;
   }
 
-  /* Иконки чуть приглушим */
   svg {
     opacity: 0.75;
+  }
+
+  /* ✅ mobile: разрешаем перенос адреса/значений */
+  @media (max-width: 520px) {
+    gap: 8px;
+
+    li {
+      font-size: 13px;
+    }
+
+    li > div {
+      white-space: normal;   /* было nowrap */
+      flex-wrap: wrap;
+    }
+
+    .v {
+      overflow: visible;     /* чтобы адрес не резался */
+      text-overflow: clip;
+      word-break: break-word;
+    }
   }
 `;
 
@@ -251,12 +308,24 @@ export const WORight = styled.aside`
   grid-auto-rows: min-content;
 
   @media (max-width: 920px) {
-    width: auto;
     justify-items: start;
     grid-auto-flow: column;
   }
-`;
 
+  @media (max-width: 520px) {
+    grid-auto-flow: unset;
+    grid-template-columns: 1fr 1fr;
+    justify-items: stretch;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+  }
+`;
 const btnBase = `
   height: 36px; padding: 0 12px; border-radius: 12px; cursor: pointer;
   transition: box-shadow .15s ease, transform .06s ease, color .12s ease, border-color .12s ease;
@@ -468,6 +537,17 @@ export const WOTabs = styled.div`
   gap: 8px;
   flex-wrap: wrap;
   margin: 6px 0 16px;
+
+  @media (max-width: 520px) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+  }
 `;
 
 export const WOTab = styled.button<{ $active?: boolean }>`

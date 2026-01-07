@@ -72,6 +72,12 @@ export function TopbarLayout() {
       ...(role === "LEGAL"
         ? [{ to: "/app/legal/offers", label: t("nav.legalOffers") }]
         : []),
+      ...(role === "INVESTOR"
+        ? [{ to: "/app/investor/offers", label: t("nav.legalOffers") }]
+        : []),
+      ...(role === "INVESTOR"
+        ? [{ to: "/app/investor/orders", label: t("nav.orders") }]
+        : []),
 
       { to: "/app/help", label: t("nav.help") },
     ];
@@ -267,7 +273,7 @@ export function TopbarLayout() {
 
             {/* Написать на почту */}
             <a
-              href="mailto:support@pointer.uz" // ← поставь вашу почту
+              href="mailto:support@profibaza.uz" // ← поставь вашу почту
               onClick={() => setHelpOpen(false)}
               style={{
                 textDecoration: "none",

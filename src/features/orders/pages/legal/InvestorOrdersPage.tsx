@@ -23,8 +23,14 @@ import {
   getClientOrders,
   postClientComment,
 } from "../../../../shared/endpoints/client-orders";
+import {
+  LegalOrder,
+  getInvestorOrders,
+  postInvestorComment,
+} from "../../../../shared/endpoints/legal-orders";
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
+import { Link } from "react-router-dom";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ru");
@@ -50,7 +56,7 @@ const fmtDate = (iso?: string | null) =>
 const fmtFromNow = (iso?: string) => (iso ? dayjs(iso).fromNow() : "");
 
 const statusView: Record<
-  NonNullable<ClientOrder["status"]>,
+  NonNullable<LegalOrder["status"]>,
   { text: string; tone: "blue" | "green" | "amber" | "gray" | "red" }
 > = {
   NEW: { text: "Новая", tone: "blue" },
@@ -60,20 +66,19 @@ const statusView: Record<
 };
 
 /* ================ Page ================ */
-export default function ClientOrdersPage() {
+export default function InvestorOrdersPage() {
   const {
     data: orders = [],
     isLoading,
     isError,
     refetch,
-  } = useQuery<ClientOrder[]>({
-    queryKey: ["client", "orders"],
-    queryFn: ({ signal }) => getClientOrders(signal),
+  } = useQuery<LegalOrder[]>({
+    queryKey: ["investor", "orders"],
+    queryFn: ({ signal }) => getInvestorOrders(signal),
     staleTime: 60_000,
   });
 
   const total = orders.length;
-
 
   return (
     <Wrap>
@@ -103,7 +108,7 @@ export default function ClientOrdersPage() {
           <h3>Заявок пока нет</h3>
           <p>Создайте первую — мастер быстро откликнется.</p>
           <CreateBtn
-            onClick={() => (window.location.href = "/client/create-order")}
+            onClick={() => (window.location.href = "/legal/create-order")}
           >
             Создать заявку
           </CreateBtn>
@@ -160,13 +165,13 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
   const qc = useQueryClient();
   const { mutate: sendComment, isPending } = useMutation({
     mutationFn: (payload: { rate: number; comment: string }) =>
-      postClientComment(order.id, payload),
+        postInvestorComment(order.id, payload),
     onSuccess: async () => {
       setRateOpen(false);
       setRate(0);
       setComment("");
 
-      await qc.invalidateQueries({ queryKey: ["client", "orders"] });
+      await qc.invalidateQueries({ queryKey: ["investor", "orders"] });
     },
     onError: () => {
       alert("Не удалось отправить отзыв. Попробуйте ещё раз.");
@@ -202,7 +207,10 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
       <Mid>
         <Head>
           <div>
+            <Link to='/find/worker/ab6b81e9-32c0-4bb7-a4e4-3ea9be0ad148'>
             <Name>{fio(u)}</Name>
+            </Link>
+
             <Sub>
               {createdAgo ? `создана ${createdAgo}` : null}
               {createdAgo && deadline ? " • " : ""}
@@ -236,18 +244,13 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
         <Desc title={order.description}>{order.description}</Desc>
 
         <Actions>
-          {tel && (
-            <Ghost as="a" title={`Позвонить ${fio(u)}`}>
-              <Phone size={16} />
-              Позвонить
-            </Ghost>
-          )}
+
+
 
 <Ghost type="button" onClick={() => setFilesOpen(true)} title="Посмотреть файлы">
     <ExternalLink size={16} />
     Файлы ({order.files?.length ?? 0})
   </Ghost>
-
 
           {canRate && (
             <CommentToggle type="button" onClick={() => setOpen((v) => !v)}>
@@ -341,6 +344,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
         )}
       </Mid>
 
+
       <Modal
   open={isFilesOpen}
   onClose={() => setFilesOpen(false)}
@@ -366,7 +370,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     ) : (
       <FilesGrid>
         {order.files.map((fid) => {
-          const url = `https://profibaza.uz/public/orders/${fid}`;
+          const url = `https://profibaza.uz/public/order/${fid}`;
           const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
 
           return (
@@ -484,6 +488,7 @@ const Wrap = styled.div`
   display: grid;
   gap: 16px;
 `;
+
 
 const FilesWrap = styled.div`
   /* вертикальный скролл внутри модала */

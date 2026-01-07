@@ -299,6 +299,13 @@ export const clientApi = {
     );
     return data;
   },
+  createOrderInvestor: async (dto: CreateOrderDto) => {
+    const { data } = await api.post<CreateOrderResp>(
+      "/investor/create-order",
+      dto
+    );
+    return data;
+  },
 
   createOrderLegal: async (dto: CreateOrderDto) => {
     const { data } = await api.post<CreateOrderResp>(

@@ -44,6 +44,9 @@ import WorkerDetailPage from "../pages/worker-search/WorkerDetailPage";
 import { FindOrTopbarLayout } from "../layouts/FindOrTopbarLayout";
 import InvestorCreateProject from "../features/profile/pages/components/InvestorCreateProject";
 import InvestorsPage from "../pages/investors/Investors";
+import InvestorOffersPage from "../features/investor-offers/InvestorOffersPage";
+import InvestorOrdersPage from "../features/orders/pages/legal/InvestorOrdersPage";
+import InvestorDetailPage from "../pages/investors/InvestorDetailPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -57,6 +60,7 @@ export const router = createBrowserRouter([
       { index: true, element: <WorkerSearchPage /> },
       { path: "worker/:id", element: <WorkerDetailPage /> },
       { path: "investors", element: <InvestorsPage /> },
+      { path: "investor/:investorId", element: <InvestorDetailPage /> }
     ],
   },
 
@@ -109,10 +113,12 @@ export const router = createBrowserRouter([
                     path: "investor/projects/create",
                     element: <InvestorCreateProject />,
                   },
+                  { path: "investor/offers", element: <InvestorOffersPage /> },
+                  { path: "investor/orders", element: <InvestorOrdersPage /> },
                 ],
               },
               {
-                element: <RoleGuard allow={["CLIENT", "LEGAL"]} />,
+                element: <RoleGuard allow={["CLIENT", "LEGAL", "INVESTOR"]} />,
                 children: [
                   { path: "client/create-order", element: <CreateOrderPage /> },
                 ],

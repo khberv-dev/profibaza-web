@@ -1007,7 +1007,7 @@ export const WorkerSearchPage: React.FC = () => {
                 <HHAvatar
                   $src={
                     row.worker?.user?.avatar
-                      ? `https://pointer.uz/public/avatar/${row.worker?.user?.avatar}`
+                      ? `https://profibaza.uz/public/avatar/${row.worker?.user?.avatar}`
                       : null
                   }
                 >

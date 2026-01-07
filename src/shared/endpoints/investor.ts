@@ -68,3 +68,41 @@ export const useUpdateInvestorAddress = () =>
   useMutation({
     mutationFn: (dto: UpdateAddressDto) => clientApi.updateAddressInvestor(dto),
   });
+
+
+  
+export type Investor = {
+  id: string;
+  name: string | null;
+  activityType: string | null;
+  investmentAmount: number | null;
+  address1: string | null;
+  address2: string | null;
+  address3: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type InvestorResp =
+  | { ok: boolean; data: Investor }
+  | { ok: boolean; data: { ok: boolean; data: Investor } };
+
+const takeInvestor = (payload: InvestorResp): Investor | null => {
+  // @ts-ignore
+  if (payload?.data && payload.data.id) return payload.data as Investor;
+  // @ts-ignore
+  if (payload?.data?.data && payload.data.data.id) return payload.data.data as Investor;
+  return null;
+};
+
+export async function getInvestorById(
+  investorId: string,
+  signal?: AbortSignal
+): Promise<Investor | null> {
+  const { data } = await api.get<InvestorResp>(
+    `/opt/investor/${encodeURIComponent(investorId)}`,
+    { signal }
+  );
+  return takeInvestor(data);
+}

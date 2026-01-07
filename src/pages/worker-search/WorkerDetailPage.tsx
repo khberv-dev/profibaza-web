@@ -151,8 +151,8 @@ const WorkerDetailPage: React.FC = () => {
 
   // ===== CONSTANTS / HELPERS (не хуки) =====
   const FILE_CDN =
-    import.meta.env.VITE_FILES_CDN || "https://pointer.uz/public/order/";
-  const AVA_CDN = "https://pointer.uz/public/avatar/";
+    import.meta.env.VITE_FILES_CDN || "https://profibaza.uz/public/order/";
+  const AVA_CDN = "https://profibaza.uz/public/avatar/";
   const fileUrl = (name?: string | null) =>
     name ? `${FILE_CDN}${encodeURIComponent(name)}` : "";
 

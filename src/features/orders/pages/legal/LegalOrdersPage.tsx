@@ -30,6 +30,7 @@ import {
 } from "../../../../shared/endpoints/legal-orders";
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
+import { Link } from "react-router-dom";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ru");
@@ -152,7 +153,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
   const u = order.workerProfession?.worker?.user;
   const avatarSrc = u?.avatar
-    ? `https://pointer.uz/public/avatar/${u.avatar}`
+    ? `https://profibaza.uz/public/avatar/${u.avatar}`
     : null;
   const s = getStatusView(order.status);
   const deadline = fmtDate(order.deadline);
@@ -195,6 +196,10 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
   const tel = u?.phone ? `+${u.phone.replace(/[^\d]/g, "")}` : null;
 
+  const telRaw = u?.phone ?? "";
+const telDigits = telRaw.replace(/[^\d]/g, "");
+const telHref = telDigits ? `tel:+${telDigits}` : "";
+
   return (
     <Card role="article" aria-label={`Заявка ${order.id}`}>
       <Left>
@@ -206,7 +211,9 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
       <Mid>
         <Head>
           <div>
+          <Link to='/find/worker/ab6b81e9-32c0-4bb7-a4e4-3ea9be0ad148'>
             <Name>{fio(u)}</Name>
+            </Link>
             <Sub>
               {createdAgo ? `создана ${createdAgo}` : null}
               {createdAgo && deadline ? " • " : ""}
@@ -240,12 +247,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
         <Desc title={order.description}>{order.description}</Desc>
 
         <Actions>
-          {tel && (
-            <Ghost as="a" title={`Позвонить ${fio(u)}`}>
-              <Phone size={16} />
-              Позвонить
-            </Ghost>
-          )}
+
 
 
 <Ghost type="button" onClick={() => setFilesOpen(true)} title="Посмотреть файлы">
@@ -371,7 +373,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     ) : (
       <FilesGrid>
         {order.files.map((fid) => {
-          const url = `https://pointer.uz/public/order/${fid}`;
+          const url = `https://profibaza.uz/public/order/${fid}`;
           const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
 
           return (

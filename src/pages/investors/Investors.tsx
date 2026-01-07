@@ -370,9 +370,18 @@ export default function InvestorsPage() {
                     </S.LogoCircle>
 
                     <div style={{ minWidth: 0 }}>
-                      <S.CompanyTitle title={inv.name ?? undefined}>
-                        {inv.name ?? "Компания (не указано)"}
-                      </S.CompanyTitle>
+                    <Link
+  to={`/find/investor/${inv.id}`}
+  style={{ textDecoration: "none", color: "inherit" }}
+>
+  <S.CompanyTitle
+    as="span"
+    title={inv.name ?? undefined}
+    style={{ cursor: "pointer" }}
+  >
+    {inv.name ?? "Компания (не указано)"}
+  </S.CompanyTitle>
+</Link>
 
                       <S.MetaLine>
                         <S.MetaItem>

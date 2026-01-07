@@ -231,7 +231,7 @@ export function AdminLayout() {
 
             {/* Написать на почту */}
             <a
-              href="mailto:support@pointer.uz" // ← поставь вашу почту
+              href="mailto:support@profibaza.uz" // ← поставь вашу почту
               onClick={() => setHelpOpen(false)}
               style={{
                 textDecoration: "none",

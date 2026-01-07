@@ -23,3 +23,7 @@ export const useCreateOrderLegal = () =>
   useMutation({
     mutationFn: (dto: CreateOrderDto) => clientApi.createOrderLegal(dto),
   });
+export const useCreateOrderInvestor = () =>
+  useMutation({
+    mutationFn: (dto: CreateOrderDto) => clientApi.createOrderInvestor(dto),
+  });
