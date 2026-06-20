@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import styled from "@emotion/styled";
-import { Control, Controller } from "react-hook-form";
+import { Control, Controller, FieldValues, Path } from "react-hook-form";
 
 /* ===== Стили ===== */
 const OTPWrap = styled.div<{ hasError?: boolean }>`
@@ -55,23 +55,23 @@ const ErrorText = styled.div`
 `;
 
 /* ===== Логика ===== */
-type OTPCodeProps = {
-  control: Control<any>;
-  name: string; // RHF имя
+type OTPCodeProps<T extends FieldValues = FieldValues> = {
+  control: Control<T>;
+  name: Path<T>;
   length?: number; // кол-во цифр (по умолчанию 5)
   autoFocus?: boolean; // автофокус на первую ячейку
   placeholderChar?: string; // плейсхолдер в пустых ячейках (•)
   disabled?: boolean;
 };
 
-export default function OTPCode({
+export default function OTPCode<T extends FieldValues = FieldValues>({
   control,
   name,
   length = 5,
   autoFocus = true,
   placeholderChar = "•",
   disabled,
-}: OTPCodeProps) {
+}: OTPCodeProps<T>) {
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   // Создаём массив индексов [0..length-1]
