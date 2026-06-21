@@ -108,7 +108,7 @@ export default function InvestorOrdersPage() {
           <h3>Заявок пока нет</h3>
           <p>Создайте первую — мастер быстро откликнется.</p>
           <CreateBtn
-            onClick={() => (window.location.href = "/legal/create-order")}
+            onClick={() => (window.location.href = "/app/client/create-order")}
           >
             Создать заявку
           </CreateBtn>
