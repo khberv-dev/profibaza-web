@@ -587,6 +587,36 @@
     }
   },
 
+  "activation": {
+    "badge": "Akkaunt faollashtirilmagan",
+    "title": "Davom etish uchun kirishni to'lang",
+    "sub": "Bir martalik to'lov <b>5&nbsp;000 {{currency}}</b>. To'lovdan keyin kirish avtomatik ochiladi. Agar kirish ochilmasa — «{{checkStatus}}» tugmasini bosing.",
+    "checkStatus": "Holatni tekshirish",
+    "planName": "Start",
+    "price": "5&nbsp;000 {{currency}}",
+    "checkPaid": "To'ladim — tekshirish",
+    "ribbon": "Bir martalik to'lov",
+    "hint": "To'lovdan keyin holat avtomatik yangilanadi. Agar yo'q bo'lsa — «{{checkStatus}}».",
+    "cardNumber": "Karta raqami",
+    "cardPlaceholder": "0000 0000 0000 0000",
+    "expiry": "Amal qilish muddati",
+    "expiryPlaceholder": "OO/YY",
+    "otpLabel": "SMS kodi",
+    "otpPlaceholder": "Kodni kiriting",
+    "otpHint": "Kartaga bog'langan telefon raqamiga tasdiqlash kodi yuborildi.",
+    "amountDue": "To'lov:",
+    "amountValue": "5&nbsp;000 {{currency}}",
+    "verifying": "Tekshirilmoqda…",
+    "done": "Tayyor",
+    "confirm": "Tasdiqlash",
+    "sending": "Yuborilmoqda…",
+    "pay": "To'lash",
+    "errors": {
+      "initPayment": "To'lovni boshlashda xatolik",
+      "verifyCode": "Kodni tasdiqlab bo'lmadi"
+    }
+  },
+
   "fields": {
     "profession": "Kasb",
     "experience": "Ish tajribasi",

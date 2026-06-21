@@ -3,6 +3,7 @@ import styled from "@emotion/styled";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 
 import { useMe, USER_QUERY_KEY } from "../shared/modules/user";
 import { useAuthStore } from "../shared/stores/auth";
@@ -14,8 +15,10 @@ import {
 } from "../shared/endpoints/activation";
 import { useNavigate } from "react-router-dom";
 import { pickMessage } from "../lib/pickMessage";
+import LangSwitcher from "./lang-switcher/LangSwitcher";
 
 export default function ActivationGate() {
+  const { t } = useTranslation();
   const { data: meApi, isLoading } = useMe();
   const setMe = useAuthStore((s) => s.setMe);
   const me = useAuthStore((s) => s.me);
@@ -36,30 +39,43 @@ export default function ActivationGate() {
   // Если вдруг активен — ничего не рендерим (гейт не нужен)
   if (me?.active) return null;
 
+  const currency = t("orders.currency");
+  const checkStatus = t("activation.checkStatus");
+
   return (
     <Page role="document" aria-labelledby="activation-title">
+      <LangWrap>
+        <LangSwitcher />
+      </LangWrap>
       <Center>
         <Hero>
           <Badge>
             <BadgeCheck size={16} />
-            Аккаунт не активирован
+            {t("activation.badge")}
           </Badge>
-          <Title id="activation-title">Оплатите доступ, чтобы продолжить</Title>
+          <Title id="activation-title">{t("activation.title")}</Title>
           <Sub>
-            Разовая оплата <b>5&nbsp;000 сум</b>. После оплаты доступ откроется
-            автоматически. Если доступ не появился — нажмите «Проверить статус».
+            <Trans
+              i18nKey="activation.sub"
+              values={{ currency, checkStatus }}
+              components={{ b: <b /> }}
+            />
           </Sub>
         </Hero>
 
         <Plan>
           <PlanHead>
-            <span className="name">Старт</span>
-            <span className="price">5&nbsp;000 сум</span>
+            <span className="name">{t("activation.planName")}</span>
+            <span
+              className="price"
+              dangerouslySetInnerHTML={{
+                __html: t("activation.price", { currency }),
+              }}
+            />
           </PlanHead>
 
           <PayBox
             onSuccess={async () => {
-              // перезагрузим /me, чтобы active стал true
               await qc.invalidateQueries({ queryKey: USER_QUERY_KEY });
             }}
           />
@@ -67,19 +83,16 @@ export default function ActivationGate() {
           <Actions>
             <Ghost
               onClick={() => qc.invalidateQueries({ queryKey: USER_QUERY_KEY })}
-              title="Проверить статус"
+              title={checkStatus}
             >
-              Я оплатил(а) — проверить
+              {t("activation.checkPaid")}
             </Ghost>
           </Actions>
 
-          <Ribbon>Разовая оплата</Ribbon>
+          <Ribbon>{t("activation.ribbon")}</Ribbon>
         </Plan>
 
-        <Hint>
-          После оплаты статус обновится автоматически. Если нет — «Проверить
-          статус».
-        </Hint>
+        <Hint>{t("activation.hint", { checkStatus })}</Hint>
       </Center>
     </Page>
   );
@@ -97,6 +110,8 @@ type Stage =
   | "error";
 
 function PayBox({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useTranslation();
+  const currency = t("orders.currency");
   const [stage, setStage] = useState<Stage>("card");
   const [error, setError] = useState<string | null>(null);
 
@@ -157,7 +172,7 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
       // показываем поле OTP
       setStage("otp");
     } catch (e: any) {
-      setError(e?.message || "Ошибка при инициализации платежа");
+      setError(e?.message || t("activation.errors.initPayment"));
       setStage("error");
     }
   };
@@ -190,7 +205,7 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
       const msg =
         pickMessage(e?.response?.data?.message) || // если axios-ошибка
         pickMessage(e?.message) ||
-        "Не удалось подтвердить код";
+        t("activation.errors.verifyCode");
       setError(msg); // <- всегда строка
       setStage("otp");
     }
@@ -200,11 +215,11 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
     <Box>
       <Fields aria-live="polite">
         <Field>
-          <Label>Номер карты</Label>
+          <Label>{t("activation.cardNumber")}</Label>
           <Input
             id="card"
             inputMode="numeric"
-            placeholder="0000 0000 0000 0000"
+            placeholder={t("activation.cardPlaceholder")}
             value={card}
             onChange={onCardInput}
             maxLength={19}
@@ -221,11 +236,11 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
 
         <Row2>
           <Field>
-            <Label>Срок действия</Label>
+            <Label>{t("activation.expiry")}</Label>
             <Input
               id="exp"
               inputMode="numeric"
-              placeholder="MM/YY"
+              placeholder={t("activation.expiryPlaceholder")}
               value={expiry}
               onChange={onExpiryInput}
               maxLength={5}
@@ -241,21 +256,18 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
 
         {stage === "otp" || stage === "verifying" || stage === "done" ? (
           <Field>
-            <Label>Код из SMS</Label>
+            <Label>{t("activation.otpLabel")}</Label>
             <Input
               id="otp"
               inputMode="numeric"
-              placeholder="Введите код"
+              placeholder={t("activation.otpPlaceholder")}
               value={otp}
               onChange={onOtpInput}
               maxLength={6}
               autoComplete="one-time-code"
               disabled={stage === "verifying" || stage === "done"}
             />
-            <SmallHint>
-              Мы отправили код подтверждения на номер телефона, привязанный к
-              карте.
-            </SmallHint>
+            <SmallHint>{t("activation.otpHint")}</SmallHint>
           </Field>
         ) : null}
 
@@ -264,7 +276,12 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
 
       <FooterRow>
         <Amount>
-          К оплате: <b>5&nbsp;000 сум</b>
+          {t("activation.amountDue")}{" "}
+          <b
+            dangerouslySetInnerHTML={{
+              __html: t("activation.amountValue", { currency }),
+            }}
+          />
         </Amount>
 
         {stage === "otp" || stage === "verifying" || stage === "done" ? (
@@ -276,10 +293,10 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
             }
           >
             {stage === "verifying"
-              ? "Проверяем…"
+              ? t("activation.verifying")
               : stage === "done"
-              ? "Готово"
-              : "Подтвердить"}
+              ? t("activation.done")
+              : t("activation.confirm")}
           </PayBtn>
         ) : (
           <PayBtn
@@ -287,7 +304,9 @@ function PayBox({ onSuccess }: { onSuccess: () => void }) {
             onClick={handlePay}
             disabled={!validCard || stage === "requesting"}
           >
-            {stage === "requesting" ? "Отправляем…" : "Оплатить"}
+            {stage === "requesting"
+              ? t("activation.sending")
+              : t("activation.pay")}
           </PayBtn>
         )}
       </FooterRow>
@@ -311,6 +330,7 @@ const Page = styled.main`
   min-height: 100vh;
   width: 100%;
   color: var(--text);
+  position: relative;
   background: radial-gradient(
       900px 360px at 15% -10%,
       rgba(59, 130, 246, 0.22),
@@ -326,6 +346,13 @@ const Page = styled.main`
   place-items: center;
   padding: clamp(20px, 4vw, 48px);
   box-sizing: border-box;
+`;
+
+const LangWrap = styled.div`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
 `;
 
 const Center = styled.div`
