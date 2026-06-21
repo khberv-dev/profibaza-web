@@ -35,8 +35,9 @@ import { DatePopoverInput } from "../../../../../components/custom-date-input/Da
 import { useDistricts, useRegions, useVillages } from "../../../../../shared/modules/location";
 import { pickName } from "../../../../../shared/endpoints/location";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { getWorkerById } from "../../../../../shared/endpoints/client";
+import { getWorkerById, CreateOrderDto } from "../../../../../shared/endpoints/client";
 import { Rate } from "antd";
 import { useMe } from "../../../../../shared/modules/user";
 import { useAuthStore } from "../../../../../shared/stores/auth";
@@ -66,6 +67,8 @@ const QUICK_BUDGETS = [300_000, 500_000, 1_000_000, 2_000_000, 5_000_000];
 export const CreateOrderCard: React.FC<Props> = ({
   initialWorkerProfessionId,
 }) => {
+  const { t, i18n } = useTranslation();
+  const numberLocale = i18n.language?.startsWith("uz") ? "uz-UZ" : "ru-RU";
   // ==== RHF: ИНИЦИАЛИЗАЦИЯ ====
   const { control, watch, setValue, getValues, reset } = useForm<FormValues>({
     defaultValues: {
@@ -120,7 +123,9 @@ export const CreateOrderCard: React.FC<Props> = ({
     ((u?.surname?.[0] ?? "") + (u?.name?.[0] ?? "")).toUpperCase() || "M";
   
   const fmtMoney = (n?: number) =>
-    typeof n === "number" ? n.toLocaleString("ru-RU") + " сум" : "—";
+    typeof n === "number"
+      ? n.toLocaleString(numberLocale) + " " + t("orders.currency")
+      : t("orders.dash");
   
   // хэндлеры
   const onRegionChange = (v: string | number | null) => {
@@ -163,7 +168,6 @@ export const CreateOrderCard: React.FC<Props> = ({
   const createLegal  = useCreateOrderLegal();
   const createInvestor  = useCreateOrderInvestor();
   
-  const isClient = me === "CLIENT";
   const isLegal  = me === "LEGAL";
   const isInvestor  = me === "INVESTOR";
   
@@ -181,8 +185,7 @@ const isPending = isInvestor
     : createClient.isPending;
 
 
-    const canSubmit =
-    (!!workerProfessionId || isLegal || isInvestor) &&
+  const canSubmit =
     description.trim().length >= 8 &&
     !!deadline &&
     budgetNum >= 0 &&
@@ -191,24 +194,21 @@ const isPending = isInvestor
   const addBudget = (v: number) =>
     setValue("budget", String(v), { shouldDirty: true, shouldValidate: true });
 
-  const fmtSum = (n?: number) => (n ? n.toLocaleString("ru-RU") + " сум" : "—");
+  const fmtSum = (n?: number) =>
+    n ? n.toLocaleString(numberLocale) + " " + t("orders.currency") : t("orders.dash");
 
   const navigate = useNavigate();
   const handleSubmit = async () => {
     if (!canSubmit) {
       if (!deadline) {
-        toast.error("Выберите срок выполнения");
+        toast.error(t("orders.create.errors.deadline"));
         return;
       }
       if (description.trim().length < 8) {
-        toast.error("Опишите задачу подробнее (минимум 8 символов)");
+        toast.error(t("orders.create.errors.descriptionMin"));
         return;
       }
-      if (!isLegal && !isInvestor && !workerProfessionId) {
-        toast.error("Не указан профиль мастера");
-        return;
-      }
-      toast.error("Проверьте поля формы");
+      toast.error(t("orders.create.errors.formInvalid"));
       return;
     }
   
@@ -218,8 +218,7 @@ const isPending = isInvestor
       const districtName = districtId ? pickName(districts.find(d => d.id === districtId)!, lng) : null;
       const villageName  = villageId  ? pickName(villages.find(v => v.id === villageId)!, lng)   : null;
   
-      // базовый ДТО (общее для обеих ролей)
-      const baseDto = {
+      const dto: CreateOrderDto = {
         description: description.trim(),
         workerProfessionId: workerProfessionId.trim(),
         deadline,
@@ -229,16 +228,10 @@ const isPending = isInvestor
         address3: villageName,
       };
   
-      // различия по роли
-      const dto =
-      isLegal || isInvestor
-        ? baseDto
-        : { ...baseDto, workerProfessionId: workerProfessionId.trim() };
-  
-      const res = await mutateAsync(dto as any);
+      const res = await mutateAsync(dto);
   
       if (res?.ok) {
-        toast.success("Заявка создана и отправлена");
+        toast.success(t("orders.create.success"));
   
         navigate(
           isInvestor ? "/app/investor/orders" : isLegal ? "/app/legal/orders" : "/app/client/orders"
@@ -258,10 +251,10 @@ const isPending = isInvestor
         setDistrictId(null);
         setVillageId(null);
       } else {
-        toast.error("Не удалось создать заявку");
+        toast.error(t("orders.create.failed"));
       }
     } catch (e: any) {
-      toast.error(e?.message || "Ошибка создания заявки");
+      toast.error(e?.message || t("orders.create.errorGeneric"));
     }
   };
 
@@ -270,7 +263,7 @@ const isPending = isInvestor
       {/* ФОРМА */}
       <CardWrap>
         <CardHeader>
-          <CardTitle>Создание заявки</CardTitle>
+          <CardTitle>{t("orders.create.title")}</CardTitle>
         </CardHeader>
 
         <CardBody>
@@ -305,7 +298,7 @@ const isPending = isInvestor
           fontWeight: 800,
           color: "#1e40af",
         }}
-        aria-label="Аватар мастера"
+        aria-label={t("orders.create.workerAvatarAria")}
       >
         {!workerBrief?.worker?.user?.avatar &&
           initials(workerBrief?.worker?.user)}
@@ -314,7 +307,7 @@ const isPending = isInvestor
       {/* ФИО + рейтинг */}
       <div style={{ minWidth: 0 }}>
         <div style={{ fontWeight: 900, color: "#0f172a" }}>
-          {workerLoading ? "Загрузка…" : fio(workerBrief?.worker?.user)}
+          {workerLoading ? t("loading") : fio(workerBrief?.worker?.user)}
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
           <Rate allowHalf disabled value={workerBrief?.rating ?? 0} style={{ fontSize: 16 }} />
@@ -329,7 +322,7 @@ const isPending = isInvestor
         <div style={{ fontWeight: 800, color: "#12284a" }}>
           {fmtMoney(workerBrief?.minPrice)} — {fmtMoney(workerBrief?.maxPrice)}
         </div>
-        <div style={{ color: "#6b7a90", fontSize: 12 }}>вилка мастера</div>
+        <div style={{ color: "#6b7a90", fontSize: 12 }}>{t("orders.create.workerPriceRange")}</div>
       </div>
     </div>
   ) : null}
@@ -337,14 +330,14 @@ const isPending = isInvestor
           <Row>
             <TwoCol>
               <div>
-                <SectionLabel>Срок выполнения</SectionLabel>
+                <SectionLabel>{t("orders.create.deadlineLabel")}</SectionLabel>
                 <DatePopoverInput
   control={control}
   name="deadline"
-  placeholder="ГГГГ-ММ-ДД"
+  placeholder={t("orders.create.deadlinePlaceholder")}
   min={dayjs().format("YYYY-MM-DD")}
-  rules={{ required: "Выберите дату" }}
-  description="Укажите крайнюю дату — мастеру проще планировать."
+  rules={{ required: t("orders.create.deadlineRequired") }}
+  description={t("orders.create.deadlineHint")}
 />
               </div>
 
@@ -365,15 +358,15 @@ const isPending = isInvestor
 
           {/* Бюджет + пресеты */}
           <Row>
-            <SectionLabel>Бюджет</SectionLabel>
+            <SectionLabel>{t("orders.create.budgetLabel")}</SectionLabel>
             <TwoCol>
               <CustomInput
                 control={control}
                 name="budget"
-                placeholder="сум"
+                placeholder={t("orders.create.budgetPlaceholder")}
                 rules={{
                   validate: (v: string) =>
-                    v === "" || /^\d+$/.test(v) || "Только цифры",
+                    v === "" || /^\d+$/.test(v) || t("orders.create.budgetDigitsOnly"),
                 }}
               />
               <Chips>
@@ -388,19 +381,19 @@ const isPending = isInvestor
                 ))}
               </Chips>
             </TwoCol>
-            <Hint>Можно оставить пустым — мастера предложат свои ставки.</Hint>
+            <Hint>{t("orders.create.budgetHint")}</Hint>
           </Row>
 
           {/* Регионы: селект + чипсы */}
           <Row>
-  <SectionLabel>Локация работ</SectionLabel>
+  <SectionLabel>{t("orders.create.locationLabel")}</SectionLabel>
   <ThreeCol>
     <CustomSelect
       id="region-select"
       options={regionOptions}
       value={regionId}
       onChange={onRegionChange}
-      placeholder={regionsLoading ? "Загрузка…" : "Регион"}
+      placeholder={regionsLoading ? t("orders.create.regionLoading") : t("orders.create.regionPlaceholder")}
       loading={regionsLoading}
       width="100%"
     />
@@ -409,7 +402,7 @@ const isPending = isInvestor
       options={districtOptions}
       value={districtId}
       onChange={onDistrictChange}
-      placeholder={regionId ? (districtsLoading ? "Загрузка…" : "Район") : "Сначала выберите регион"}
+      placeholder={regionId ? (districtsLoading ? t("orders.create.regionLoading") : t("orders.create.districtPlaceholder")) : t("orders.create.districtSelectRegionFirst")}
       loading={districtsLoading}
       disabled={!regionId}
       width="100%"
@@ -419,26 +412,26 @@ const isPending = isInvestor
       options={villageOptions}
       value={villageId}
       onChange={onVillageChange}
-      placeholder={districtId ? (villagesLoading ? "Загрузка…" : "Посёлок/махалля (необязательно)") : "Выберите район"}
+      placeholder={districtId ? (villagesLoading ? t("orders.create.regionLoading") : t("orders.create.villagePlaceholder")) : t("orders.create.villageSelectDistrictFirst")}
       loading={villagesLoading}
       disabled={!districtId}
       width="100%"
     />
   </ThreeCol>
-  <Hint>Сначала выберите регион, затем район. Посёлок/махалля — по желанию.</Hint>
+  <Hint>{t("orders.create.locationHint")}</Hint>
 </Row>
 
 
           {/* Описание */}
           <Row>
-            <SectionLabel>Описание задачи</SectionLabel>
+            <SectionLabel>{t("orders.create.descriptionLabel")}</SectionLabel>
             <Textarea
               rows={6}
-              placeholder="Пример: Zo'r devor bor, shundan sim o'tkazish kerak. Material bor, ishni 5 yanvargacha tugatish kerak."
+              placeholder={t("orders.create.descriptionPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <Hint>Чем подробнее — тем точнее отклики.</Hint>
+            <Hint>{t("orders.create.descriptionHint")}</Hint>
           </Row>
 
           <Actions>
@@ -447,16 +440,16 @@ const isPending = isInvestor
               onClick={handleSubmit}
               disabled={!canSubmit || isPending}
             >
-              {isPending ? "Отправляем…" : "Создать заявку"}
+              {isPending ? t("orders.sending") : t("orders.create.submit")}
             </PrimaryBtn>
             <GhostBtn type="button" onClick={() => window.history.back()}>
-              Отмена
+              {t("common.cancel")}
             </GhostBtn>
           </Actions>
 
           <SoftBar>
-  <b>Предпросмотр:</b> Дедлайн {dayjs(deadline).format("DD.MM.YYYY")},
-  бюджет {fmtSum(budgetNum)}, локация: {
+  <b>{t("orders.create.previewLabel")}</b> {t("orders.create.previewDeadline")} {dayjs(deadline).format("DD.MM.YYYY")},
+  {t("orders.create.previewBudget")} {fmtSum(budgetNum)}, {t("orders.create.previewLocation")} {
     [
       regionId   ? pickName(regions.find(r => r.id === regionId)!, lng)   : null,
       districtId ? pickName(districts.find(d => d.id === districtId)!, lng): null,
@@ -470,7 +463,7 @@ const isPending = isInvestor
       {/* САЙДБАР */}
       <CardWrap>
         <CardHeader>
-          <CardTitle>Итого по заявке</CardTitle>
+          <CardTitle>{t("orders.create.summaryTitle")}</CardTitle>
         </CardHeader>
         <CardBody>
           <SummaryList>
@@ -483,43 +476,38 @@ const isPending = isInvestor
               </b>
             </li> */}
             <li>
-              <span>Срок</span>
+              <span>{t("orders.create.summaryDeadline")}</span>
               <b>{dayjs(deadline).format("DD.MM.YYYY")}</b>
             </li>
             <li>
-              <span>Бюджет</span>
+              <span>{t("orders.create.summaryBudget")}</span>
               <b>{fmtSum(budgetNum)}</b>
             </li>
             <li>
-    <span>Регион</span>
-    <b>{regionId ? pickName(regions.find(r => r.id === regionId)!, lng) : "—"}</b>
+    <span>{t("orders.create.summaryRegion")}</span>
+    <b>{regionId ? pickName(regions.find(r => r.id === regionId)!, lng) : t("orders.dash")}</b>
   </li>
   <li>
-    <span>Регион</span>
-    <b>{regionId ? pickName(regions.find(r => r.id === regionId)!, lng) : "—"}</b>
+    <span>{t("orders.create.summaryDistrict")}</span>
+    <b>{districtId ? pickName(districts.find(d => d.id === districtId)!, lng) : t("orders.dash")}</b>
   </li>
   <li>
-    <span>Район</span>
-    <b>{districtId ? pickName(districts.find(d => d.id === districtId)!, lng) : "—"}</b>
-  </li>
-  <li>
-    <span>Махалля / посёлок</span>
-    <b>{villageId ? pickName(villages.find(v => v.id === villageId)!, lng) : "—"}</b>
+    <span>{t("orders.create.summaryVillage")}</span>
+    <b>{villageId ? pickName(villages.find(v => v.id === villageId)!, lng) : t("orders.dash")}</b>
   </li>
             <li>
-              <span>Описание</span>
+              <span>{t("orders.create.summaryDescription")}</span>
               <b>
                 {description
                   ? description.length > 26
                     ? description.slice(0, 26) + "…"
                     : description
-                  : "—"}
+                  : t("orders.dash")}
               </b>
             </li>
           </SummaryList>
           <SoftBar>
-            После отправки заявка попадёт мастеру. Он увидит дедлайн, бюджет и
-            адрес и сможет быстро откликнуться.
+            {t("orders.create.afterSubmitHint")}
           </SoftBar>
         </CardBody>
       </CardWrap>

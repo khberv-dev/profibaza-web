@@ -198,10 +198,10 @@ export function TopbarLayout() {
           }}
         >
           <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>
-            Нужна помощь?
+            {t("help.title")}
           </div>
           <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.45 }}>
-            Можно спросить в поддержке или найти ответ самостоятельно
+            {t("help.subtitle")}
           </div>
 
           <div
@@ -267,7 +267,7 @@ export function TopbarLayout() {
                 </svg>
               </span>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                Найти ответ
+                {t("help.findAnswer")}
               </div>
             </a>
 
@@ -324,7 +324,7 @@ export function TopbarLayout() {
                 </svg>
               </span>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                Написать на почту
+                {t("help.emailSupport")}
               </div>
             </a>
           </div>

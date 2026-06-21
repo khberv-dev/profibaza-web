@@ -2,6 +2,7 @@
 import React from "react";
 import styled from "@emotion/styled";
 import { ChevronLeft, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { CreateOrderCard } from "../../../features/profile/pages/components/client/CreateOrderCard";
 
 // Если используешь react-router-dom v6 — можно подключить useSearchParams.
@@ -12,6 +13,7 @@ const useWorkerProfessionId = () => {
 };
 
 const CreateOrderPage: React.FC = () => {
+  const { t } = useTranslation();
   const initialWorkerProfessionId = useWorkerProfessionId();
 
   return (
@@ -28,23 +30,20 @@ const CreateOrderPage: React.FC = () => {
             }}
           >
             <ChevronLeft size={16} />
-            Назад
+            {t("worker.back")}
           </a>
-          <span>Заявки</span>
-          <em>Создать</em>
+          <span>{t("orders.create.breadcrumbOrders")}</span>
+          <em>{t("orders.create.breadcrumbCreate")}</em>
         </Crumbs>
 
         <HeroTitle>
-          Создание заявки
+          {t("orders.create.title")}
           <SafeBadge>
             <ShieldCheck size={14} />
-            Безопасная сделка
+            {t("orders.create.safeDeal")}
           </SafeBadge>
         </HeroTitle>
-        <HeroSub>
-          Заполните детали задачи — мастер увидит срок, бюджет и адрес и сможет
-          быстро откликнуться.
-        </HeroSub>
+        <HeroSub>{t("orders.create.pageSubtitle")}</HeroSub>
       </Hero>
 
       <MainWrap>

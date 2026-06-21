@@ -1,10 +1,31 @@
-// src/components/footer/AppFooter.tsx
 import React from "react";
+import { useTranslation } from "react-i18next";
+import LangSwitcher from "./lang-switcher/LangSwitcher";
+
+const FOOTER_NAV = [
+  { key: "about", href: "/about" },
+  { key: "help", href: "/help" },
+  { key: "jobs", href: "/jobs" },
+  { key: "ads", href: "/ads" },
+  { key: "requirements", href: "/requirements" },
+  { key: "companies", href: "/companies" },
+  { key: "professions", href: "/professions" },
+] as const;
+
+const FOOTER_LEGAL = [
+  { key: "ethics", href: "/legal/ethics" },
+  { key: "services", href: "/legal/services" },
+  { key: "terms", href: "/legal/terms" },
+  { key: "privacy", href: "/legal/privacy" },
+  { key: "userAgreement", href: "/legal/user" },
+] as const;
 
 export function AppFooter() {
+  const { t } = useTranslation();
+
   return (
     <footer
-    className="app-footer"
+      className="app-footer"
       style={{
         paddingTop: 40,
         borderTop: "1px solid #e5e7eb",
@@ -24,9 +45,8 @@ export function AppFooter() {
           alignItems: "start",
         }}
       >
-        {/* Левая колонка */}
         <div>
-          <div style={{ fontWeight: 800, marginBottom: 12 }}>PROFIBAZA</div>
+          <div style={{ fontWeight: 800, marginBottom: 12 }}>{t("brand")}</div>
           <nav
             style={{
               display: "grid",
@@ -34,15 +54,7 @@ export function AppFooter() {
               maxWidth: 420,
             }}
           >
-            {[
-              { label: "О компании", href: "/about" },
-              { label: "Помощь", href: "/help" },
-              { label: "Наши вакансии", href: "/jobs" },
-              { label: "Реклама на сайте", href: "/ads" },
-              { label: "Требования к ПО", href: "/requirements" },
-              { label: "Каталог компаний", href: "/companies" },
-              { label: "Работа по профессиям", href: "/professions" },
-            ].map((link) => (
+            {FOOTER_NAV.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -52,16 +64,15 @@ export function AppFooter() {
                   fontSize: 14,
                 }}
               >
-                {link.label}
+                {t(`footerLinks.${link.key}`)}
               </a>
             ))}
           </nav>
         </div>
 
-        {/* Правая колонка */}
         <div style={{ justifySelf: "center", textAlign: "center" }}>
           <div style={{ fontWeight: 700, marginBottom: 10 }}>
-            Мобильное приложение
+            {t("footerLinks.mobileApp")}
           </div>
           <div
             style={{
@@ -72,7 +83,6 @@ export function AppFooter() {
               border: "1px solid #e5e7eb",
             }}
           >
-            {/* Подставь ваш src на QR */}
             <img
               src="/qr.png"
               alt="QR"
@@ -84,7 +94,6 @@ export function AppFooter() {
         </div>
       </div>
 
-      {/* Линейки и нижняя полоса */}
       <div
         style={{
           maxWidth: 1120,
@@ -103,19 +112,13 @@ export function AppFooter() {
             paddingTop: 16,
           }}
         >
-          {[
-            { label: "Этика и комплаенс", href: "/legal/ethics" },
-            { label: "Оказание услуг", href: "/legal/services" },
-            { label: "Использование сайтов", href: "/legal/terms" },
-            { label: "Защита персональных данных", href: "/legal/privacy" },
-            { label: "Пользовательское соглашение", href: "/legal/user" },
-          ].map((l, i, arr) => (
+          {FOOTER_LEGAL.map((l, i, arr) => (
             <span key={l.href} style={{ display: "inline-flex", gap: 10 }}>
               <a
                 href={l.href}
                 style={{ color: "#6b7280", textDecoration: "none" }}
               >
-                {l.label}
+                {t(`footerLinks.${l.key}`)}
               </a>
               {i !== arr.length - 1 && <span>·</span>}
             </span>
@@ -135,39 +138,11 @@ export function AppFooter() {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* Иконка языка (упрощённая) */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                stroke="#6b7280"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M3 12h18M12 3v18M6 6c2 2 10 2 12 0M6 18c2-2 10-2 12 0"
-                stroke="#6b7280"
-                strokeWidth="1.2"
-              />
-            </svg>
-            <button
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#374151",
-                fontSize: 14,
-                cursor: "pointer",
-                padding: 0,
-              }}
-              // onClick={() => changeLang('ru')}
-              title="Сменить язык"
-            >
-              Русский
-            </button>
+            <LangSwitcher />
           </div>
 
           <div style={{ color: "#6b7280", fontSize: 13 }}>
-            © 2025 Группа компаний PROFIBAZA
+            {t("footerLinks.copyright")}
           </div>
         </div>
       </div>

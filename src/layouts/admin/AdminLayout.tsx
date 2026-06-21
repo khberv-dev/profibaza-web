@@ -47,8 +47,8 @@ export function AdminLayout() {
 
   const NAV_ITEMS: NavDef[] = useMemo(() => {
     const items: NavDef[] = [
-      { to: "/admin/stats", label: "Статистика" },
-      { to: "/admin/invoices", label: "Инвойсы" },
+      { to: "/admin/stats", label: t("admin.nav.stats") },
+      { to: "/admin/invoices", label: t("admin.nav.invoices") },
       { to: "/app/help", label: t("nav.help") },
     ];
 
@@ -156,10 +156,10 @@ export function AdminLayout() {
           }}
         >
           <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a" }}>
-            Нужна помощь?
+            {t("help.title")}
           </div>
           <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.45 }}>
-            Можно спросить в поддержке или найти ответ самостоятельно
+            {t("help.subtitle")}
           </div>
 
           <div
@@ -225,7 +225,7 @@ export function AdminLayout() {
                 </svg>
               </span>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                Найти ответ
+                {t("help.findAnswer")}
               </div>
             </a>
 
@@ -282,7 +282,7 @@ export function AdminLayout() {
                 </svg>
               </span>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                Написать на почту
+                {t("help.emailSupport")}
               </div>
             </a>
           </div>

@@ -186,7 +186,7 @@ export type WeekSchedule = {
 // Если у вас другой роут раздачи файлов — поправьте здесь один раз.
 const buildDemoUrl = (fileId?: string | null): string => {
   if (!fileId) return "";
-  const base = import.meta.env.VITE_API_URL || "";
+  const base = import.meta.env.VITE_API_URL || "https://profibaza.uz/api";
   // предположительно файлы отдаются по /files/:fileId — при необходимости поменяй путь
   return `${base.replace(/\/$/, "")}/files/${encodeURIComponent(fileId)}`;
 };
@@ -407,7 +407,7 @@ export type UploadedDoc = {
 
 const buildFileUrl = (fileId?: string | null): string | null => {
   if (!fileId) return null;
-  const base = import.meta.env.VITE_API_URL || "";
+  const base = import.meta.env.VITE_API_URL || "https://profibaza.uz/api";
   return `${base.replace(/\/$/, "")}/worker/documents/${encodeURIComponent(
     fileId
   )}`;
@@ -433,7 +433,7 @@ export async function getWorkerDocuments(
 }
 
 export function getWorkerResumeUrl(workerProfessionId: string): string {
-  const base = import.meta.env.VITE_API_URL || "";
+  const base = import.meta.env.VITE_API_URL || "https://profibaza.uz/api";
   return `${base.replace(
     /\/$/,
     ""

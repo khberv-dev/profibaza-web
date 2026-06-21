@@ -7,8 +7,11 @@ import axios, {
 import type { ApiError } from "./types";
 import { getAuthToken, useAuthStore } from "../stores/auth";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://profibaza.uz/api";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE_URL,
   timeout: 20000,
   headers: { "Content-Type": "application/json" },
 });

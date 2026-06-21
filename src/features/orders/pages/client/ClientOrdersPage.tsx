@@ -25,42 +25,14 @@ import {
 } from "../../../../shared/endpoints/client-orders";
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
+import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
 
 dayjs.extend(relativeTime);
-dayjs.locale("ru");
-
-/* ================= Helpers ================= */
-const fmtMoney = (n?: number | null) =>
-  typeof n === "number" && !Number.isNaN(n)
-    ? `${n.toLocaleString("ru-RU")} сум`
-    : "—";
-
-const fio = (u?: {
-  name?: string;
-  surname?: string;
-  middleName?: string | null;
-}) => [u?.surname, u?.name].filter(Boolean).join(" ") || "Мастер";
-
-const initials = (u?: { name?: string; surname?: string }) =>
-  ((u?.surname?.[0] ?? "") + (u?.name?.[0] ?? "")).toUpperCase() || "M";
-
-const fmtDate = (iso?: string | null) =>
-  iso ? dayjs(iso).format("DD.MM.YYYY") : "—";
-
-const fmtFromNow = (iso?: string) => (iso ? dayjs(iso).fromNow() : "");
-
-const statusView: Record<
-  NonNullable<ClientOrder["status"]>,
-  { text: string; tone: "blue" | "green" | "amber" | "gray" | "red" }
-> = {
-  NEW: { text: "Новая", tone: "blue" },
-  PROGRESS: { text: "В работе", tone: "amber" },
-  DONE: { text: "Завершено", tone: "green" },
-  CANCELLED: { text: "Отменено", tone: "red" },
-};
 
 /* ================ Page ================ */
 export default function ClientOrdersPage() {
+  const labels = useOrderLabels();
+  const { t } = labels;
   const {
     data: orders = [],
     isLoading,
@@ -78,14 +50,18 @@ export default function ClientOrdersPage() {
   return (
     <Wrap>
       <Toolbar>
-        <Title>Мои заявки</Title>
-        <Counter>{isLoading ? "Загружаем…" : `Всего: ${total}`}</Counter>
+        <Title>{t("orders.title")}</Title>
+        <Counter>
+          {isLoading
+            ? t("orders.loading")
+            : t("orders.totalCount", { count: total })}
+        </Counter>
       </Toolbar>
 
       {isError && (
         <SoftBanner>
-          Не удалось загрузить заявки.{" "}
-          <button onClick={() => refetch()}>Повторить</button>
+          {t("orders.loadFailed")}{" "}
+          <button onClick={() => refetch()}>{t("orders.retry")}</button>
         </SoftBanner>
       )}
 
@@ -100,18 +76,17 @@ export default function ClientOrdersPage() {
           <div className="ico">
             <BadgeCheck size={34} />
           </div>
-          <h3>Заявок пока нет</h3>
-          <p>Создайте первую — мастер быстро откликнется.</p>
-          <CreateBtn
-            onClick={() => (window.location.href = "/app/client/create-order")}
-          >
-            Создать заявку
-          </CreateBtn>
+          <h3>{t("orders.emptyTitle")}</h3>
+          <p>{t("orders.clientEmptyHint")}</p>
         </Empty>
       ) : (
         <List>
           {orders.map((o) => (
-            <OrderCard key={o.id} order={o} />
+            <OrderCard
+              key={o.id}
+              order={o}
+              labels={labels}
+            />
           ))}
         </List>
       )}
@@ -120,18 +95,14 @@ export default function ClientOrdersPage() {
 }
 
 /* ================ Item ================ */
-const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
-  const statusViewMap: Record<
-    string,
-    { text: string; tone: "blue" | "green" | "amber" | "gray" | "red" }
-  > = {
-    NEW: { text: "Новая", tone: "blue" },
-    PROGRESS: { text: "В работе", tone: "amber" },
-    DONE: { text: "Завершено", tone: "green" },
-    CANCELLED: { text: "Отменено", tone: "red" },
-    ACCEPTED: { text: "Принята", tone: "green" },
-    REJECTED: { text: "Отклонено", tone: "red" },
-  };
+type OrderLabels = ReturnType<typeof useOrderLabels>;
+
+const OrderCard: React.FC<{ order: ClientOrder; labels: OrderLabels }> = ({
+  order,
+  labels,
+}) => {
+  const { t, fmtMoney, fio, fmtDate, fmtFromNow, getStatus, initials, dash } =
+    labels;
   const [open, setOpen] = useState(false);
 
   const RatingIcon: React.FC<{ rating: number }> = ({ rating }) => {
@@ -140,11 +111,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
     if (rating >= 1) return <Frown size={16} />;
     return <MessageSquare size={16} />; // без оценки
   };
-  const getStatusView = (status?: string) =>
-    statusViewMap[status ?? ""] ?? {
-      text: status ?? "—",
-      tone: "gray" as const,
-    };
+  const getStatusView = (status?: string) => getStatus(status);
 
   const u = order.workerProfession?.worker?.user;
   const avatarSrc = u?.avatar
@@ -169,7 +136,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
       await qc.invalidateQueries({ queryKey: ["client", "orders"] });
     },
     onError: () => {
-      alert("Не удалось отправить отзыв. Попробуйте ещё раз.");
+      alert(t("orders.reviewSendFailed"));
     },
   });
 
@@ -192,7 +159,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
   const tel = u?.phone ? `+${u.phone.replace(/[^\d]/g, "")}` : null;
 
   return (
-    <Card role="article" aria-label={`Заявка ${order.id}`}>
+    <Card role="article" aria-label={t("orders.cardAria", { id: order.id })}>
       <Left>
         <Avatar $src={avatarSrc}>
           {!avatarSrc ? u ? initials(u) : <User size={18} /> : null}
@@ -204,9 +171,11 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
           <div>
             <Name>{fio(u)}</Name>
             <Sub>
-              {createdAgo ? `создана ${createdAgo}` : null}
+              {createdAgo ? t("orders.metaCreatedAgo", { ago: createdAgo }) : null}
               {createdAgo && deadline ? " • " : ""}
-              {deadline ? `срок до ${deadline}` : ""}
+              {deadline
+                ? t("orders.metaDeadlineUntil", { date: deadline })
+                : ""}
             </Sub>
           </div>
           <Status $tone={s.tone}>{s.text}</Status>
@@ -214,21 +183,23 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
         <Meta>
           <li>
-            <CalendarDays size={16} /> <span className="k">Дедлайн:</span>
+            <CalendarDays size={16} />{" "}
+            <span className="k">{t("orders.fieldDeadline")}</span>
             <span className="v">{deadline}</span>
           </li>
           <li>
-            <Clock size={16} /> <span className="k">Создана:</span>
+            <Clock size={16} /> <span className="k">{t("orders.fieldCreated")}</span>
             <span className="v">
               {dayjs(order.createdAt).format("DD.MM.YYYY HH:mm")}
             </span>
           </li>
           <li>
-            <MapPin size={16} /> <span className="k">Адрес:</span>
-            <span className="v">{fullAddress || "—"}</span>
+            <MapPin size={16} /> <span className="k">{t("orders.fieldAddress")}</span>
+            <span className="v">{fullAddress || dash}</span>
           </li>
           <li>
-            <BadgeCheck size={16} /> <span className="k">Ставки мастера:</span>
+            <BadgeCheck size={16} />{" "}
+            <span className="k">{t("orders.fieldWorkerRates")}</span>
             <span className="v">{price}</span>
           </li>
         </Meta>
@@ -237,21 +208,21 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
         <Actions>
           {tel && (
-            <Ghost as="a" title={`Позвонить ${fio(u)}`}>
+            <Ghost as="a" title={t("orders.callNamed", { name: fio(u) })}>
               <Phone size={16} />
-              Позвонить
+              {t("orders.call")}
             </Ghost>
           )}
 
-<Ghost type="button" onClick={() => setFilesOpen(true)} title="Посмотреть файлы">
+<Ghost type="button" onClick={() => setFilesOpen(true)} title={t("orders.viewFiles")}>
     <ExternalLink size={16} />
-    Файлы ({order.files?.length ?? 0})
+    {t("orders.filesCount", { count: order.files?.length ?? 0 })}
   </Ghost>
 
 
           {canRate && (
             <CommentToggle type="button" onClick={() => setOpen((v) => !v)}>
-              <span>{open ? "Скрыть отзыв" : "Оставить отзыв"}</span>
+              <span>{open ? t("orders.reviewHide") : t("orders.reviewLeave")}</span>
               <RatingIcon rating={rate} />
             </CommentToggle>
           )}
@@ -287,15 +258,15 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
                       {rate > 0 && <b style={{ fontSize: 12 }}>{rate}/5</b>}
                     </span>
 
-                    <StarsRow aria-label="Оценка">
+                    <StarsRow aria-label={t("orders.ratingLabel")}>
                       {[1, 2, 3, 4, 5].map((n) => (
                         <StarBtn
                           key={n}
                           type="button"
                           data-active={n <= rate}
                           onClick={() => setRate(n)}
-                          aria-label={`${n} из 5`}
-                          title={`${n} из 5`}
+                          aria-label={t("orders.starOfFive", { n })}
+                          title={t("orders.starOfFive", { n })}
                         >
                           <Star
                             style={{
@@ -309,7 +280,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
                   {/* Комментарий */}
                   <textarea
-                    placeholder="Zo'r ish, malades…"
+                    placeholder={t("orders.reviewPlaceholder")}
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     maxLength={400}
@@ -321,7 +292,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
                       disabled={isPending || rate < 1}
                       onClick={() => sendComment({ rate, comment })}
                     >
-                      {isPending ? "Отправляем…" : "Отправить"}
+                      {isPending ? t("orders.sending") : t("orders.send")}
                     </button>
                     <button
                       className="cancel"
@@ -331,7 +302,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
                         setComment("");
                       }}
                     >
-                      Отменить
+                      {t("orders.cancel")}
                     </button>
                   </div>
                 </CommentForm>
@@ -344,24 +315,24 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
       <Modal
   open={isFilesOpen}
   onClose={() => setFilesOpen(false)}
-  title="Прикреплённые файлы"
+  title={t("orders.filesTitle")}
   width={720}
   maxWidth="95vw"
   closeOnOverlay
-  ariaLabel="Файлы заявки"
+  ariaLabel={t("orders.filesModalAria")}
   footer={
     <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
       <span style={{ fontSize: 12, color: "#6b7280" }}>
-        Всего: <b>{order.files?.length ?? 0}</b>
+        {t("orders.filesTotal")} <b>{order.files?.length ?? 0}</b>
       </span>
-      <Ghost type="button" onClick={() => setFilesOpen(false)}>Закрыть</Ghost>
+      <Ghost type="button" onClick={() => setFilesOpen(false)}>{t("orders.close")}</Ghost>
     </div>
   }
 >
   <FilesWrap>
     {!order.files?.length ? (
       <EmptyFiles>
-        Файлы отсутствуют
+        {t("orders.filesEmpty")}
       </EmptyFiles>
     ) : (
       <FilesGrid>
@@ -371,7 +342,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
 
           return (
             <FileCard key={fid}>
-              <a href={url} target="_blank" rel="noreferrer" title="Открыть в новой вкладке">
+              <a href={url} target="_blank" rel="noreferrer" title={t("orders.openInNewTab")}>
                 {isVideo ? (
                   <video
                     src={url}
@@ -401,29 +372,29 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
       <Modal
         open={isRateOpen}
         onClose={() => setRateOpen(false)}
-        title="Оценка работы"
+        title={t("orders.reviewModalTitle")}
         width={540}
         maxWidth="92vw"
         closeOnOverlay
-        ariaLabel="Оценка работы"
+        ariaLabel={t("orders.reviewModalTitle")}
         footer={
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
             <Ghost type="button" onClick={() => setRateOpen(false)}>
-              Отмена
+              {t("common.cancel")}
             </Ghost>
             <Primary
               type="button"
               disabled={isPending || rate < 1}
               onClick={() => sendComment({ rate, comment })}
             >
-              {isPending ? "Отправляем…" : "Отправить"}
+              {isPending ? t("orders.sending") : t("orders.send")}
             </Primary>
           </div>
         }
       >
         <div style={{ display: "grid", gap: 12 }}>
           <div style={{ fontSize: 14, color: "#6b7a90" }}>
-            Поставьте оценку и оставьте короткий комментарий.
+            {t("orders.reviewHint")}
           </div>
 
           {/* Звёзды */}
@@ -433,7 +404,7 @@ const OrderCard: React.FC<{ order: ClientOrder }> = ({ order }) => {
                 key={n}
                 type="button"
                 onClick={() => setRate(n)}
-                aria-label={`${n} ${n === 1 ? "звезда" : "звезды"}`}
+                aria-label={t("orders.starOfFive", { n })}
                 style={{
                   border: 0,
                   background: "transparent",
@@ -793,18 +764,6 @@ const Empty = styled.div`
     color: #6b7a90;
   }
 `;
-const CreateBtn = styled.button`
-  margin-top: 8px;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid #2f6bff;
-  background: #2f6bff;
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-`;
-
 const CardSkeleton = () => (
   <SkeletonCard>
     <div className="a" />

@@ -31,6 +31,7 @@ import {
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
 import { Link } from "react-router-dom";
+import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
 
 dayjs.extend(relativeTime);
 dayjs.locale("ru");
@@ -67,6 +68,7 @@ const statusView: Record<
 
 /* ================ Page ================ */
 export default function InvestorOrdersPage() {
+  const { t } = useOrderLabels();
   const {
     data: orders = [],
     isLoading,
@@ -83,14 +85,18 @@ export default function InvestorOrdersPage() {
   return (
     <Wrap>
       <Toolbar>
-        <Title>Мои заявки</Title>
-        <Counter>{isLoading ? "Загружаем…" : `Всего: ${total}`}</Counter>
+        <Title>{t("orders.title")}</Title>
+        <Counter>
+          {isLoading
+            ? t("orders.loading")
+            : t("orders.totalCount", { count: total })}
+        </Counter>
       </Toolbar>
 
       {isError && (
         <SoftBanner>
-          Не удалось загрузить заявки.{" "}
-          <button onClick={() => refetch()}>Повторить</button>
+          {t("orders.loadFailed")}{" "}
+          <button onClick={() => refetch()}>{t("orders.retry")}</button>
         </SoftBanner>
       )}
 
@@ -105,12 +111,12 @@ export default function InvestorOrdersPage() {
           <div className="ico">
             <BadgeCheck size={34} />
           </div>
-          <h3>Заявок пока нет</h3>
-          <p>Создайте первую — мастер быстро откликнется.</p>
+          <h3>{t("orders.emptyTitle")}</h3>
+          <p>{t("orders.legalEmptyHint")}</p>
           <CreateBtn
             onClick={() => (window.location.href = "/app/client/create-order")}
           >
-            Создать заявку
+            {t("orders.createCta")}
           </CreateBtn>
         </Empty>
       ) : (
