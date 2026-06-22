@@ -146,7 +146,7 @@ export const Card = styled.div`
   }
 `;
 
-export const Card = styled.div`
+export const Row = styled.div`
   display: grid;
   grid-template-columns: 240px 1fr auto;
   align-items: center;
