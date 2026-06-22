@@ -48,6 +48,12 @@ import {
   MutedBar,
   HeadRow,
   Meta,
+  ProfList,
+  ProfIconWrap,
+  ProfHeadBlock,
+  SectionHint,
+  ProgressMeta,
+  HeadActions,
 } from "./worker-profile.style";
 
 import {
@@ -83,7 +89,7 @@ import {
   MapLocation,
   MapYandexLocations,
 } from "../../../../../components/map/MapYandexLocations";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { EditBtn } from "../../../pro-profile-section.style";
 
 const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule =
@@ -604,6 +610,7 @@ export const WorkerProfile: React.FC = () => {
     <Page>
       <Header>
         <Title>{t("worker.title")}</Title>
+        <SectionHint>{t("worker.fillBasic")}</SectionHint>
       </Header>
 
       <Layout>
@@ -647,7 +654,7 @@ export const WorkerProfile: React.FC = () => {
             </CardHeader>
             <CardBody>
               {createdList.length > 0 ? (
-                <div style={{ display: "grid", gap: 18 }}>
+                <ProfList>
                   {createdList.map(({ row, profession }) => {
                     const label = profession
                       ? profLabel(profession)
@@ -666,23 +673,10 @@ export const WorkerProfile: React.FC = () => {
                     return (
                       <JobItem key={row.id}>
                         <HeadRow>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                            }}
-                          >
-                            <div
-                              style={{
-                                background: "#f1f4f9",
-                                borderRadius: "12px",
-                                maxWidth: "max-content",
-                                padding: "13px",
-                              }}
-                            >
+                          <ProfHeadBlock>
+                            <ProfIconWrap>
                               <img src="/hat.svg" alt="" />
-                            </div>
+                            </ProfIconWrap>
                             <div>
                               <JobTitle>{label}</JobTitle>
                               <Meta>
@@ -690,20 +684,12 @@ export const WorkerProfile: React.FC = () => {
                                 {t("worker.updated")} {fmtUpdated(f.updatedAt)}
                               </Meta>
                             </div>
-                          </div>
+                          </ProfHeadBlock>
 
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <a href={`/app/worker/profile/${row.id}/edit`}>
-                              <EditBtn type="button">
-                                {/* <img
-                              src="/pen.svg"
-                              style={{
-                                width: 18,
-                              }}
-                            /> */}
-                                {t("worker.edit")}
-                              </EditBtn>
-                            </a>
+                          <HeadActions>
+                            <Link to={`/app/worker/profile/${row.id}/edit`}>
+                              <EditBtn type="button">{t("worker.edit")}</EditBtn>
+                            </Link>
 
                             <EditBtn
                               type="button"
@@ -717,7 +703,6 @@ export const WorkerProfile: React.FC = () => {
                                 )
                               }
                             >
-                              {/* простая иконка загрузки */}
                               <svg
                                 width="16"
                                 height="16"
@@ -727,24 +712,19 @@ export const WorkerProfile: React.FC = () => {
                                 focusable="false"
                                 aria-hidden="true"
                                 role="img"
-                                className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-primary___KhLAU_12-3-5"
                               >
-                                <g>
-                                  <g>
-                                    <path
-                                      d="M4.1715 6.32824L7.99981 10.1566L11.8281 6.32831L10.8382 5.33837L8.69982 7.47672L8.69982 0.500001L7.29982 0.5L7.29982 7.4767L5.16146 5.3383L4.1715 6.32824Z"
-                                      fill="currentColor"
-                                    ></path>
-                                    <path
-                                      d="M8 15.5C1.4375 15.5 0.5 14.5625 0.5 8H1.9C1.9 9.6299 1.96022 10.8076 2.12482 11.6812C2.28685 12.5412 2.52558 12.9676 2.77901 13.221C3.03245 13.4744 3.45877 13.7132 4.31878 13.8752C5.19242 14.0398 6.3701 14.1 8 14.1C9.6299 14.1 10.8076 14.0398 11.6812 13.8752C12.5412 13.7132 12.9676 13.4744 13.221 13.221C13.4744 12.9676 13.7132 12.5412 13.8752 11.6812C14.0398 10.8076 14.1 9.6299 14.1 8H15.5C15.5 14.5625 14.5625 15.5 8 15.5Z"
-                                      fill="currentColor"
-                                    ></path>
-                                  </g>
-                                </g>
+                                <path
+                                  d="M4.1715 6.32824L7.99981 10.1566L11.8281 6.32831L10.8382 5.33837L8.69982 7.47672L8.69982 0.500001L7.29982 0.5L7.29982 7.4767L5.16146 5.3383L4.1715 6.32824Z"
+                                  fill="currentColor"
+                                />
+                                <path
+                                  d="M8 15.5C1.4375 15.5 0.5 14.5625 0.5 8H1.9C1.9 9.6299 1.96022 10.8076 2.12482 11.6812C2.28685 12.5412 2.52558 12.9676 2.77901 13.221C3.03245 13.4744 3.45877 13.7132 4.31878 13.8752C5.19242 14.0398 6.3701 14.1 8 14.1C9.6299 14.1 10.8076 14.0398 11.6812 13.8752C12.5412 13.7132 12.9676 13.4744 13.221 13.221C13.4744 12.9676 13.7132 12.5412 13.8752 11.6812C14.0398 10.8076 14.1 9.6299 14.1 8H15.5C15.5 14.5625 14.5625 15.5 8 15.5Z"
+                                  fill="currentColor"
+                                />
                               </svg>
                               {t("worker.downloadResume") || "Скачать резюме"}
                             </EditBtn>
-                          </div>
+                          </HeadActions>
                         </HeadRow>
 
                         <div>
@@ -795,22 +775,16 @@ export const WorkerProfile: React.FC = () => {
                         </ActionRow>
 
                         <MutedBar>
-                          <b
-                            style={{
-                              display: "inline-flex",
-                              gap: 8,
-                              alignItems: "center",
-                            }}
-                          >
+                          <b>
                             <Wrench size={14} className="icon" />
                             {t("worker.tools")}
-                          </b>{" "}
+                          </b>
                           {f.inventory ? f.inventory : t("worker.notSpecified")}
                         </MutedBar>
                       </JobItem>
                     );
                   })}
-                </div>
+                </ProfList>
               ) : (
                 <Notice tone="neutral">{t("worker.noneYet")}</Notice>
               )}
@@ -941,11 +915,13 @@ export const WorkerProfile: React.FC = () => {
             </CardHeader>
             <CardBody>
               <Small>{t("worker.fillBasic")}</Small>
-              <div style={{ marginTop: 10 }}>
-                <Progress>
-                  <i style={{ width: `${workerProfRaw ? 70 : 40}%` }} />
-                </Progress>
-              </div>
+              <Progress>
+                <i style={{ width: `${workerProfRaw ? 70 : 40}%` }} />
+              </Progress>
+              <ProgressMeta>
+                <span>{t("worker.profileReady")}</span>
+                <span>{workerProfRaw ? "70%" : "40%"}</span>
+              </ProgressMeta>
             </CardBody>
           </Card>
         </Aside>

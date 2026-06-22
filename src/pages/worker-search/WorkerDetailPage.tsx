@@ -4,95 +4,54 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "@emotion/styled";
 import { useQuery } from "@tanstack/react-query";
 import { Image, Rate } from "antd";
-import { ArrowLeft, Share2, Heart, BadgeCheck, Phone } from "lucide-react";
-import { getWorkerById } from "../../shared/endpoints/client";
+import {
+  ArrowLeft,
+  Phone,
+  FileText,
+  ImageIcon,
+  Briefcase,
+  Users,
+  Building2,
+  Trophy,
+  Wrench,
+  Clock,
+  Activity,
+  Star,
+  Banknote,
+  Calendar,
+  FolderKanban,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import {
+  getWorkerById,
+  type OrderBrief,
+  type SearchWorker,
+} from "../../shared/endpoints/client";
+import { getProfessions, type ProfessionCategory } from "../../shared/modules/worker";
 import { useAuthStore } from "../../shared/stores/auth";
-import { EditBtn } from "../../features/profile/pro-profile-section.style";
+import { useOrderLabels } from "../../shared/i18n/useOrderLabels";
+import { motion } from "framer-motion";
+import { Stagger, StaggerItem } from "../../components/Stagger";
+import { fadeUp } from "../../lib/motion";
 
 /* ============== types ============== */
-type SearchWorkerUser = {
+type DemoRaw = {
+  id?: string;
+  fileId?: string;
+  comment?: string | null;
+  createdAt?: string;
+};
+type DemoItem = string | DemoRaw;
+
+/* ============== helpers ============== */
+const fmtMoney = (n?: number | null) =>
+  typeof n === "number" && n >= 0 ? `${n.toLocaleString("ru-RU")} сум` : "—";
+const fio = (u?: {
   name?: string;
   surname?: string;
   middleName?: string | null;
-  avatar?: string | null;
-  phone?: string | null;
-};
-type Schedule = {
-  id: string;
-  monday: boolean;
-  tuesday: boolean;
-  wednesday: boolean;
-  thursday: boolean;
-  friday: boolean;
-  saturday: boolean;
-  sunday: boolean;
-};
-type Experience = {
-  id: string;
-  startedAt?: number | null;
-  endedAt?: number | null;
-  jobPlace?: string | null;
-  jobDescription?: string | null;
-};
-type OrderRow = {
-  id: string;
-  description?: string | null;
-  budget?: number | null;
-  address1?: string | null;
-  address2?: string | null;
-  address3?: string | null;
-  files?: string[];
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-type WorkerRow = {
-  id: string;
-  minPrice: number;
-  maxPrice: number;
-  rating: number;
-  hasTeam: boolean;
-  teamMemberCount: number;
-  readyForHugeProject: boolean;
-  inventory?: string | null;
-  competitions?: "YES" | "NO";
-  jobType?: "SOLO" | "COMPANY";
-  professionId: string;
-  updatedAt?: string;
-  isBusy?: boolean;
-  inArea?: boolean;
-  worker?: { id: string; user?: SearchWorkerUser };
-  schedule?: Schedule;
-  experience?: Experience[];
-  orders?: OrderRow[];
-};
-
-/* ============== helpers ============== */
-const WEEK_ORDER = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-] as const;
-const WEEK_LABELS: Record<(typeof WEEK_ORDER)[number], string> = {
-  monday: "Пн",
-  tuesday: "Вт",
-  wednesday: "Ср",
-  thursday: "Чт",
-  friday: "Пт",
-  saturday: "Сб",
-  sunday: "Вс",
-};
-
-const fmtMoney = (n?: number | null) =>
-  typeof n === "number" && n >= 0 ? `${n.toLocaleString("ru-RU")} сум` : "—";
-const fio = (u?: { name?: string; surname?: string; middleName?: string | null }) =>
-  [u?.surname, u?.name].filter(Boolean).join(" ") || "Мастер";
-const initials = (u?: { name?: string; surname?: string }) =>
-  ((u?.surname?.[0] ?? "") + (u?.name?.[0] ?? "")).toUpperCase() || "M";
+}) =>
+  [u?.surname, u?.name, u?.middleName].filter(Boolean).join(" ") || "Мастер";
 const fmtUpdated = (d?: string) => {
   if (!d) return "—";
   const dd = new Date(d);
@@ -105,6 +64,16 @@ const fmtUpdated = (d?: string) => {
 };
 const fmtYears = (start?: number | null, end?: number | null) =>
   `${start ? start : "—"} — ${end ? end : "по наст."}`;
+const fmtAddress = (o?: Pick<OrderBrief, "address1" | "address2" | "address3">) =>
+  [o?.address1, o?.address2, o?.address3].filter(Boolean).join(", ") || "—";
+const demoUrlFromFileId = (fileId: string) =>
+  `https://profibaza.uz/public/demo/${fileId}`;
+const demoFileId = (item: DemoItem): string =>
+  typeof item === "string" ? item : item.fileId || "";
+const normalizeDemos = (items?: DemoItem[]) =>
+  (Array.isArray(items) ? items : [])
+    .map((item) => demoFileId(item))
+    .filter(Boolean);
 const plural = (n: number, f: [string, string, string]) => {
   const a = Math.abs(n) % 100,
     b = a % 10;
@@ -133,21 +102,52 @@ const formatPhone = (p?: string | null) => {
     } catch {}
   };
 
+const ANON_AVATAR = "/avatar.png";
+
+const onAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  e.currentTarget.onerror = null;
+  e.currentTarget.src = ANON_AVATAR;
+};
+
+const onOrder = (wpId: string) => {
+  const url = new URL("/app/client/create-order", window.location.origin);
+  url.searchParams.set("workerProfessionId", wpId);
+  window.location.href = url.toString();
+};
+
 /* ============== page ============== */
 const WorkerDetailPage: React.FC = () => {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const me = useAuthStore((s) => s.me);
   const isAuthed = useAuthStore((s) => s.isAuthed);
+  const { i18n } = useTranslation();
+  const lang = i18n.language?.startsWith("uz") ? "uz" : "ru";
+  const { fmtDate, getStatus } = useOrderLabels();
 
-  const { data, isLoading, isError } = useQuery<WorkerRow | null, Error>({
+  const { data, isLoading, isError } = useQuery<SearchWorker | null, Error>({
     queryKey: ["opt", "order-search", "worker", id],
     queryFn: async ({ signal }) => {
       const res = await getWorkerById(id, signal);
-      return (res as unknown as WorkerRow) ?? null;
+      return res ?? null;
     },
     enabled: Boolean(id),
   });
+
+  const { data: profCats = [] } = useQuery<ProfessionCategory[]>({
+    queryKey: ["opt", "professions"],
+    queryFn: ({ signal }) => getProfessions(signal),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const profLabelById = useMemo(() => {
+    const flat = profCats.flatMap((c) => c.professions || []);
+    return (professionId?: string) => {
+      if (!professionId) return "—";
+      const found = flat.find((p) => p.id === professionId);
+      if (!found) return "—";
+      return lang === "uz" ? found.nameUz : found.nameRu;
+    };
+  }, [profCats, lang]);
 
   // ===== CONSTANTS / HELPERS (не хуки) =====
   const FILE_CDN =
@@ -159,14 +159,31 @@ const WorkerDetailPage: React.FC = () => {
   // ===== ВСЕ useMemo ДОЛЖНЫ БЫТЬ ДО ЛЮБЫХ return =====
   const row = data ?? null;
 
-  const orders = useMemo<OrderRow[]>(
+  const orders = useMemo<OrderBrief[]>(
     () => (Array.isArray(row?.orders) ? row!.orders! : []),
     [row]
   );
 
-  const totalPhotos = useMemo(
-    () => orders.reduce((acc, o) => acc + (o.files?.length || 0), 0),
-    [orders]
+  const demos = useMemo(
+    () => normalizeDemos(row?.demos as DemoItem[] | undefined),
+    [row]
+  );
+
+  const isBusy = useMemo(
+    () =>
+      row?.isBusy ??
+      orders.some((o) => o.status === "PROGRESS" || o.status === "IN_PROGRESS"),
+    [row, orders]
+  );
+
+  const professionLabel = useMemo(
+    () =>
+      row?.profession
+        ? lang === "uz"
+          ? row.profession.nameUz
+          : row.profession.nameRu
+        : profLabelById(row?.professionId),
+    [row, lang, profLabelById]
   );
 
   const files = useMemo<string[]>(
@@ -199,25 +216,23 @@ const WorkerDetailPage: React.FC = () => {
       .sort((a, b) => b.sortKey - a.sortKey);
   }, [row]);
 
-  const avatar = row?.worker?.user?.avatar ?? null;
-
-  const onOrder = (wpId: string) => {
-    const url = new URL("/app/client/create-order", window.location.origin);
-    url.searchParams.set("workerProfessionId", wpId);
-    window.location.href = url.toString();
-  };
+  const avatarSrc = row?.worker?.user?.avatar
+    ? `${AVA_CDN}${row.worker.user.avatar}`
+    : ANON_AVATAR;
 
   // ===== ТЕПЕРЬ МОЖНО ДЕЛАТЬ УСЛОВНЫЕ RETURN'ы =====
   if (isLoading) {
     return (
       <Page>
-        <HeaderBar>
-          <BackBtn onClick={() => navigate(-1)}>
-            <ArrowLeft size={18} />
-            Назад
-          </BackBtn>
-        </HeaderBar>
-        <Skeleton />
+        <PageShell>
+          <TopNav>
+            <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Назад">
+              <ArrowLeft size={18} />
+            </BackBtn>
+            <TopNavTitle>Профиль мастера</TopNavTitle>
+          </TopNav>
+          <Skeleton />
+        </PageShell>
       </Page>
     );
   }
@@ -225,528 +240,1301 @@ const WorkerDetailPage: React.FC = () => {
   if (isError || !row) {
     return (
       <Page>
-        <HeaderBar>
-          <BackBtn onClick={() => navigate(-1)}>
-            <ArrowLeft size={18} />
-            Назад
-          </BackBtn>
-        </HeaderBar>
-        <Empty>
+        <PageShell>
+          <TopNav>
+            <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Назад">
+              <ArrowLeft size={18} />
+            </BackBtn>
+            <TopNavTitle>Профиль мастера</TopNavTitle>
+          </TopNav>
+          <Empty>
           <h3>Профиль не найден</h3>
           <p>Возможно, ссылка устарела или мастер скрыт.</p>
-          <Link className="btn" to="/app/find">
+          <Link className="btn" to="/find">
             Вернуться к поиску
           </Link>
         </Empty>
+        </PageShell>
       </Page>
     );
   }
 
   return (
     <Page>
-      <HeaderBar>
-        <BackBtn onClick={() => navigate(-1)}>
-          <ArrowLeft size={18} />
-          Назад
-        </BackBtn>
-        <div className="spacer" />
-        <IconRow>
-          <IconBtn title="В избранное">
-            <Heart size={18} />
-          </IconBtn>
-          <IconBtn title="Поделиться">
-            <Share2 size={18} />
-          </IconBtn>
-        </IconRow>
-      </HeaderBar>
+      <PageShell>
+        <motion.div initial="hidden" animate="show" variants={fadeUp(0)}>
+          <TopNav>
+            <BackBtn type="button" onClick={() => navigate(-1)} aria-label="Назад">
+              <ArrowLeft size={18} />
+            </BackBtn>
+            <TopNavTitle>Профиль мастера</TopNavTitle>
+          </TopNav>
+        </motion.div>
 
-      <Hero>
-        <HeroHead>
-          <Avatar $src={avatar ? `${AVA_CDN}${avatar}` : null}>
-            {!avatar && initials(row.worker?.user)}
-          </Avatar>
+        <LayoutGrid>
+          <MainCol>
+            <Stagger style={{ display: "grid", gap: 20, width: "100%" }}>
+            <StaggerItem>
+            <Card>
+              <SummaryRow>
+                <AvatarSquare src={avatarSrc} alt="" onError={onAvatarError} />
+                <SummaryBody>
+                  <Title>{fio(row.worker?.user)}</Title>
+                  <Subtitle>
+                    {professionLabel}
+                    {professionLabel !== "—" ? " · " : ""}
+                    {row.jobType === "COMPANY" ? "Компания" : "Исполнитель"}
+                    {row.hasTeam ? ` · Команда ${row.teamMemberCount || 1} чел.` : ""}
+                  </Subtitle>
+                  <SummaryMeta>
+                    <MetaRow>
+                      <span className="label">Профессия</span>
+                      <span className="value">{professionLabel}</span>
+                    </MetaRow>
+                    <MetaRow>
+                      <span className="label">Телефон</span>
+                      <span className="value">
+                        {row.worker?.user?.phone
+                          ? isAuthed
+                            ? formatPhone(row.worker.user.phone)
+                            : "Доступен после входа"
+                          : "—"}
+                      </span>
+                    </MetaRow>
+                    <MetaRow>
+                      <span className="label">Рейтинг</span>
+                      <span className="value rating">
+                        <Rate
+                          allowHalf
+                          disabled
+                          value={row.rating ?? 0}
+                          style={{ fontSize: 14, marginRight: 6 }}
+                        />
+                        {(row.rating ?? 0).toFixed(1)}
+                      </span>
+                    </MetaRow>
+                  </SummaryMeta>
+                </SummaryBody>
+              </SummaryRow>
+            </Card>
+            </StaggerItem>
 
-          <div className="titlebox">
-            <Title>
-              {fio(row.worker?.user)}
-              {/* {row.competitions === "YES" && (
-                <Badge>
-                  <BadgeCheck size={16} /> Тендеры
-                </Badge>
-              )} */}
-            </Title>
+            <StaggerItem>
+            <Card>
+              <CardHead>
+                <CardHeadText>
+                  <CardTitle>Основная информация</CardTitle>
+                  <CardSubtitle>Статус, стоимость и ключевые показатели</CardSubtitle>
+                </CardHeadText>
+                <CardHeadActions>
+                  <OutlineBtn type="button" onClick={() => onOrder(row.id)}>
+                    Связаться
+                  </OutlineBtn>
+                  <PrimaryBtn type="button" onClick={() => onOrder(row.id)}>
+                    Заказать
+                  </PrimaryBtn>
+                </CardHeadActions>
+              </CardHead>
+              <InfoPanel>
+                <InfoGrid>
+                  <InfoTile>
+                    <InfoIcon $tone={isBusy ? "red" : "green"}>
+                      <Activity size={18} />
+                    </InfoIcon>
+                    <InfoBody>
+                      <span className="label">Статус</span>
+                      <span className="value">
+                        <StatusBadge $tone={isBusy ? "red" : "green"}>
+                          {isBusy ? "Занят" : "Свободен"}
+                        </StatusBadge>
+                      </span>
+                    </InfoBody>
+                  </InfoTile>
 
-            <MetaRow>
-              <Rate allowHalf disabled value={row.rating ?? 0} style={{ fontSize: 16 }} />
-              <strong className="rating">{(row.rating ?? 0).toFixed(1)}</strong>
-              <Dot />
-              <span className="upd">
-                {fmtUpdated(row.updatedAt) !== "—"
-                  ? `Обновлено ${fmtUpdated(row.updatedAt)}`
-                  : "—"}
-              </span>
-            </MetaRow>
+                  <InfoTile>
+                    <InfoIcon $tone="amber">
+                      <Star size={18} />
+                    </InfoIcon>
+                    <InfoBody>
+                      <span className="label">Рейтинг</span>
+                      <span className="value rating">
+                        <Rate
+                          allowHalf
+                          disabled
+                          value={row.rating ?? 0}
+                          style={{ fontSize: 13, marginRight: 6 }}
+                        />
+                        {(row.rating ?? 0).toFixed(1)}
+                      </span>
+                    </InfoBody>
+                  </InfoTile>
 
-            <PriceLine>
-              {fmtMoney(row.minPrice)} — {fmtMoney(row.maxPrice)}{" "}
-              <span className="muted">на проект</span>
-            </PriceLine>
+                  <InfoTile>
+                    <InfoIcon $tone="blue">
+                      <FolderKanban size={18} />
+                    </InfoIcon>
+                    <InfoBody>
+                      <span className="label">Проектов</span>
+                      <span className="value">{orders.length}</span>
+                    </InfoBody>
+                  </InfoTile>
 
-         {row.worker?.user?.phone ? (
-  isAuthed ? (
-    <PhoneRow>
-      <Phone size={16} />
-      <a
-        href={`tel:${formatPhone(row.worker.user.phone)}`}
-        className="phone"
-      >
-        {formatPhone(row.worker.user.phone)}
-      </a>
+                  <InfoTile $wide>
+                    <InfoIcon $tone="blue">
+                      <Banknote size={18} />
+                    </InfoIcon>
+                    <InfoBody>
+                      <span className="label">Стоимость работ</span>
+                      <span className="value">
+                        {fmtMoney(row.minPrice)}
+                        <span className="sep">—</span>
+                        {fmtMoney(row.maxPrice)}
+                      </span>
+                    </InfoBody>
+                  </InfoTile>
 
-      <PhoneActions>
-        <SmallBtn
-          type="button"
-          onClick={() => copyToClipboard(formatPhone(row.worker!.user!.phone!))}
-          title="Скопировать"
-        >
-          Копировать
-        </SmallBtn>
-      </PhoneActions>
-    </PhoneRow>
-  ) : (
-    <PhoneGate>
-      <span className="hint">Телефон доступен после входа</span>
-      <ShowPhoneBtn
-        onClick={() => {
-          const url = new URL("/login", window.location.origin);
-          url.searchParams.set("redirect", window.location.pathname);
-          window.location.href = url.toString();
-        }}
-      >
-        Показать телефон
-      </ShowPhoneBtn>
-    </PhoneGate>
-  )
-) : null}
+                  <InfoTile>
+                    <InfoIcon $tone="purple">
+                      <Calendar size={18} />
+                    </InfoIcon>
+                    <InfoBody>
+                      <span className="label">Дата регистрации</span>
+                      <span className="value">{fmtUpdated(row.createdAt)}</span>
+                    </InfoBody>
+                  </InfoTile>
+                </InfoGrid>
+              </InfoPanel>
+            </Card>
+            </StaggerItem>
 
-            <Pills>
-              <Pill tone={row.isBusy ? "red" : "green"}>
-                {row.isBusy ? "Занят" : "Свободен"}
-              </Pill>
-              {row.jobType && (
-                <Pill>{row.jobType === "SOLO" ? "Соло" : "Компания"}</Pill>
+            <StaggerItem>
+            <Card>
+              <CardHead>
+                <CardTitle>Сведения о работе</CardTitle>
+              </CardHead>
+              <EmpGrid>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Briefcase size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Формат работы</span>
+                    <span className="value">
+                      {row.jobType === "SOLO" ? "Соло" : "Компания"}
+                    </span>
+                  </EmpContent>
+                </EmpItem>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Users size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Команда</span>
+                    <span className="value">
+                      {row.hasTeam ? `${row.teamMemberCount || 1} человек` : "Нет"}
+                    </span>
+                  </EmpContent>
+                </EmpItem>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Building2 size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Крупные проекты</span>
+                    <span className="value">
+                      {row.readyForHugeProject ? "Да" : "Нет"}
+                    </span>
+                  </EmpContent>
+                </EmpItem>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Trophy size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Тендеры</span>
+                    <span className="value">
+                      {row.competitions === "YES" ? "Участвует" : "Нет"}
+                    </span>
+                  </EmpContent>
+                </EmpItem>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Wrench size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Инструменты</span>
+                    <span className="value">
+                      {row.inventory?.trim() || "Не указано"}
+                    </span>
+                  </EmpContent>
+                </EmpItem>
+                <EmpItem>
+                  <EmpIconBox>
+                    <Clock size={18} />
+                  </EmpIconBox>
+                  <EmpContent>
+                    <span className="label">Опыт</span>
+                    <span className="value">{expYears ?? "—"}</span>
+                  </EmpContent>
+                </EmpItem>
+              </EmpGrid>
+            </Card>
+            </StaggerItem>
+
+            {exps.length > 0 && (
+              <StaggerItem>
+              <Card>
+                <CardHead>
+                  <CardTitle>Опыт работы</CardTitle>
+                </CardHead>
+                <GrayPanel>
+                  <ExpList>
+                    {exps.map((e, idx) => (
+                      <ExpItem key={idx}>
+                        <span className="dot" />
+                        <div className="meta">
+                          <div className="line1">
+                            <strong>{fmtYears(e.startedAt, e.endedAt)}</strong>
+                            {e.jobPlace && (
+                              <span className="place"> · {e.jobPlace}</span>
+                            )}
+                          </div>
+                          {e.jobDescription && (
+                            <div className="desc">{e.jobDescription}</div>
+                          )}
+                        </div>
+                      </ExpItem>
+                    ))}
+                  </ExpList>
+                </GrayPanel>
+              </Card>
+              </StaggerItem>
+            )}
+
+            {(files.length > 0 || demos.length > 0) && (
+              <StaggerItem>
+              <Card>
+                <CardHead>
+                  <CardTitle>Фото работ</CardTitle>
+                </CardHead>
+                <GrayPanel $plain>
+                  <Image.PreviewGroup key={`media-${row.id}`}>
+                    <PhotoGrid>
+                      {demos.map((fileId) => (
+                        <Image
+                          key={`demo-${fileId}`}
+                          src={demoUrlFromFileId(fileId)}
+                          alt="Демо"
+                          className="thumb"
+                        />
+                      ))}
+                      {files.map((fname) => {
+                        const src = fileUrl(fname);
+                        if (!src) return null;
+                        return (
+                          <Image
+                            key={fname}
+                            src={src}
+                            alt="Фото из заказа"
+                            className="thumb"
+                          />
+                        );
+                      })}
+                    </PhotoGrid>
+                  </Image.PreviewGroup>
+                </GrayPanel>
+              </Card>
+              </StaggerItem>
+            )}
+            </Stagger>
+          </MainCol>
+
+          <SidebarCol>
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={fadeUp(0.08)}
+              style={{ width: "100%" }}
+            >
+            <SidebarCard>
+              {orders.length > 0 && (
+                <SidebarBlock>
+                  <SidebarTitle>Заказы</SidebarTitle>
+                  <NoteList>
+                    {orders.map((order) => {
+                      const status = getStatus(order.status);
+                      return (
+                        <NoteItem key={order.id}>
+                          <NoteHead>
+                            <span className="author">
+                              {order.description?.trim() || "Заказ"}
+                            </span>
+                            <NoteBadge $tone={status.tone}>{status.text}</NoteBadge>
+                          </NoteHead>
+                          <NoteMeta>{fmtDate(order.createdAt)}</NoteMeta>
+                          <NoteText>
+                            {fmtMoney(order.budget)} · {fmtAddress(order)}
+                          </NoteText>
+                        </NoteItem>
+                      );
+                    })}
+                  </NoteList>
+                </SidebarBlock>
               )}
-              {row.hasTeam && <Pill>Команда · {row.teamMemberCount || 1}</Pill>}
-              {row.readyForHugeProject && <Pill>Крупные проекты</Pill>}
-            </Pills>
-          </div>
 
-          <Actions>
-            <PrimaryBtn onClick={() => onOrder(row.id)}>Откликнуться</PrimaryBtn>
-            <EditBtn style={{width: '100%'}} onClick={() => onOrder(row.id)}>Связаться</EditBtn>
-          </Actions>
-        </HeroHead>
-
-        <Kpis>
-          <Kpi>
-            <div className="k">Опыт</div>
-            <div className="v">{expYears ?? "—"}</div>
-          </Kpi>
-          <Kpi>
-            <div className="k">Проекты</div>
-            <div className="v">{orders.length || 0}</div>
-          </Kpi>
-          <Kpi>
-            <div className="k">Фото</div>
-            <div className="v">{totalPhotos}</div>
-          </Kpi>
-        </Kpis>
-
-        {exps.length > 0 && (
-          <Block style={{ marginTop: 18 }}>
-            <BlockTitle>Опыт работы</BlockTitle>
-            <ExpList>
-              {exps.map((e, idx) => (
-                <ExpItem key={idx}>
-                  <span className="dot" />
-                  <div className="meta">
-                    <div className="line1">
-                      <strong className="range">
-                        {fmtYears(e.startedAt, e.endedAt)}
-                      </strong>
-                      {e.jobPlace && <span className="place"> · {e.jobPlace}</span>}
+              <SidebarBlock>
+                <SidebarTitle>Стоимость</SidebarTitle>
+                <Timeline>
+                  <TimelineItem>
+                    <span className="dot" />
+                    <div className="content">
+                      <span className="date">Минимум</span>
+                      <span className="rate">{fmtMoney(row.minPrice)}</span>
                     </div>
-                    {e.jobDescription && (
-                      <div className="desc">{e.jobDescription}</div>
-                    )}
-                  </div>
-                </ExpItem>
-              ))}
-            </ExpList>
-          </Block>
-        )}
-      </Hero>
+                  </TimelineItem>
+                  <TimelineItem>
+                    <span className="dot" />
+                    <div className="content">
+                      <span className="date">Максимум</span>
+                      <span className="rate">{fmtMoney(row.maxPrice)}</span>
+                    </div>
+                  </TimelineItem>
+                </Timeline>
+              </SidebarBlock>
 
-      {files.length > 0 && (
-        <Block>
-          <BlockTitle>Фото работ</BlockTitle>
-          <Image.PreviewGroup key={`wp-${row.id}`}>
-            <FilesGrid>
-              {files.map((fname) => {
-                const src = fileUrl(fname);
-                if (!src) return null;
-                return <Image key={fname} src={src} alt="Фото из заказа" className="img" />;
-              })}
-            </FilesGrid>
-          </Image.PreviewGroup>
-        </Block>
-      )}
+              {row.worker?.user?.phone && (
+                <SidebarBlock>
+                  <SidebarTitle>Контакты</SidebarTitle>
+                  {isAuthed ? (
+                    <ContactRow>
+                      <Phone size={16} />
+                      <div>
+                        <div className="label">Телефон</div>
+                        <a
+                          href={`tel:${formatPhone(row.worker.user.phone)}`}
+                          className="phone"
+                        >
+                          {formatPhone(row.worker.user.phone)}
+                        </a>
+                      </div>
+                    <SmallBtn
+                      className="copy-btn"
+                      type="button"
+                        onClick={() =>
+                          copyToClipboard(formatPhone(row.worker!.user!.phone!))
+                        }
+                      >
+                        Копировать
+                      </SmallBtn>
+                    </ContactRow>
+                  ) : (
+                    <PhoneGate>
+                      <span className="hint">Телефон доступен после входа</span>
+                    <ShowPhoneBtn
+                      className="show-phone"
+                      type="button"
+                        onClick={() => {
+                          const url = new URL("/login", window.location.origin);
+                          url.searchParams.set("redirect", window.location.pathname);
+                          window.location.href = url.toString();
+                        }}
+                      >
+                        Показать телефон
+                      </ShowPhoneBtn>
+                    </PhoneGate>
+                  )}
+                </SidebarBlock>
+              )}
+
+              {(files.length > 0 || demos.length > 0) && (
+                <SidebarBlock $last>
+                  <SidebarTitle>Файлы</SidebarTitle>
+                  <SideFileList>
+                    {demos.slice(0, 5).map((fileId) => (
+                      <SideFileItem key={fileId}>
+                        <span className="icon blue">
+                          <ImageIcon size={16} />
+                        </span>
+                        <span className="info">
+                          <span className="name">{fileId}</span>
+                          <span className="size">Демо</span>
+                        </span>
+                      </SideFileItem>
+                    ))}
+                    {files.slice(0, 5).map((fname) => (
+                      <SideFileItem key={fname}>
+                        <span className="icon red">
+                          <FileText size={16} />
+                        </span>
+                        <span className="info">
+                          <span className="name">{fname}</span>
+                          <span className="size">Фото работ</span>
+                        </span>
+                      </SideFileItem>
+                    ))}
+                  </SideFileList>
+                </SidebarBlock>
+              )}
+            </SidebarCard>
+            </motion.div>
+          </SidebarCol>
+        </LayoutGrid>
+
+        <MobileActionBar>
+          <OutlineBtn
+            className="bar-outline"
+            type="button"
+            onClick={() => onOrder(row.id)}
+          >
+            Связаться
+          </OutlineBtn>
+          <PrimaryBtn
+            className="bar-primary"
+            type="button"
+            onClick={() => onOrder(row.id)}
+          >
+            Заказать
+          </PrimaryBtn>
+        </MobileActionBar>
+      </PageShell>
     </Page>
   );
 };
 
 export default WorkerDetailPage;
 
-/* ===== STYLES (refined, emerald) ===== */
+/* ===== STYLES ===== */
 const TOKENS = {
-  maxw: "1120px",
-  radiusLg: "16px",
-  radiusMd: "12px",
-  radiusSm: "10px",
-  shadowSm: "0 4px 16px rgba(15, 23, 42, .06)",
-  shadowMd: "0 16px 48px rgba(2, 32, 71, .08)",
-  line: "#E6EAF1",
-  bgSoft: "#F6F8FB",
+  maxw: "1180px",
+  pageBg: "#F4F7FB",
+  radiusLg: "12px",
+  radiusMd: "10px",
+  radiusSm: "8px",
+  shadow: "0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06)",
+  line: "#E5E7EB",
+  lineSoft: "#F3F4F6",
   cardBg: "#FFFFFF",
-  text: "#0F172A",
-  textMuted: "#64748B",
-  primary: "#10B981",
-  primaryHover: "#059669",
-  primaryRing: "rgba(16, 185, 129, .35)",
-  primarySoftBg: "#ECFDF5",
-  primarySoftLine: "#D1FAE5",
-  green: "#10B981",
-  red: "#DC2626",
+  panelBg: "#F9FAFB",
+  text: "#111827",
+  textMuted: "#6B7280",
+  primary: "#2563EB",
+  primaryDark: "#1D4ED8",
+  primarySoftBg: "#EFF6FF",
+  primarySoftLine: "#BFDBFE",
+  green: "#047857",
+  greenBg: "#ECFDF5",
+  greenLine: "#A7F3D0",
+  red: "#B91C1C",
+  redBg: "#FEF2F2",
+  redLine: "#FECACA",
 };
 
 const Page = styled.div`
-  background: ${TOKENS.bgSoft};
+  background: ${TOKENS.pageBg};
   min-height: 100vh;
+  overflow-x: clip;
 `;
 
-const HeaderBar = styled.header`
+const PageShell = styled.div`
   max-width: ${TOKENS.maxw};
   margin: 0 auto;
-  height: 64px;
+  padding: 20px 24px 48px;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+
+  @media (max-width: 640px) {
+    padding: 12px 12px 32px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+`;
+
+const TopNav = styled.header`
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 20px;
+  margin-bottom: 20px;
 
-  .spacer {
-    flex: 1;
+  @media (max-width: 640px) {
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+`;
+
+const TopNavTitle = styled.h1`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: ${TOKENS.text};
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    font-size: 15px;
   }
 `;
 
 const BackBtn = styled.button`
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  border: 1px solid ${TOKENS.line};
-  background: ${TOKENS.cardBg};
-  cursor: pointer;
-  color: ${TOKENS.text};
-  font-weight: 700;
-  border-radius: ${TOKENS.radiusSm};
-  padding: 8px 10px;
-  box-shadow: ${TOKENS.shadowSm};
-  transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
-
-  &:hover {
-    background: #fbfcff;
-    border-color: #dde3ee;
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-  &:focus-visible {
-    outline: 2px solid ${TOKENS.primary};
-    outline-offset: 2px;
-  }
-`;
-
-const IconRow = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const IconBtn = styled.button`
-  width: 38px;
-  height: 38px;
-  border-radius: ${TOKENS.radiusSm};
-  border: 1px solid ${TOKENS.line};
-  background: ${TOKENS.cardBg};
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
+  border: 1px solid ${TOKENS.line};
+  background: ${TOKENS.cardBg};
   cursor: pointer;
-  box-shadow: ${TOKENS.shadowSm};
-  transition: transform 0.06s ease, background 0.15s ease, border-color 0.15s ease;
+  color: ${TOKENS.textMuted};
+  border-radius: ${TOKENS.radiusSm};
+  transition: border-color 0.15s ease, color 0.15s ease;
 
   &:hover {
-    background: #fbfcff;
-    border-color: #dde3ee;
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-  &:focus-visible {
-    outline: 2px solid ${TOKENS.primary};
-    outline-offset: 2px;
+    border-color: #d1d5db;
+    color: ${TOKENS.text};
   }
 `;
 
-const Hero = styled.section`
-  max-width: ${TOKENS.maxw};
-  margin: 0 auto;
-  padding: 16px 20px 28px;
-`;
-
-const HeroHead = styled.div`
-  background: ${TOKENS.cardBg};
-  border-radius: ${TOKENS.radiusLg};
-  padding: 24px;
-  border: 1px solid ${TOKENS.line};
-  box-shadow: ${TOKENS.shadowMd};
+const LayoutGrid = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
 
-  @media (max-width: 900px) {
+  @media (max-width: 960px) {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 `;
 
-const Avatar = styled.div<{ $src: string | null }>`
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #eef2f8;
-  background: ${({ $src }) => ($src ? `url(${$src}) center/cover` : "#111827")};
-  color: #fff;
+const MainCol = styled.div`
   display: grid;
-  place-items: center;
-  font-weight: 800;
-  font-size: 28px;
-`;
+  gap: 20px;
+  min-width: 0;
 
-const Title = styled.h1`
-  margin: 0 0 6px;
-  font-size: 26px;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  color: ${TOKENS.text};
-  font-weight: 900;
-
-  @media (max-width: 480px) {
-    font-size: 22px;
+  @media (max-width: 640px) {
+    gap: 14px;
   }
 `;
 
-const Badge = styled.span`
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-  font-size: 12px;
+const SidebarCol = styled.aside`
+  min-width: 0;
+`;
+
+const Card = styled.section`
+  background: ${TOKENS.cardBg};
+  border: 1px solid ${TOKENS.line};
+  border-radius: ${TOKENS.radiusLg};
+  box-shadow: ${TOKENS.shadow};
+  overflow: hidden;
+
+  @media (max-width: 640px) {
+    border-radius: 10px;
+  }
+`;
+
+const SummaryRow = styled.div`
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 20px;
+  padding: 24px;
+  align-items: start;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px;
+    text-align: left;
+  }
+`;
+
+const AvatarSquare = styled.img`
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid ${TOKENS.line};
+  background: #f9fafb url("/avatar.png") center/cover no-repeat;
+
+  @media (max-width: 640px) {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+  }
+`;
+
+const SummaryBody = styled.div`
+  min-width: 0;
+`;
+
+const Title = styled.h2`
+  margin: 0 0 4px;
+  font-size: clamp(20px, 4.5vw, 24px);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: ${TOKENS.text};
   font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 999px;
-  color: ${TOKENS.primary};
-  background: #eef4ff;
-  border: 1px solid #dde8ff;
-  margin-left: 10px;
+  word-break: break-word;
+`;
+
+const Subtitle = styled.p`
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: ${TOKENS.textMuted};
+  font-weight: 500;
+  line-height: 1.45;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+`;
+
+const SummaryMeta = styled.div`
+  display: grid;
+  gap: 10px;
+  max-width: 420px;
+
+  @media (max-width: 640px) {
+    max-width: none;
+    gap: 8px;
+  }
 `;
 
 const MetaRow = styled.div`
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
-  color: ${TOKENS.textMuted};
-  font-size: 13px;
+  font-size: 14px;
+
+  .label {
+    color: ${TOKENS.textMuted};
+    font-weight: 500;
+  }
+
+  .value {
+    color: ${TOKENS.text};
+    font-weight: 600;
+    min-width: 0;
+    word-break: break-word;
+  }
 
   .rating {
-    color: ${TOKENS.text};
-    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 8px;
+    font-size: 13px;
   }
 `;
 
-const Dot = styled.span`
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #cbd5e1;
-  display: inline-block;
-`;
-
-const PriceLine = styled.div`
-  margin-top: 8px;
-  font-weight: 800;
-  color: ${TOKENS.text};
-  font-size: 18px;
-
-  .muted {
-    color: ${TOKENS.textMuted};
-    font-weight: 600;
-  }
-`;
-
-const PhoneBox = styled.div`
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: ${TOKENS.green};
-  font-weight: 700;
-  background: ${TOKENS.primarySoftBg};
-  border: 1px solid ${TOKENS.primarySoftLine};
-  padding: 6px 10px;
-  border-radius: ${TOKENS.radiusSm};
-`;
-
-const Pills = styled.div`
-  margin-top: 12px;
+const CardHead = styled.div`
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 0;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 14px 0;
+  }
 `;
 
-const Pill = styled.span<{ tone?: "green" | "red" }>`
-  --c: ${({ tone }) => (tone === "red" ? TOKENS.red : TOKENS.green)};
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 12px;
-  background: color-mix(in oklab, var(--c) 12%, white);
-  color: var(--c);
-  border: 1px solid color-mix(in oklab, var(--c) 22%, white);
-`;
-
-const Actions = styled.div`
+const CardHeadText = styled.div`
   display: grid;
-  gap: 10px;
-  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 `;
 
-const Primary = styled.button`
-  height: 44px;
-  border-radius: ${TOKENS.radiusMd};
-  border: 0;
+const CardSubtitle = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: ${TOKENS.textMuted};
+  font-weight: 500;
+  line-height: 1.4;
+
+  @media (max-width: 640px) {
+    font-size: 12px;
+  }
+`;
+
+const CardTitle = styled.h3`
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: ${TOKENS.text};
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+`;
+
+const CardHeadActions = styled(CardActions)`
+  @media (max-width: 640px) {
+    display: none;
+  }
+`;
+
+const OutlineBtn = styled.button`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: ${TOKENS.radiusSm};
+  border: 1px solid ${TOKENS.line};
+  background: ${TOKENS.cardBg};
   cursor: pointer;
-  font-weight: 800;
-  color: #0b1b13;
-  background: linear-gradient(180deg, ${TOKENS.primary} 0%, ${TOKENS.primaryHover} 100%);
-  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24);
-  transition: transform 0.06s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${TOKENS.text};
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    filter: brightness(1.02);
-    box-shadow: 0 12px 28px rgba(16, 185, 129, 0.28);
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-  &:focus-visible {
-    outline: 2px solid ${TOKENS.primary};
-    outline-offset: 2px;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
   }
 `;
 
-const Secondary = styled.button`
-  height: 44px;
+const InfoPanel = styled.div`
+  margin: 16px 24px 24px;
+  padding: 16px;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 1px solid ${TOKENS.lineSoft};
   border-radius: ${TOKENS.radiusMd};
-  cursor: pointer;
-  font-weight: 800;
+
+  @media (max-width: 640px) {
+    margin: 12px 14px 14px;
+    padding: 10px;
+  }
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 540px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+`;
+
+const InfoTile = styled.div<{ $wide?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: ${TOKENS.cardBg};
+  border: 1px solid ${TOKENS.line};
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-width: 0;
+
+  ${({ $wide }) =>
+    $wide &&
+    `
+    grid-column: span 2;
+
+    @media (max-width: 900px) {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 540px) {
+      grid-column: span 1;
+    }
+  `}
+
+  @media (max-width: 640px) {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+  }
+`;
+
+const InfoIcon = styled.span<{
+  $tone?: "blue" | "green" | "amber" | "purple" | "red";
+}>`
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #fff;
+
+  ${({ $tone }) =>
+    $tone === "green"
+      ? `background: ${TOKENS.green};`
+      : $tone === "amber"
+        ? `background: #D97706;`
+        : $tone === "purple"
+          ? `background: #7C3AED;`
+          : $tone === "red"
+            ? `background: ${TOKENS.red};`
+            : `background: ${TOKENS.primary};`}
+
+  @media (max-width: 640px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+`;
+
+const InfoBody = styled.div`
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: ${TOKENS.textMuted};
+  }
+
+  .value {
+    font-size: 15px;
+    font-weight: 700;
+    color: ${TOKENS.text};
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  @media (max-width: 640px) {
+    .value {
+      font-size: 14px;
+    }
+  }
+
+  .value.rating {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .sep {
+    margin: 0 6px;
+    color: ${TOKENS.textMuted};
+    font-weight: 500;
+  }
+`;
+
+const GrayPanel = styled.div<{ $plain?: boolean }>`
+  margin: 16px 24px 24px;
+  padding: ${({ $plain }) => ($plain ? "0" : "20px")};
+  background: ${({ $plain }) => ($plain ? "transparent" : TOKENS.panelBg)};
+  border: ${({ $plain }) => ($plain ? "none" : `1px solid ${TOKENS.lineSoft}`)};
+  border-radius: ${TOKENS.radiusMd};
+
+  @media (max-width: 640px) {
+    margin: 12px 14px 14px;
+    padding: ${({ $plain }) => ($plain ? "0" : "14px")};
+  }
+`;
+
+const EmpGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 32px;
+  padding: 8px 24px 24px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    padding: 4px 14px 14px;
+    gap: 14px;
+  }
+`;
+
+const EmpItem = styled.div`
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+`;
+
+const EmpIconBox = styled.span`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: ${TOKENS.primary};
+`;
+
+const EmpContent = styled.div`
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+
+  .label {
+    font-size: 12px;
+    font-weight: 500;
+    color: ${TOKENS.textMuted};
+  }
+
+  .value {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${TOKENS.text};
+    word-break: break-word;
+  }
+`;
+
+const StatusBadge = styled.span<{ $tone?: "green" | "red" }>`
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: ${({ $tone }) => ($tone === "red" ? TOKENS.red : TOKENS.green)};
+  background: ${({ $tone }) => ($tone === "red" ? TOKENS.redBg : TOKENS.greenBg)};
+  border: 1px solid ${({ $tone }) => ($tone === "red" ? TOKENS.redLine : TOKENS.greenLine)};
+`;
+
+const SidebarCard = styled.div`
+  background: ${TOKENS.cardBg};
+  border: 1px solid ${TOKENS.line};
+  border-radius: ${TOKENS.radiusLg};
+  box-shadow: ${TOKENS.shadow};
+  overflow: hidden;
+`;
+
+const SidebarBlock = styled.div<{ $last?: boolean }>`
+  padding: 20px 22px;
+  border-bottom: ${({ $last }) => ($last ? "none" : `1px solid ${TOKENS.lineSoft}`)};
+
+  @media (max-width: 640px) {
+    padding: 16px 14px;
+  }
+`;
+
+const SidebarTitle = styled.h4`
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
   color: ${TOKENS.text};
-  background: transparent;
-  border: 1.5px solid ${TOKENS.line};
-  transition: transform 0.06s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+`;
+
+const NoteList = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+
+const NoteItem = styled.article`
+  display: grid;
+  gap: 4px;
+`;
+
+const NoteHead = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+
+  .author {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${TOKENS.text};
+    line-height: 1.4;
+    min-width: 0;
+    flex: 1;
+    word-break: break-word;
+  }
+`;
+
+const NoteBadge = styled.span<{
+  $tone?: "blue" | "green" | "amber" | "gray" | "red";
+}>`
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  color: ${({ $tone }) =>
+    $tone === "green"
+      ? TOKENS.green
+      : $tone === "red"
+        ? TOKENS.red
+        : $tone === "amber"
+          ? "#B45309"
+          : $tone === "blue"
+            ? TOKENS.primaryDark
+            : TOKENS.textMuted};
+  background: ${({ $tone }) =>
+    $tone === "green"
+      ? TOKENS.greenBg
+      : $tone === "red"
+        ? TOKENS.redBg
+        : $tone === "amber"
+          ? "#FFFBEB"
+          : $tone === "blue"
+            ? TOKENS.primarySoftBg
+            : "#F3F4F6"};
+`;
+
+const NoteMeta = styled.div`
+  font-size: 12px;
+  color: ${TOKENS.textMuted};
+  font-weight: 500;
+`;
+
+const NoteText = styled.p`
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: ${TOKENS.textMuted};
+  font-weight: 500;
+`;
+
+const Timeline = styled.div`
+  position: relative;
+  display: grid;
+  gap: 18px;
+  padding-left: 4px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: ${TOKENS.line};
+  }
+`;
+
+const TimelineItem = styled.div`
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: start;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 2px;
+    background: ${TOKENS.primary};
+    box-shadow: 0 0 0 3px ${TOKENS.primarySoftBg};
+    z-index: 1;
+  }
+
+  .content {
+    display: grid;
+    gap: 2px;
+  }
+
+  .date {
+    font-size: 12px;
+    color: ${TOKENS.textMuted};
+    font-weight: 500;
+  }
+
+  .rate {
+    font-size: 14px;
+    color: ${TOKENS.text};
+    font-weight: 700;
+  }
+`;
+
+const SmallBtn = styled.button`
+  height: 30px;
+  padding: 0 10px;
+  border-radius: ${TOKENS.radiusSm};
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid ${TOKENS.line};
+  background: #ffffff;
+  color: ${TOKENS.text};
+  cursor: pointer;
 
   &:hover {
     border-color: ${TOKENS.primary};
-    background: ${TOKENS.primarySoftBg};
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-  &:focus-visible {
-    box-shadow: 0 0 0 4px ${TOKENS.primaryRing};
+    color: ${TOKENS.primary};
   }
 `;
 
-const Kpis = styled.div`
-  margin-top: 14px;
+const ContactRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: start;
+  color: ${TOKENS.primary};
 
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Kpi = styled.div`
-  background: ${TOKENS.cardBg};
-  border: 1px solid ${TOKENS.line};
-  border-radius: ${TOKENS.radiusMd};
-  padding: 12px 14px;
-  box-shadow: ${TOKENS.shadowSm};
-
-  .k {
+  .label {
     font-size: 12px;
     color: ${TOKENS.textMuted};
+    font-weight: 500;
   }
-  .v {
-    margin-top: 2px;
-    font-weight: 900;
+
+  .phone {
     color: ${TOKENS.text};
-    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  .copy-btn {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 `;
 
-const Block = styled.section`
-  max-width: ${TOKENS.maxw};
-  margin: 18px auto 0;
-  padding: 0 20px;
-  display: grid;
-  gap: 12px;
-`;
-
-const BlockTitle = styled.h2`
+const SideFileList = styled.ul`
   margin: 0;
-  font-size: 18px;
-  font-weight: 900;
-  color: ${TOKENS.text};
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
 `;
 
-const FilesGrid = styled.div`
+const SideFileItem = styled.li`
   display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: center;
 
-  .img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-radius: ${TOKENS.radiusMd};
-    border: 1px solid ${TOKENS.line};
-    box-shadow: ${TOKENS.shadowSm};
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  .icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 40px rgba(2, 32, 71, 0.1);
+    &.red {
+      background: #fef2f2;
+      color: #dc2626;
     }
+
+    &.blue {
+      background: ${TOKENS.primarySoftBg};
+      color: ${TOKENS.primary};
+    }
+  }
+
+  .info {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${TOKENS.text};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .size {
+    font-size: 12px;
+    color: ${TOKENS.textMuted};
+    font-weight: 500;
+  }
+`;
+
+export const PrimaryBtn = styled.button`
+  height: 36px;
+  padding: 0 16px;
+  border-radius: ${TOKENS.radiusSm};
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+  background: ${TOKENS.primary};
+  transition: background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: ${TOKENS.primaryDark};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+`;
+
+const MobileActionBar = styled.div`
+  display: none;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 10px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid ${TOKENS.line};
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+
+    .bar-outline,
+    .bar-primary {
+      width: 100%;
+      height: 46px;
+      font-size: 14px;
+    }
+  }
+`;
+
+const PhotoGrid = styled.div`
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+
+  .thumb {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: ${TOKENS.radiusSm};
+    border: 1px solid ${TOKENS.line};
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+
+    .thumb {
+      height: 108px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -761,132 +1549,122 @@ const ExpList = styled.ul`
 const ExpItem = styled.li`
   display: grid;
   grid-template-columns: 16px 1fr;
-  gap: 10px;
+  gap: 12px;
   align-items: start;
-  position: relative;
 
   .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
     background: ${TOKENS.primary};
-    margin-top: 6px;
-    box-shadow: 0 0 0 4px ${TOKENS.primarySoftBg};
+    margin-top: 8px;
+    box-shadow: 0 0 0 3px ${TOKENS.primarySoftBg};
   }
 
   .meta {
     background: ${TOKENS.cardBg};
     border: 1px solid ${TOKENS.line};
-    border-radius: ${TOKENS.radiusMd};
-    padding: 10px 12px;
-    box-shadow: ${TOKENS.shadowSm};
+    border-radius: ${TOKENS.radiusSm};
+    padding: 12px 14px;
   }
 
   .line1 {
     font-size: 14px;
     color: ${TOKENS.text};
-    font-weight: 800;
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  .range {
-    letter-spacing: 0.01em;
+    font-weight: 700;
   }
 
   .place {
     color: ${TOKENS.textMuted};
-    font-weight: 700;
+    font-weight: 500;
   }
 
   .desc {
-    margin-top: 4px;
+    margin-top: 6px;
     color: ${TOKENS.textMuted};
     font-size: 13px;
-    line-height: 1.35;
+    line-height: 1.5;
   }
 `;
 
 const Empty = styled.div`
-  max-width: 820px;
-  margin: 44px auto;
+  margin: 24px auto;
   background: ${TOKENS.cardBg};
-  border: 1px solid ${TOKENS.line};
+  border: 1px dashed #cbd5e1;
   border-radius: ${TOKENS.radiusLg};
-  padding: 40px 28px;
+  padding: 36px 24px;
   text-align: center;
-  box-shadow: ${TOKENS.shadowMd};
+  box-shadow: ${TOKENS.shadow};
   color: ${TOKENS.text};
 
   h3 {
-    margin: 0 0 6px;
-    font-size: 22px;
-    font-weight: 900;
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
   }
+
   p {
     margin: 0;
     color: ${TOKENS.textMuted};
   }
+
   .btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-top: 16px;
-    height: 40px;
-    padding: 0 14px;
-    border-radius: ${TOKENS.radiusMd};
-    background: ${TOKENS.primary};
-    color: #fff;
-    font-weight: 800;
-    line-height: 40px;
-    border: 0;
-    text-decoration: none;
-    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.24);
-    transition: background 0.15s ease, transform 0.06s ease;
-
-    &:hover {
-      background: ${TOKENS.primaryHover};
-    }
-    &:active {
-      transform: translateY(1px);
-    }
-  }
-`;
-
-
-export const PrimaryBtn = styled.button`
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 10px;
-  background: #0070ff;
-  color: #fff;
-  border: 1px solid #0070ff;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
     height: 44px;
+    padding: 0 18px;
+    border-radius: ${TOKENS.radiusSm};
+    background: linear-gradient(180deg, ${TOKENS.primary} 0%, ${TOKENS.primaryDark} 100%);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22);
   }
 `;
 
 const Skeleton = () => (
-  <div style={{ maxWidth: TOKENS.maxw, margin: "0 auto", padding: "0 20px" }}>
+  <div style={{ display: "grid", gap: 16 }}>
     <div
       style={{
-        height: 196,
-        background: "linear-gradient(90deg, #fff 25%, #F3F6FB 37%, #fff 63%)",
+        height: 160,
+        background: "linear-gradient(90deg, #fff 25%, #eef2f7 37%, #fff 63%)",
         backgroundSize: "400% 100%",
-        border: `1px solid ${TOKENS.line}`,
+        border: "1px solid #e2e8f0",
         borderRadius: TOKENS.radiusLg,
-        boxShadow: TOKENS.shadowMd,
+        boxShadow: TOKENS.shadow,
         animation: "shimmer 1.4s infinite",
       }}
     />
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 320px",
+        gap: 16,
+      }}
+    >
+      <div
+        style={{
+          height: 240,
+          background: "linear-gradient(90deg, #fff 25%, #eef2f7 37%, #fff 63%)",
+          backgroundSize: "400% 100%",
+          border: "1px solid #e2e8f0",
+          borderRadius: TOKENS.radiusLg,
+          animation: "shimmer 1.4s infinite",
+        }}
+      />
+      <div
+        style={{
+          height: 240,
+          background: "linear-gradient(90deg, #fff 25%, #eef2f7 37%, #fff 63%)",
+          backgroundSize: "400% 100%",
+          border: "1px solid #e2e8f0",
+          borderRadius: TOKENS.radiusMd,
+          animation: "shimmer 1.4s infinite",
+        }}
+      />
+    </div>
     <style>
       {`
         @keyframes shimmer {
@@ -898,95 +1676,47 @@ const Skeleton = () => (
   </div>
 );
 
-
-const PhoneRow = styled.div`
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #f0f6ff;
-  border: 1px solid #cfe3ff;
-  padding: 8px 12px;
-  border-radius: ${TOKENS.radiusSm};
-  color: #0070ff;
-  font-weight: 800;
-
-  .phone {
-    color: ${TOKENS.text};
-    font-weight: 800;
-    text-decoration: none;
-  }
-`;
-
-const PhoneActions = styled.div`
-  display: inline-flex;
-  gap: 8px;
-  margin-left: 4px;
-`;
-
-const SmallBtn = styled.button`
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid #d3e2ff;
-  background: #ffffff;
-  color: #0f172a;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background: #f4f8ff;
-    border-color: #0070ff;
-    color: #0070ff;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #0070ff;
-    outline-offset: 2px;
-  }
-`;
-
 const PhoneGate = styled.div`
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   gap: 10px;
   align-items: center;
-  background: #ffffff;
-  border: 1px dashed #d3e2ff;
-  padding: 8px 10px;
-  border-radius: ${TOKENS.radiusSm};
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  padding: 10px 12px;
+  border-radius: ${TOKENS.radiusMd};
 
   .hint {
     color: ${TOKENS.textMuted};
     font-size: 13px;
     font-weight: 600;
   }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    .show-phone {
+      width: 100%;
+      height: 44px;
+    }
+  }
 `;
 
 const ShowPhoneBtn = styled.button`
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-weight: 800;
-  border: 1px solid #0070ff;
-  background: #f0f6ff;
-  color: #0056d6;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: ${TOKENS.radiusSm};
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid ${TOKENS.primarySoftLine};
+  background: ${TOKENS.primarySoftBg};
+  color: ${TOKENS.primaryDark};
   cursor: pointer;
-  transition: transform 0.06s ease, background 0.15s ease, color 0.15s ease;
 
   &:hover {
-    background: #e6efff;
-    color: #0045b3;
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-
-  &:focus-visible {
-    outline: 2px solid #0070ff;
-    outline-offset: 2px;
+    background: #dbeafe;
   }
 `;

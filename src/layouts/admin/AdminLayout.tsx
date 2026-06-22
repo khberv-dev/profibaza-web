@@ -1,4 +1,5 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { PageTransition } from "../../components/PageTransition";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { UserRole } from "../../shared/auth/roles";
@@ -136,7 +137,7 @@ export function AdminLayout() {
 
       <Main>
         <Content>
-          <Outlet />
+          <PageTransition />
         </Content>
       </Main>
 

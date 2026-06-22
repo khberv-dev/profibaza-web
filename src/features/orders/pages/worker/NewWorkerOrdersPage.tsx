@@ -21,7 +21,6 @@ import {
   WOList,
   WOCard,
   WOLeft,
-  WOAvatar,
   WOMid,
   WOHead,
   WOName,
@@ -56,6 +55,7 @@ import { CommentsThread } from "../client/CommentsThread";
 import ReplyBar from "./ReplyBar";
 import { finishWorkerOrder } from "../../../../shared/modules/worker";
 import { Modal } from "../../../../components/modal/Modal";
+import { OrderAvatar } from "../../../../components/OrderAvatar";
 import OrderEvidenceUploader from "./OrderEvidenceUploader";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
@@ -479,9 +479,6 @@ export default function NewWorkerOrdersPage() {
           {data.map((row) => {
             const u = row.client?.user || undefined;
             const ui = getUI(row.id);
-            const avatar = u?.avatar
-              ? `https://profibaza.uz/public/avatar/${u.avatar}`
-              : null;
             const addr = [row.address1, row.address2, row.address3]
               .filter(Boolean)
               .join(", ");
@@ -499,7 +496,11 @@ export default function NewWorkerOrdersPage() {
               >
                 <div className="inner">
                   <WOLeft>
-                    <WOAvatar $src={avatar}>{!avatar && initials(u)}</WOAvatar>
+                    <OrderAvatar
+                      variant="worker"
+                      fileId={u?.avatar}
+                      initials={initials(u)}
+                    />
                   </WOLeft>
 
                   <WOMid>

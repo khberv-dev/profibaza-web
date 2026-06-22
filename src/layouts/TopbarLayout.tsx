@@ -21,6 +21,7 @@ import {
 import { useAuthStore } from "../shared/stores/auth";
 import { Modal } from "../components/modal/Modal";
 import { AppFooter } from "../components/AppFooter";
+import { PageTransition } from "../components/PageTransition";
 
 type NavDef = { to: string; label: string; roles?: UserRole[] };
 
@@ -178,7 +179,7 @@ export function TopbarLayout() {
 
       <Main>
         <Content>
-          <Outlet />
+          <PageTransition />
         </Content>
       </Main>
 

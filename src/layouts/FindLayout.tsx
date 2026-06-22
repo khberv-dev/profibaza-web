@@ -1,4 +1,5 @@
-import { Outlet, useNavigate, Link } from "react-router-dom";
+import { PageTransition } from "../components/PageTransition";
+import { useNavigate, Link } from "react-router-dom";
 import styled from "@emotion/styled";
 import { AppFooter } from "../components/AppFooter";
 import { useTranslation } from "react-i18next";
@@ -58,7 +59,7 @@ export const FindLayout = () => {
       </Navbar>
 
       <Main>
-        <Outlet />
+        <PageTransition />
       </Main>
 
       <AppFooter />

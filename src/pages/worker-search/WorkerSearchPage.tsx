@@ -4,33 +4,53 @@ import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { CustomInput } from "../../components/custom-input/CustomInput";
 import {
-  HHCard,
-  HHLeft,
-  HHAvatar,
-  HHMid,
-  HHHead,
+  HHAvatarImage,
   HHName,
   HHSub,
   HHStatuses,
   HHStatus,
-  HHChips,
-  HHChip,
   HHMeta,
-  HHDivider,
-  HHBottom,
-  HHPrice,
   HHRating,
-  HHRight,
   IconBtn,
   OpenBtn,
   PageWrap,
+  PageHeader,
+  PageTitle,
+  PageSubtitle,
+  ResultsBar,
+  ResultsCount,
+  ToolbarShell,
   Toolbar,
   SearchInputWrap,
+  ProfPickWrap,
+  ProfPickBtn,
+  ProfPickClear,
+  ProfPickChevron,
   FilterBtn,
   SearchBtn,
   FiltersPanel,
   List,
+  FilterField,
+  FieldLabel,
+  MapEmbed,
+  GeoControls,
+  GeoHint,
+  GeoInput,
+  GeoRemoveBtn,
+  GeoRow,
+  FindCard,
+  FindCardTop,
+  FindCardBody,
+  FindCardFooter,
+  CardIconRow,
+  ProfBadge,
+  PriceHighlight,
+  EmptyWrap,
+  ResultsStagger,
 } from "./worker-search.style";
+import { StaggerItem } from "../../components/Stagger";
+import { motion } from "framer-motion";
+import { fadeUp } from "../../lib/motion";
 import CustomSelect, {
   SelectOption,
 } from "../../components/custom-select/CustomSelect";
@@ -60,6 +80,24 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 /* ========== helpers ========== */
+const useCompactLayout = () => {
+  const [compact, setCompact] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 640px)").matches
+      : false
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setCompact(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return compact;
+};
+
 const fmtMoney = (n?: number) =>
   typeof n === "number" ? n.toLocaleString("ru-RU") + " сум" : "—";
 
@@ -69,8 +107,16 @@ const fio = (u?: {
   middleName?: string | null;
 }) => [u?.surname, u?.name].filter(Boolean).join(" ") || "Мастер";
 
-const initials = (u?: { name?: string; surname?: string }) =>
-  ((u?.surname?.[0] ?? "") + (u?.name?.[0] ?? "")).toUpperCase() || "M";
+const AVATAR_CDN = "https://profibaza.uz/public/avatar/";
+const ANON_AVATAR = "/avatar.png";
+
+const workerAvatarSrc = (avatarId?: string | null) =>
+  avatarId ? `${AVATAR_CDN}${avatarId}` : ANON_AVATAR;
+
+const onAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  e.currentTarget.onerror = null;
+  e.currentTarget.src = ANON_AVATAR;
+};
 
 const fmtUpdated = (d?: string) => {
   if (!d) return "—";
@@ -102,54 +148,6 @@ const skeletonCSS = `
 @keyframes skel { 100% { transform: translateX(100%); } }
 `;
 
-/* ========== empty state CSS ========== */
-const emptyCSS = `
-.empty {
-  background: #f1f4f9;
-  border-radius: 14px;
-  padding: 24px;
-  text-align: center;
-}
-.empty h3 {
-  margin: 10px 0 6px;
-  font-size: 23px;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.01em;
-}
-.empty p {
-  margin: 0;
-  color: #64748b;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-.empty .actions {
-  margin-top: 14px;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.empty .btn {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #e7ecf3;
-  background: #fff;
-  cursor: pointer;
-  font-weight: 600;
-}
-.empty .btn.primary {
-  background: #1e5cfb;
-  border-color: #1e5cfb;
-  color: #fff;
-}
-.empty .hint {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #94a3b8;
-}
-`;
-
 type AppliedFilters = {
   professions?: string;
   minPrice?: number;
@@ -163,6 +161,9 @@ type PriceForm = { minPrice: string; maxPrice: string };
 
 export const WorkerSearchPage: React.FC = () => {
   const { t } = useTranslation();
+  const isCompact = useCompactLayout();
+  const filterMapHeight = isCompact ? 240 : 320;
+  const emptyMapHeight = isCompact ? 280 : 420;
   const lang = (localStorage.getItem("i18nextLng") || "ru").split("-")[0] as
     | "ru"
     | "uz";
@@ -439,60 +440,47 @@ export const WorkerSearchPage: React.FC = () => {
   return (
     <PageWrap>
       <style>{skeletonCSS}</style>
-      <style>{emptyCSS}</style>
 
+      <motion.div initial="hidden" animate="show" variants={fadeUp(0)}>
+      <PageHeader>
+        <PageTitle>{t("nav.find")}</PageTitle>
+        <PageSubtitle>{t("searchPlaceholder")}</PageSubtitle>
+      </PageHeader>
+      </motion.div>
+
+      <ToolbarShell>
       {/* ===== Тулбар ===== */}
       <Toolbar>
         {showToolbarSkeleton ? (
           <SearchInputWrap>
-            <div className="select-wrap" style={{ width: 320 }}>
+            <div className="select-wrap" style={{ width: "100%" }}>
               <div className="skel" style={{ height: 44, borderRadius: 12 }} />
             </div>
           </SearchInputWrap>
         ) : (
           <SearchInputWrap>
-            <div style={{ position: "relative", width: "100%" }}>
-              <button
+            <ProfPickWrap>
+              <ProfPickBtn
                 type="button"
+                $filled={!!selectedProfLabel}
                 onClick={() => setProfModalOpen(true)}
                 aria-haspopup="dialog"
                 aria-expanded={profModalOpen}
-                style={{
-                  width: "100%",
-                  height: 44,
-                  padding: "0 40px 0 14px",
-                  borderRadius: 12,
-                  border: "1px solid #e7ecf3",
-                  background: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                  fontWeight: 500,
-                  color: selectedProfLabel ? "#0f172a" : "#94a3b8",
-                  boxShadow: "0 2px 8px rgba(2,32,71,0.04)",
-                }}
               >
                 <SlidersHorizontal
                   style={{
-                    color: selectedProfLabel ? "#2f6bff" : "#cbd5e1",
+                    color: selectedProfLabel ? "#2563eb" : "#cbd5e1",
+                    flexShrink: 0,
                   }}
                   size={16}
                 />
-
-                <span
-                  style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <span className="label">
                   {selectedProfLabel ||
                     (profLoading ? "Загрузка…" : "Выберите профессию")}
                 </span>
 
                 {selectedProfLabel && (
-                  <span
+                  <ProfPickClear
                     role="button"
                     title="Очистить"
                     onClick={(e) => {
@@ -504,29 +492,16 @@ export const WorkerSearchPage: React.FC = () => {
                         return next;
                       });
                     }}
-                    style={{
-                      position: "absolute",
-                      right: 28,
-                      width: 18,
-                      height: 18,
-                      borderRadius: 999,
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: 14,
-                      color: "#64748b",
-                      background: "#f1f5f9",
-                      cursor: "pointer",
-                    }}
                   >
                     <FaXmark />
-                  </span>
+                  </ProfPickClear>
                 )}
 
-                <FaChevronDown
-                  style={{ position: "absolute", right: 10, opacity: 0.6 }}
-                />
-              </button>
-            </div>
+                <ProfPickChevron>
+                  <FaChevronDown size={12} />
+                </ProfPickChevron>
+              </ProfPickBtn>
+            </ProfPickWrap>
           </SearchInputWrap>
         )}
 
@@ -548,6 +523,7 @@ export const WorkerSearchPage: React.FC = () => {
        
         {/* >>> end add */}
       </Toolbar>
+      </ToolbarShell>
 
       {/* ===== Панель фильтров ===== */}
       <FiltersPanel $open={showFilters}>
@@ -565,10 +541,8 @@ export const WorkerSearchPage: React.FC = () => {
           />
         </div>
 
-        <div className="field" style={{ minWidth: 240 }}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-            Область
-          </label>
+        <FilterField className="field">
+          <FieldLabel>Область</FieldLabel>
           <CustomSelect
             id="region"
             placeholder={regionsLoading ? "Загрузка…" : "Выберите область"}
@@ -596,12 +570,10 @@ export const WorkerSearchPage: React.FC = () => {
             }}
             width="100%"
           />
-        </div>
+        </FilterField>
 
-        <div className="field" style={{ minWidth: 240 }}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-            Район
-          </label>
+        <FilterField className="field">
+          <FieldLabel>Район</FieldLabel>
           <CustomSelect
             id="district"
             placeholder={
@@ -644,12 +616,10 @@ export const WorkerSearchPage: React.FC = () => {
             }}
             width="100%"
           />
-        </div>
+        </FilterField>
 
-        <div className="field" style={{ minWidth: 240 }}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-            Махалля
-          </label>
+        <FilterField className="field">
+          <FieldLabel>Махалля</FieldLabel>
           <CustomSelect
             id="village"
             placeholder={
@@ -697,7 +667,7 @@ export const WorkerSearchPage: React.FC = () => {
             }}
             width="100%"
           />
-        </div>
+        </FilterField>
 
         <div className="field">
           <CustomInput
@@ -713,36 +683,29 @@ export const WorkerSearchPage: React.FC = () => {
         </div>
 
         {/* === Карта локации === */}
-        <div className="field" style={{ width: "100%" }}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-            Локация (по желанию)
-          </label>
+        <FilterField className="field">
+          <FieldLabel>Локация (по желанию)</FieldLabel>
 
-          <MapYandexLocations
-            apiKey={import.meta.env.VITE_YMAPS_KEY}
-            locations={locations}
-            onAdd={onAddLoc}
-            onChange={onChangeLoc}
-            onRemove={onRemoveLoc}
-            height={320}
-          />
+          <MapEmbed>
+            <MapYandexLocations
+              apiKey={import.meta.env.VITE_YMAPS_KEY}
+              locations={locations}
+              onAdd={onAddLoc}
+              onChange={onChangeLoc}
+              onRemove={onRemoveLoc}
+              height={filterMapHeight}
+            />
+          </MapEmbed>
+
           {!!locations.length && (
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                marginTop: 10,
-                alignItems: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              <small style={{ opacity: 0.8 }}>
+            <GeoControls>
+              <GeoHint>
                 Долгота: <b>{locations[0].longitude}</b> | Широта:{" "}
                 <b>{locations[0].latitude}</b>
-              </small>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              </GeoHint>
+              <GeoRow>
                 <span style={{ fontSize: 12, opacity: 0.8 }}>Радиус:</span>
-                <input
+                <GeoInput
                   type="number"
                   step="0.001"
                   min={0}
@@ -754,192 +717,102 @@ export const WorkerSearchPage: React.FC = () => {
                       radius: Number.isFinite(val) ? val : 0,
                     });
                   }}
-                  style={{
-                    width: 120,
-                    padding: "6px 10px",
-                    borderRadius: 8,
-                    border: "1px solid #e7ecf3",
-                    outline: "none",
-                  }}
                 />
-                <span style={{ fontSize: 12, opacity: 0.8 }}>
-                  единицы как в бек (см. примеры)
-                </span>
-              </div>
+                <GeoHint>единицы как в бек (см. примеры)</GeoHint>
+              </GeoRow>
 
-              <button
-                type="button"
-                onClick={() => onRemoveLoc(0)}
-                style={{
-                  marginLeft: "auto",
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #e7ecf3",
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
-              >
+              <GeoRemoveBtn type="button" onClick={() => onRemoveLoc(0)}>
                 Удалить зону
-              </button>
-            </div>
+              </GeoRemoveBtn>
+            </GeoControls>
           )}
-        </div>
+        </FilterField>
       </FiltersPanel>
+
+      {!showListSkeleton && results.length > 0 && (
+        <ResultsBar>
+          <ResultsCount>
+            {results.length}{" "}
+            <span>
+              {results.length === 1
+                ? "специалист"
+                : results.length < 5
+                ? "специалиста"
+                : "специалистов"}
+            </span>
+          </ResultsCount>
+        </ResultsBar>
+      )}
 
       {/* ===== Список ===== */}
       <List>
         {showListSkeleton ? (
           <>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <HHCard key={`skel-${i}`}>
-                <HHLeft>
+            {Array.from({ length: isCompact ? 3 : 6 }).map((_, i) => (
+              <FindCard key={`skel-${i}`}>
+                <FindCardTop>
                   <div
                     className="skel"
                     style={{ width: 64, height: 64, borderRadius: "50%" }}
                   />
-                </HHLeft>
-
-                <HHMid>
-                  <HHHead>
-                    <div>
-                      <div
-                        className="skel"
-                        style={{
-                          width: 220,
-                          height: 16,
-                          borderRadius: 6,
-                          marginBottom: 8,
-                        }}
-                      />
-                      <div
-                        className="skel"
-                        style={{ width: 140, height: 12, borderRadius: 6 }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <div
-                        className="skel"
-                        style={{ width: 72, height: 20, borderRadius: 999 }}
-                      />
-                      <div
-                        className="skel"
-                        style={{ width: 90, height: 20, borderRadius: 999 }}
-                      />
-                    </div>
-                  </HHHead>
-
-                  <HHChips>
-                    <div
-                      className="skel"
-                      style={{
-                        width: 120,
-                        height: 22,
-                        borderRadius: 999,
-                      }}
-                    />
-                    <div
-                      className="skel"
-                      style={{ width: 100, height: 22, borderRadius: 999 }}
-                    />
-                    <div
-                      className="skel"
-                      style={{ width: 80, height: 22, borderRadius: 999 }}
-                    />
-                  </HHChips>
-
-                  <HHMeta>
-                    <li>
-                      <span className="k">Занятость:</span>
-                      <span className="v">
-                        <span
-                          className="skel"
-                          style={{
-                            width: 80,
-                            height: 12,
-                            borderRadius: 6,
-                            display: "inline-block",
-                          }}
-                        />
-                      </span>
-                    </li>
-                    <li>
-                      <span className="k">Формат:</span>
-                      <span className="v">
-                        <span
-                          className="skel"
-                          style={{
-                            width: 70,
-                            height: 12,
-                            borderRadius: 6,
-                            display: "inline-block",
-                          }}
-                        />
-                      </span>
-                    </li>
-                  </HHMeta>
-
-                  <HHDivider />
-
-                  <HHBottom>
-                    <div
-                      className="skel"
-                      style={{ width: 180, height: 18, borderRadius: 6 }}
-                    />
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 8 }}
-                    >
-                      <div
-                        className="skel"
-                        style={{ width: 100, height: 16, borderRadius: 6 }}
-                      />
-                      <div
-                        className="skel"
-                        style={{ width: 34, height: 16, borderRadius: 6 }}
-                      />
-                    </div>
-                  </HHBottom>
-                </HHMid>
-
-                <HHRight>
                   <div
                     className="skel"
-                    style={{ width: 36, height: 36, borderRadius: 10 }}
+                    style={{ width: 72, height: 24, borderRadius: 999 }}
+                  />
+                </FindCardTop>
+                <FindCardBody>
+                  <div
+                    className="skel"
+                    style={{ width: "72%", height: 18, borderRadius: 6 }}
                   />
                   <div
                     className="skel"
-                    style={{ width: 36, height: 36, borderRadius: 10 }}
+                    style={{ width: "48%", height: 12, borderRadius: 6 }}
                   />
                   <div
                     className="skel"
-                    style={{ width: 96, height: 36, borderRadius: 10 }}
+                    style={{ width: 110, height: 26, borderRadius: 999 }}
                   />
-                </HHRight>
-              </HHCard>
+                  <div
+                    className="skel"
+                    style={{ width: "85%", height: 14, borderRadius: 6 }}
+                  />
+                  <div
+                    className="skel"
+                    style={{ width: "62%", height: 16, borderRadius: 6 }}
+                  />
+                </FindCardBody>
+                <FindCardFooter>
+                  <div
+                    className="skel"
+                    style={{ width: 76, height: 36, borderRadius: 10 }}
+                  />
+                  <div
+                    className="skel"
+                    style={{ width: 104, height: 40, borderRadius: 11 }}
+                  />
+                </FindCardFooter>
+              </FindCard>
             ))}
           </>
         ) : results.length === 0 ? (
-          <div
-            style={{
-              gridColumn: "span 2",
-            }}
-            className="empty"
-            role="status"
-            aria-live="polite"
-          >
+          <EmptyWrap role="status" aria-live="polite">
             <h3>В выбранном регионе не нашлось специалистов</h3>
             <p>
               Попробуйте расширить радиус поиска, снять часть фильтров или
               выбрать другую профессию.
             </p>
 
-            <MapYandexLocations
-              apiKey={import.meta.env.VITE_YMAPS_KEY}
-              locations={locations}
-              onAdd={onAddLoc}
-              onChange={onChangeLoc}
-              onRemove={onRemoveLoc}
-              height={600}
-            />
+            <MapEmbed>
+              <MapYandexLocations
+                apiKey={import.meta.env.VITE_YMAPS_KEY}
+                locations={locations}
+                onAdd={onAddLoc}
+                onChange={onChangeLoc}
+                onRemove={onRemoveLoc}
+                height={emptyMapHeight}
+              />
+            </MapEmbed>
 
             <div className="actions">
               {/* теперь эта кнопка реально работает */}
@@ -993,74 +866,70 @@ export const WorkerSearchPage: React.FC = () => {
               Совет: отметьте точку на карте или включите геолокацию — так мы
               покажем специалистов рядом.
             </div>
-          </div>
+          </EmptyWrap>
         ) : (
-          results.map((row: SearchWorker) => (
-            <HHCard
-              key={row.id}
+          <ResultsStagger>
+          {results.map((row: SearchWorker) => (
+            <StaggerItem key={row.id}>
+            <FindCard
               role="article"
               aria-label={`${fio(row.worker?.user)} — ${profLabelById(
                 row.professionId
               )}`}
             >
-              <HHLeft>
-                <HHAvatar
-                  $src={
-                    row.worker?.user?.avatar
-                      ? `https://profibaza.uz/public/avatar/${row.worker?.user?.avatar}`
-                      : null
-                  }
-                >
-                  {!row.worker?.user?.avatar && initials(row.worker?.user)}
-                </HHAvatar>
-              </HHLeft>
+              <FindCardTop>
+                <HHAvatarImage
+                  src={workerAvatarSrc(row.worker?.user?.avatar)}
+                  alt=""
+                  onError={onAvatarError}
+                />
 
-              <HHMid>
-                <HHHead>
-                  <div>
-                    <Link
-                      style={{ textDecoration: "none" }}
-                      to={{
-                        pathname: `/find/worker/${encodeURIComponent(row.id)}`,
-                      }}
-                    >
-                      <HHName>{fio(row.worker?.user)}</HHName>
-                    </Link>
-                    <HHSub>
-                      {fmtUpdated(row.updatedAt) !== "—"
-                        ? "Обновлено " + fmtUpdated(row.updatedAt)
-                        : ""}
-                    </HHSub>
-                  </div>
+                <HHStatuses>
+                  {row.isBusy ? (
+                    <HHStatus $tone="red" title="Мастер сейчас занят на заказе">
+                      Занят
+                    </HHStatus>
+                  ) : (
+                    <HHStatus $tone="green" title="Готов принимать заказы">
+                      Свободен
+                    </HHStatus>
+                  )}
 
-                  <HHStatuses>
-                    {row.isBusy ? (
-                      <HHStatus
-                        $tone="red"
-                        title="Мастер сейчас занят на заказе"
-                      >
-                        Занят
-                      </HHStatus>
-                    ) : (
-                      <HHStatus $tone="green" title="Готов принимать заказы">
-                        Свободен
-                      </HHStatus>
-                    )}
+                  {typeof (row as any).inArea === "boolean" && (
+                    <HHStatus $tone={row.inArea ? "blue" : "gray"}>
+                      {row.inArea ? "В радиусе" : "Далеко"}
+                    </HHStatus>
+                  )}
+                </HHStatuses>
+              </FindCardTop>
 
-                    {typeof (row as any).inArea === "boolean" && (
-                      <HHStatus $tone={row.inArea ? "blue" : "gray"}>
-                        {row.inArea ? "В радиусе" : "Далеко"}
-                      </HHStatus>
-                    )}
-                  </HHStatuses>
-                </HHHead>
+              <FindCardBody>
+                <div>
+                  <Link
+                    style={{ textDecoration: "none", color: "inherit" }}
+                    to={{
+                      pathname: `/find/worker/${encodeURIComponent(row.id)}`,
+                    }}
+                  >
+                    <HHName>{fio(row.worker?.user)}</HHName>
+                  </Link>
+                  <HHSub>
+                    {fmtUpdated(row.updatedAt) !== "—"
+                      ? "Обновлено " + fmtUpdated(row.updatedAt)
+                      : ""}
+                  </HHSub>
+                </div>
+
+                <ProfBadge title={profLabelById(row.professionId)}>
+                  {profLabelById(row.professionId)}
+                </ProfBadge>
 
                 <HHRating>
                   <Rate
                     allowHalf
                     disabled
                     value={row.rating ?? 0}
-                    style={{ fontSize: 13 }}
+                    style={{ fontSize: isCompact ? 11 : 13 }}
                   />
                   <strong>{(row.rating ?? 0).toFixed(1)}</strong>
                 </HHRating>
@@ -1078,32 +947,24 @@ export const WorkerSearchPage: React.FC = () => {
                   </li>
                 </HHMeta>
 
-                <HHDivider />
+                <PriceHighlight>
+                  {fmtMoney(row.minPrice)} — {fmtMoney(row.maxPrice)}
+                </PriceHighlight>
+              </FindCardBody>
 
-                <HHBottom>
-                  <HHPrice>
-                    {fmtMoney(row.minPrice)} — {fmtMoney(row.maxPrice)}{" "}
-                  </HHPrice>
-
-                  <HHChips>
-                    <HHChip>{profLabelById(row.professionId)}</HHChip>
-                  </HHChips>
-                </HHBottom>
-              </HHMid>
-
-              <HHRight>
-              <div className="actions-share">
-              <IconBtn title="Поделиться" aria-label="Поделиться">
-                  <Share2 size={18} />
-                </IconBtn>
-
-                <IconBtn title="В избранное" aria-label="В избранное">
-                  <Heart size={18} />
-                </IconBtn>
-              </div>
+              <FindCardFooter>
+                <CardIconRow>
+                  <IconBtn title="Поделиться" aria-label="Поделиться">
+                    <Share2 size={17} />
+                  </IconBtn>
+                  <IconBtn title="В избранное" aria-label="В избранное">
+                    <Heart size={17} />
+                  </IconBtn>
+                </CardIconRow>
 
                 <OpenBtn
                   type="button"
+                  $compact
                   onClick={() => {
                     const url = new URL(
                       "/app/client/create-order",
@@ -1115,9 +976,11 @@ export const WorkerSearchPage: React.FC = () => {
                 >
                   Заказать
                 </OpenBtn>
-              </HHRight>
-            </HHCard>
-          ))
+              </FindCardFooter>
+            </FindCard>
+            </StaggerItem>
+          ))}
+          </ResultsStagger>
         )}
       </List>
 

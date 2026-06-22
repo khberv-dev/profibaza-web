@@ -74,6 +74,7 @@ export type SearchWorkerUser = {
   surname: string;
   middleName?: string | null;
   avatar?: string | null;
+  phone?: string | null;
 };
 
 export type WorkerExperience = {
@@ -145,6 +146,7 @@ export type SearchWorker = {
   competitions?: "YES" | "NO";
   jobType?: "SOLO" | "COMPANY";
   professionId: string;
+  createdAt?: string;
   schedule?: WorkerSchedule | null;
   experience?: WorkerExperience[];
   // опциональные/вычисляемые

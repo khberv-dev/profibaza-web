@@ -26,6 +26,7 @@ import {
 import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
 import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
+import { OrderAvatar } from "../../../../components/OrderAvatar";
 
 dayjs.extend(relativeTime);
 
@@ -114,9 +115,6 @@ const OrderCard: React.FC<{ order: ClientOrder; labels: OrderLabels }> = ({
   const getStatusView = (status?: string) => getStatus(status);
 
   const u = order.workerProfession?.worker?.user;
-  const avatarSrc = u?.avatar
-    ? `https://profibaza.uz/public/avatar/${u.avatar}`
-    : null;
   const s = getStatusView(order.status);
   const deadline = fmtDate(order.deadline);
   const createdAgo = fmtFromNow(order.createdAt);
@@ -161,9 +159,10 @@ const OrderCard: React.FC<{ order: ClientOrder; labels: OrderLabels }> = ({
   return (
     <Card role="article" aria-label={t("orders.cardAria", { id: order.id })}>
       <Left>
-        <Avatar $src={avatarSrc}>
-          {!avatarSrc ? u ? initials(u) : <User size={18} /> : null}
-        </Avatar>
+        <OrderAvatar
+          fileId={u?.avatar}
+          initials={u ? initials(u) : <User size={18} />}
+        />
       </Left>
 
       <Mid>
@@ -563,22 +562,6 @@ const Card = styled.article`
 const Left = styled.div`
   display: grid;
   align-content: start;
-`;
-
-const Avatar = styled.div<{ $src?: string | null }>`
-  width: 96px;
-  height: 96px;
-  border-radius: 24px;
-  background: ${({ $src }) =>
-    $src
-      ? `url(${$src}) center/cover no-repeat`
-      : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
-  border: 1px solid #e7ecf3;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-  color: #1e40af;
-  font-size: 18px;
 `;
 
 const Mid = styled.div`

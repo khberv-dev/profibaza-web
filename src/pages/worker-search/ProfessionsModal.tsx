@@ -20,6 +20,12 @@ const Backdrop = styled(motion.div)`
   display: grid;
   place-items: center;
   z-index: 1000;
+  padding: 16px;
+
+  @media (max-width: 640px) {
+    place-items: end center;
+    padding: 0;
+  }
 `;
 
 const Sheet = styled(motion.div)`
@@ -31,6 +37,12 @@ const Sheet = styled(motion.div)`
   overflow: hidden;
   display: grid;
   grid-template-rows: auto auto 1fr;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    max-height: min(92vh, 760px);
+    border-radius: 20px 20px 0 0;
+  }
 `;
 
 const Head = styled.div`
@@ -39,12 +51,23 @@ const Head = styled.div`
   align-items: center;
   gap: 12px;
   background: #fff;
+  min-width: 0;
+
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 800;
     color: #0f172a;
   }
+
+  @media (max-width: 640px) {
+    padding: 16px 16px 14px;
+
+    h3 {
+      font-size: 16px;
+    }
+  }
+
   .spacer {
     flex: 1;
   }
@@ -55,6 +78,8 @@ const Head = styled.div`
     cursor: pointer;
     line-height: 1;
     opacity: 0.6;
+    width: 40px;
+    height: 40px;
   }
 `;
 
@@ -80,8 +105,14 @@ const Tabs = styled.div`
   padding: 10px 14px 6px;
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: #ffffff;
+
+  @media (max-width: 640px) {
+    padding: 8px 12px 6px;
+  }
 `;
 
 const Tab = styled.button<{ $active?: boolean }>`
@@ -94,20 +125,38 @@ const Tab = styled.button<{ $active?: boolean }>`
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    height: 36px;
+    font-size: 13px;
+  }
 `;
 
 const Body = styled.div`
   padding: 14px 16px 20px;
   overflow: auto;
   background: #ffffff;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 640px) {
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
   gap: 10px 14px;
-  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
   @media (min-width: 860px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 `;
 
@@ -122,6 +171,17 @@ const ItemBtn = styled.button<{ $active?: boolean }>`
   color: ${({ $active }) => ($active ? "#2f6bff" : "#0f172a")};
   cursor: pointer;
   transition: background 0.15s ease;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    height: 48px;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
   &:hover {
     background: ${({ $active }) => ($active ? "#eef2ff" : "#f1f5f9")};
   }
@@ -135,7 +195,7 @@ const backdropVariants = {
 };
 
 const sheetVariants = {
-  hidden: { opacity: 0, y: -40 },
+  hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,
     y: 0,
@@ -143,7 +203,7 @@ const sheetVariants = {
   },
   exit: {
     opacity: 0,
-    y: -30,
+    y: 30,
     transition: { duration: 0.2, ease: "easeInOut" },
   },
 };

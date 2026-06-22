@@ -7,55 +7,97 @@ width: 18px; height: 18px; opacity: .9;
   }
 `;
 
-/* ===== Design tokens (HH-like) ===== */
+/* ===== Design tokens ===== */
 export const UI = {
-  max: 1860,
+  max: 1120,
   text: "#0F172A",
-  textMuted: "#475569",
-  line: "#E5E7EB",
+  textMuted: "#64748B",
+  line: "#E2E8F0",
   lineSoft: "#F1F5F9",
   bg: "#FFFFFF",
   bgSoft: "#F8FAFC",
-  primary: "#2C64FF",
-  primaryHover: "#1F4DE0",
+  primary: "#2563EB",
+  primaryDark: "#1D4ED8",
   success: "#16A34A",
   danger: "#DC2626",
-  focus: "0 0 0 3px rgba(44,100,255,.18)",
-  rLg: 16,
+  focus: "0 0 0 3px rgba(37, 99, 235, 0.16)",
+  rLg: 20,
   rMd: 12,
   rSm: 10,
-  shadow: "0 8px 24px rgba(15, 23, 42, .06)",
+  shadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
 };
 
-export const JobItem = styled.div`
+export const ProfList = styled.div`
+  display: grid;
+  gap: 14px;
+`;
+
+export const ProfIconWrap = styled.div`
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+
+  img {
+    width: 26px;
+    height: 26px;
+    opacity: 0.92;
+  }
+`;
+
+export const ProfHeadBlock = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+`;
+
+export const JobItem = styled.article`
+  position: relative;
   box-sizing: border-box;
   min-width: 0;
   width: 100%;
   overflow: hidden;
-
-  border: 1px solid ${UI.line};
-  border-radius: 21px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 20px;
   background: ${UI.bg};
-  padding: 16px;
-  transition: box-shadow 0.15s ease, transform 0.05s ease, border-color 0.15s ease;
+  padding: 18px;
+  box-shadow: ${UI.shadow};
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 55%, #60a5fa 100%);
+  }
 
   &:hover {
-    box-shadow: ${UI.shadow};
-    border-color: #dbe2ea;
+    transform: translateY(-1px);
+    border-color: rgba(37, 99, 235, 0.12);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
   }
 
   @media (max-width: 520px) {
-    padding: 12px;
+    padding: 14px;
     border-radius: 16px;
   }
 `;
 export const JobTitle = styled.h3`
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
   min-width: 0;
-
-  /* чтобы длинные названия не ломали */
+  letter-spacing: -0.02em;
+  color: ${UI.text};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -86,29 +128,43 @@ export const Subtle = styled.div`
 `;
 
 export const StatRow = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 8px 0 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0 14px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const StatPill = styled.div`
   ${iconCss}
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  // border: 1px solid ${UI.line};
-  border-radius: 12px;
-  background: #f1f4f9;
-  > b {
-    font-size: 14px;
-    font-weight: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  min-width: 0;
+
+  .icon {
+    color: ${UI.primary};
+    margin-bottom: 2px;
   }
+
+  > b {
+    font-size: 15px;
+    font-weight: 800;
+    color: ${UI.text};
+    line-height: 1.2;
+  }
+
   > span {
-    font-size: 12px;
+    font-size: 11px;
     color: ${UI.textMuted};
-    white-space: nowrap;
+    line-height: 1.35;
   }
 `;
 
@@ -124,14 +180,18 @@ export const SoftPill = styled.span`
   ${iconCss}
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 122px;
-  // background: #f1f4f9;
-  border: 1px solid ${UI.line};
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: rgba(37, 99, 235, 0.06);
   font-weight: 700;
   font-size: 12px;
-  color: ${UI.textMuted};
+  color: #1d4ed8;
+
+  .icon {
+    color: #2563eb;
+  }
 `;
 
 export const LinkRow = styled.div`
@@ -155,19 +215,27 @@ export const TextLink = styled.button`
 
 export const MutedBar = styled.div`
   margin-top: 12px;
-  padding: 12px;
+  padding: 12px 14px;
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  border-radius: ${UI.rMd}px;
-  background: #f1f4f9;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
   color: ${UI.textMuted};
   font-size: 13px;
-
+  line-height: 1.5;
   min-width: 0;
-  overflow: hidden;
   flex-wrap: wrap;
   word-break: break-word;
+
+  b {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: ${UI.text};
+    font-weight: 700;
+  }
 `;
 export const TagList = styled.div`
   display: flex;
@@ -189,66 +257,58 @@ export const Tag = styled.span`
 
 /* ===== Page shell ===== */
 export const Page = styled.div`
-  max-width: ${UI.max}px;
-  margin: 0 auto;
-
-  padding: 24px;
-  padding-left: max(14px, env(safe-area-inset-left));
-  padding-right: max(14px, env(safe-area-inset-right));
-  padding-top: max(18px, env(safe-area-inset-top));
-  padding-bottom: max(18px, env(safe-area-inset-bottom));
-
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   color: ${UI.text};
   box-sizing: border-box;
-  overflow-x: hidden;
-
-  @media (max-width: 960px) {
-    padding: 16px;
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-  }
-
-  @media (max-width: 420px) {
-    padding: 12px;
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
-  }
 `;
-
 
 export const Header = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
+  margin: 4px 0 18px;
 `;
 
-export const Title = styled.h1`
-  font-size: 22px;
+export const Title = styled.h2`
+  margin: 0 0 6px;
+  font-size: clamp(18px, 2.4vw, 22px);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: ${UI.text};
+`;
+
+export const SectionHint = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: ${UI.textMuted};
+  max-width: 640px;
 `;
 
 /* ===== Layout (Main + Aside) ===== */
 export const Layout = styled.section`
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 20px;
-  @media (max-width: 1100px) {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+
+  @media (max-width: 1024px) {
     grid-template-columns: 1fr;
   }
 `;
 
 export const Main = styled.div`
   display: grid;
-  gap: 16px;
+  gap: 18px;
+  min-width: 0;
 `;
 
 export const Aside = styled.aside`
   position: sticky;
-  top: 16px;
+  top: 72px;
   height: fit-content;
-  @media (max-width: 1100px) {
+  min-width: 0;
+
+  @media (max-width: 1024px) {
     position: static;
   }
 `;
@@ -256,26 +316,36 @@ export const Aside = styled.aside`
 /* ===== Cards ===== */
 export const Card = styled.section`
   background: ${UI.bg};
-  // border: 1px solid ${UI.line};
+  border: 1px solid rgba(15, 23, 42, 0.06);
   border-radius: ${UI.rLg}px;
-  // box-shadow: ${UI.shadow};
+  box-shadow: ${UI.shadow};
+  overflow: hidden;
 `;
 
 export const CardHeader = styled.div`
-  padding: 14px 16px;
-  // border-bottom: 1px solid ${UI.line};
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 `;
 
 export const CardTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 700;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: ${UI.text};
 `;
 
 export const CardBody = styled.div`
-  padding: 16px;
+  padding: 18px 20px 20px;
+
+  @media (max-width: 640px) {
+    padding: 16px;
+  }
 `;
 
 /* ===== Form grid ===== */
@@ -365,9 +435,13 @@ export const Field = styled.label`
 `;
 
 export const Label = styled.span`
+  display: block;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: ${UI.textMuted};
+  margin-bottom: 8px;
 `;
 
 export const Help = styled.span`
@@ -496,16 +570,21 @@ export const Toggle = styled.button<{ active?: boolean }>`
 
 /* ===== Upload ===== */
 export const Upload = styled.label`
-  border: 1px dashed ${UI.line};
-  border-radius: ${UI.rSm}px;
-  padding: 14px;
-  background: ${UI.bgSoft};
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 22px 16px;
+  background: linear-gradient(180deg, #fafbfd 0%, #f8fafc 100%);
   display: grid;
   gap: 6px;
+  text-align: center;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
   &:hover {
-    background: #f3f6fb;
+    border-color: #94a3b8;
+    background: #f1f5f9;
   }
+
   input {
     display: none;
   }
@@ -514,37 +593,41 @@ export const Upload = styled.label`
 /* ===== Doc list ===== */
 export const DocList = styled.div`
   display: grid;
-  gap: 8px;
+  gap: 10px;
 `;
+
 export const DocItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid ${UI.line};
-  border-radius: ${UI.rSm}px;
-  background: ${UI.bg};
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  background: #fafbfd;
+  flex-wrap: wrap;
 `;
 
 /* ===== Notices ===== */
 export const Notice = styled.div<{ tone?: "success" | "error" | "neutral" }>`
-  border-radius: ${UI.rSm}px;
-  padding: 10px 12px;
-  font-size: 13px;
+  border-radius: 14px;
+  padding: 18px 16px;
+  font-size: 14px;
   font-weight: 600;
-  border: 1px solid
+  text-align: center;
+  border: 1px dashed
     ${({ tone }) =>
       tone === "success"
-        ? "rgba(22,163,74,.25)"
+        ? "rgba(22,163,74,.35)"
         : tone === "error"
-        ? "rgba(220,38,38,.25)"
-        : UI.line};
+        ? "rgba(220,38,38,.35)"
+        : "#cbd5e1"};
   background: ${({ tone }) =>
     tone === "success"
       ? "rgba(22,163,74,.06)"
       : tone === "error"
       ? "rgba(220,38,38,.06)"
-      : UI.bgSoft};
+      : "#f8fafc"};
   color: ${({ tone }) =>
     tone === "success"
       ? UI.success
@@ -563,55 +646,77 @@ export const Actions = styled.div`
 export const PrimaryBtn = styled.button`
   ${iconCss}
   height: 40px;
-  padding: 0 14px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 0;
-  border-radius: ${UI.rSm}px;
-  background: ${UI.primary};
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: linear-gradient(180deg, ${UI.primary} 0%, ${UI.primaryDark} 100%);
   color: #fff;
   font-weight: 700;
+  font-size: 13px;
   cursor: pointer;
-  transition: transform 0.05s ease, background 0.15s ease, box-shadow 0.15s ease;
-  &:hover {
-    background: ${UI.primaryHover};
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
   }
-  &:active {
-    transform: translateY(1px);
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    box-shadow: none;
   }
 `;
 
 export const GhostBtn = styled.button`
   height: 40px;
   padding: 0 14px;
-  border-radius: ${UI.rSm}px;
+  border-radius: 11px;
   border: 1px solid ${UI.line};
-  background: #0000;
+  background: #fff;
   color: ${UI.text};
   cursor: pointer;
   font-weight: 700;
+  font-size: 13px;
+
   &:hover {
     background: ${UI.bgSoft};
+    border-color: #cbd5e1;
   }
 `;
 
 /* ===== Progress ===== */
 export const Progress = styled.div`
-  height: 6px;
-  background: ${UI.lineSoft};
+  height: 8px;
+  background: #eef2f7;
   border-radius: 999px;
   overflow: hidden;
+
   > i {
     display: block;
     height: 100%;
-    background: ${UI.success};
-    transition: width 0.2s;
+    background: linear-gradient(90deg, #2563eb, #60a5fa);
+    transition: width 0.25s ease;
   }
+`;
+
+export const ProgressMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: ${UI.textMuted};
+  font-weight: 600;
 `;
 
 /* ===== Tiny muted text ===== */
