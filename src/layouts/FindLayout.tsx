@@ -89,8 +89,7 @@ const Navbar = styled.header`
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 
   @media (max-width: 640px) {
-    height: auto;          /* важно: позволяем 2 строки */
-    padding: 10px 12px;
+    padding: 0 10px;
   }
 `;
 
@@ -102,12 +101,10 @@ const NavInner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  min-width: 0;
 
   @media (max-width: 640px) {
-    height: auto;
-    align-items: stretch;
-    flex-direction: column;  /* 2 строки: верх/низ */
-    gap: 10px;
+    gap: 8px;
   }
 `;
 
@@ -117,9 +114,11 @@ const Brand = styled(Link)`
   font-size: 18px;
   color: #fff;
   text-decoration: none;
+  flex-shrink: 0;
 
   @media (max-width: 640px) {
-    font-size: 16px;
+    font-size: 15px;
+    letter-spacing: 0;
   }
 `;
 
@@ -128,11 +127,10 @@ const RightGroup = styled.div`
   align-items: center;
   gap: 10px;
   white-space: nowrap;
+  flex-shrink: 0;
 
   @media (max-width: 640px) {
-    justify-content: space-between;
-    gap: 8px;
-    white-space: normal;
+    gap: 6px;
   }
 `;
 
@@ -170,14 +168,17 @@ const LangBtn = styled.button`
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
   }
 
   @media (max-width: 640px) {
-    padding: 9px 10px;
+    padding: 8px 9px;
     border-radius: 9px;
+    font-size: 12px;
   }
 `;
 
@@ -191,15 +192,17 @@ const AuthBtn = styled.button`
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
   }
 
   @media (max-width: 640px) {
-    padding: 9px 12px;
+    padding: 8px 10px;
     border-radius: 9px;
-    flex: 1;              /* вход + язык красиво делят строку */
+    font-size: 12px;
   }
 `;
 
@@ -213,14 +216,16 @@ const PrimaryBtn = styled.button`
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   &:hover {
     background: #1d4ed8;
   }
 
   @media (max-width: 640px) {
-    width: 100%;          /* вторая строка */
-    padding: 11px 14px;
+    padding: 8px 10px;
+    font-size: 12px;
   }
 `;
 

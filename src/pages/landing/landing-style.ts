@@ -513,7 +513,18 @@ export const MobileOnly = styled.div`
   }
 `;
 export const DesktopOnly = styled.div`
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  & > a {
+    display: inline-flex;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+
   @media (max-width: 899px) {
     display: none;
   }
@@ -1002,6 +1013,8 @@ export const HeroActions = styled.div`
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   @media (max-width: 899px) {
     gap: 8px;
@@ -1017,6 +1030,8 @@ export const GhostBtn = styled.button`
   cursor: pointer;
   backdrop-filter: blur(6px);
   transition: background 0.15s, border-color 0.15s, transform 0.06s;
+  flex-shrink: 0;
+  white-space: nowrap;
   &:hover {
     background: rgba(255, 255, 255, 0.14);
     border-color: rgba(255, 255, 255, 0.35);

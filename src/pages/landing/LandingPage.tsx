@@ -1,7 +1,7 @@
 // src/features/landing/LandingPage.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, Variants, Transition } from "framer-motion";
 
 import {
@@ -96,6 +96,21 @@ const staggerList = (delayChildren = 0.08, stagger = 0.06): Variants => ({
 // делаем motion-обёртку для выпадающего меню языка чтоб не ругался TS
 const MotionLangMenu = motion(LangMenu);
 
+const LANDING_FEATURE_KEYS = [
+  "search",
+  "cards",
+  "responses",
+  "teams",
+  "terms",
+  "locale",
+] as const;
+
+const LANDING_METRIC_KEYS = [
+  "activeVacancies",
+  "resumes",
+  "notifications",
+] as const;
+
 export default function LandingPage() {
   const { t, i18n } = useTranslation("common");
   const nav = useNavigate();
@@ -151,8 +166,28 @@ export default function LandingPage() {
     nav(`/search?query=${encodeURIComponent(query)}`);
   };
 
-  // куда ведём "Мой профиль"
-  const profileHref = "/app/profile"; // можно сделать `/profile/${me?.id}` если надо персонально
+  // куда ведём профиль
+  const profileHref = "/app/profile";
+
+  const landingFeatures = useMemo(
+    () =>
+      LANDING_FEATURE_KEYS.map((key) => ({
+        key,
+        title: t(`landing.features.${key}.title`),
+        desc: t(`landing.features.${key}.desc`),
+      })),
+    [t, i18n.language]
+  );
+
+  const landingMetrics = useMemo(
+    () =>
+      LANDING_METRIC_KEYS.map((key) => ({
+        key,
+        value: t(`landing.metrics.${key}.value`),
+        label: t(`landing.metrics.${key}.label`),
+      })),
+    [t, i18n.language]
+  );
 
   return (
     <Shell>
@@ -163,14 +198,14 @@ export default function LandingPage() {
         <HeroNavbarInner>
           <Link to="/" style={{ textDecoration: "none" }}>
             <HeroBrand>
-              <span>{t("brand") || "Лоба"}</span>
+              <span>{t("brand")}</span>
             </HeroBrand>
           </Link>
 
           <HeroNavLinks>
-            <a href="#roles">{t("rolesTitle") || "Категории"}</a>
-            <a href="#about">{t("why") || "Почему мы"}</a>
-            <Link to="/find">{t("nav.find") || "Контакты"}</Link>
+            <a href="#roles">{t("rolesTitle")}</a>
+            <a href="#about">{t("why")}</a>
+            <Link to="/find">{t("nav.find")}</Link>
           </HeroNavLinks>
 
           <HeroActions>
@@ -208,13 +243,13 @@ export default function LandingPage() {
             borderColor: "transparent",
           }}
         >
-          {t("goProfile", "Мой профиль")}
+          {t("topbar.profileBtn")}
         </GhostBtn>
       </Link>
     ) : (
       <>
         <Link to="/login" style={{ textDecoration: "none" }}>
-          <GhostBtn>{t("loginCta") || "Войти"}</GhostBtn>
+          <GhostBtn>{t("loginCta")}</GhostBtn>
         </Link>
 
         <Link to="/register" style={{ textDecoration: "none" }}>
@@ -224,7 +259,7 @@ export default function LandingPage() {
               borderColor: "transparent",
             }}
           >
-            {t("ctaExec") || "Стать исполнителем"}
+            {t("ctaExec")}
           </GhostBtn>
         </Link>
       </>
@@ -234,7 +269,7 @@ export default function LandingPage() {
   {/* MOBILE: только бургер */}
   <MobileOnly>
     <BurgerBtn
-      aria-label="Open menu"
+      aria-label={t("landing.openMenu")}
       onClick={() => setOpenMobile(true)}
       style={{ marginLeft: 8 }}
     >
@@ -274,7 +309,7 @@ export default function LandingPage() {
                   </MobileBrand>
 
                   <BurgerBtn
-                    aria-label="Close menu"
+                    aria-label={t("landing.closeMenu")}
                     onClick={() => setOpenMobile(false)}
                   >
                     <FiX />
@@ -300,7 +335,7 @@ export default function LandingPage() {
                     onClick={() => setOpenMobile(false)}
                     style={{ textDecoration: "none" }}
                   >
-                    <MobileLink>Помощь</MobileLink>
+                    <MobileLink>{t("nav.help")}</MobileLink>
                   </a>
                 </MobileNav>
 
@@ -312,7 +347,7 @@ export default function LandingPage() {
                       style={{ textDecoration: "none", width: "100%" }}
                     >
                       <CustomButton style={{ width: "100%" }}>
-                        {t("goProfile", "Мой профиль")}
+                        {t("topbar.profileBtn")}
                       </CustomButton>
                     </Link>
                   ) : (
@@ -323,7 +358,7 @@ export default function LandingPage() {
                         style={{ textDecoration: "none", width: "100%" }}
                       >
                         <CustomButton style={{ width: "100%" }}>
-                          {t("ctaExec") || "Стать исполнителем"}
+                          {t("ctaExec")}
                         </CustomButton>
                       </Link>
 
@@ -335,7 +370,7 @@ export default function LandingPage() {
                         <CustomButton
                           style={{ width: "100%", background: "#374151" }}
                         >
-                          {t("loginCta") || "Войти"}
+                          {t("loginCta")}
                         </CustomButton>
                       </Link>
                     </>
@@ -372,9 +407,7 @@ export default function LandingPage() {
             variants={staggerList(0.05, 0.08)}
           >
             <motion.div variants={fadeUp(0.02)}>
-              <HHTitleLightOnVideo>
-                {t("heroTitle") || "Найди работу мечты"}
-              </HHTitleLightOnVideo>
+              <HHTitleLightOnVideo>{t("heroTitle")}</HHTitleLightOnVideo>
             </motion.div>
 
             <motion.form variants={fadeUp(0.06)} onSubmit={onSubmitSearch}>
@@ -388,7 +421,7 @@ export default function LandingPage() {
                   onChange={(e) => setQ(e.target.value)}
                 />
                 <Link to='/find'>
-                <FancyRound type="button" title={t("filters") || "Фильтры"}>
+                <FancyRound type="button" title={t("landing.filters")}>
                   <FiSliders size={18} />
                 </FancyRound></Link>
                 
@@ -411,7 +444,7 @@ export default function LandingPage() {
                       textShadow: "0 1px 12px rgba(0,0,0,.45)",
                     }}
                   >
-                    Я ищу сотрудника
+                    {t("landing.lookingForEmployee")}
                   </HHAltLink>
                 </Link>
               </HHAltLinkRow>
@@ -421,15 +454,15 @@ export default function LandingPage() {
               <HHStatsRow>
                 <HHStatCard>
                   <HHStatValue>1 637 581</HHStatValue>
-                  <HHStatLabel>резюме</HHStatLabel>
+                  <HHStatLabel>{t("landing.heroStats.resumes")}</HHStatLabel>
                 </HHStatCard>
                 <HHStatCard>
                   <HHStatValue>10 656</HHStatValue>
-                  <HHStatLabel>вакансий</HHStatLabel>
+                  <HHStatLabel>{t("landing.heroStats.vacancies")}</HHStatLabel>
                 </HHStatCard>
                 <HHStatCard>
                   <HHStatValue>26 358</HHStatValue>
-                  <HHStatLabel>компаний</HHStatLabel>
+                  <HHStatLabel>{t("landing.heroStats.companies")}</HHStatLabel>
                 </HHStatCard>
               </HHStatsRow>
             </motion.div>
@@ -644,7 +677,7 @@ export default function LandingPage() {
                     textWrap: "balance",
                   }}
                 >
-                  Быстрее найти. Проще договориться.
+                  {t("landing.about.title")}
                 </h2>
                 <p
                   style={{
@@ -655,9 +688,7 @@ export default function LandingPage() {
                     maxWidth: 760,
                   }}
                 >
-                  Мы оставили главное: чистую подачу, точные фильтры и
-                  прозрачные правила. Ничего лишнего, только скорость и
-                  качество.
+                  {t("landing.about.subtitle")}
                 </p>
               </motion.div>
 
@@ -671,34 +702,9 @@ export default function LandingPage() {
                   gap: 16,
                 }}
               >
-                {[
-                  {
-                    t: "Умный поиск",
-                    d: "Фильтры по бюджету, опыту, срокам и географии.",
-                  },
-                  {
-                    t: "Структурные карточки",
-                    d: "Опыт, цена, отзывы и кейсы — без визуального шума.",
-                  },
-                  {
-                    t: "Быстрые отклики",
-                    d: "Уведомления помогут не пропускать горячие предложения.",
-                  },
-                  {
-                    t: "Командные профили",
-                    d: "Студии, роли и прозрачно распределённые заявки.",
-                  },
-                  {
-                    t: "Прозрачные условия",
-                    d: "Понятные комиссии и единая коммуникация.",
-                  },
-                  {
-                    t: "RU/UZ локализация",
-                    d: "Интерфейс и категории — под локальный контекст.",
-                  },
-                ].map((f, i) => (
+                {landingFeatures.map((f) => (
                   <div
-                    key={f.t}
+                    key={f.key}
                     style={{
                       gridColumn: "span 12",
                       background: "#fff",
@@ -740,7 +746,7 @@ export default function LandingPage() {
                             color: "#0b1220",
                           }}
                         >
-                          {f.t}
+                          {f.title}
                         </h3>
                       </div>
                       <p
@@ -751,7 +757,7 @@ export default function LandingPage() {
                           lineHeight: 1.6,
                         }}
                       >
-                        {f.d}
+                        {f.desc}
                       </p>
                     </div>
                   </div>
@@ -786,13 +792,9 @@ export default function LandingPage() {
                       flexWrap: "wrap",
                     }}
                   >
-                    {[
-                      { v: "10 000+", l: "активных вакансий" },
-                      { v: "1.6 млн+", l: "резюме специалистов" },
-                      { v: "24/7", l: "уведомления об откликах" },
-                    ].map((s, i) => (
+                    {landingMetrics.map((s, i) => (
                       <div
-                        key={s.l}
+                        key={s.key}
                         style={{
                           flex: "1 1 260px",
                           minWidth: 220,
@@ -811,10 +813,10 @@ export default function LandingPage() {
                             marginBottom: 6,
                           }}
                         >
-                          {s.v}
+                          {s.value}
                         </div>
                         <div style={{ color: "#6b7280", fontSize: 13.5 }}>
-                          {s.l}
+                          {s.label}
                         </div>
                       </div>
                     ))}
@@ -858,7 +860,7 @@ export default function LandingPage() {
                         textDecoration: "none",
                       }}
                     >
-                      Стать исполнителем
+                      {t("ctaExec")}
                     </a>
                     <a
                       href="/hire"
@@ -876,7 +878,7 @@ export default function LandingPage() {
                         textDecoration: "none",
                       }}
                     >
-                      Найти специалиста
+                      {t("landing.ctaFindSpecialist")}
                     </a>
                   </div>
                 </div>

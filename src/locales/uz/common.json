@@ -443,6 +443,63 @@
   "footerTerms": "Foydalanuvchi kelishuvi",
   "footerPrivacy": "Maxfiylik siyosati",
 
+  "landing": {
+    "openMenu": "Menyuni ochish",
+    "closeMenu": "Menyuni yopish",
+    "filters": "Filtrlar",
+    "lookingForEmployee": "Men xodim qidiryapman",
+    "heroStats": {
+      "resumes": "rezyume",
+      "vacancies": "vakansiya",
+      "companies": "kompaniya"
+    },
+    "about": {
+      "title": "Tezroq toping. Oson kelishing.",
+      "subtitle": "Biz faqat asosiysini qoldirdik: sodda taqdimot, aniq filtrlar va shaffof qoidalar. Ortiqcha narsa yo‘q — faqat tezlik va sifat."
+    },
+    "features": {
+      "search": {
+        "title": "Aqlli qidiruv",
+        "desc": "Byudjet, tajriba, muddat va geografiya bo‘yicha filtrlar."
+      },
+      "cards": {
+        "title": "Tuzilmaviy kartochkalar",
+        "desc": "Tajriba, narx, fikrlar va keyslar — vizual shovqinsiz."
+      },
+      "responses": {
+        "title": "Tezkor javoblar",
+        "desc": "Bildirishnomalar issiq takliflarni o‘tkazib yubormaslikka yordam beradi."
+      },
+      "teams": {
+        "title": "Jamoa profillari",
+        "desc": "Studiyalar, rollar va shaffof taqsimlangan arizalar."
+      },
+      "terms": {
+        "title": "Shaffof shartlar",
+        "desc": "Tushunarli komissiyalar va yagona aloqa."
+      },
+      "locale": {
+        "title": "RU/UZ lokalizatsiya",
+        "desc": "Interfeys va kategoriyalar — mahalliy kontekstga mos."
+      }
+    },
+    "metrics": {
+      "activeVacancies": {
+        "value": "10 000+",
+        "label": "faol vakansiyalar"
+      },
+      "resumes": {
+        "value": "1.6 mln+",
+        "label": "mutaxassis rezyumalari"
+      },
+      "notifications": {
+        "value": "24/7",
+        "label": "javoblar haqida bildirishnomalar"
+      }
+    },
+    "ctaFindSpecialist": "Mutaxassis topish"
+  },
+
   "help": {
     "title": "Yordam kerakmi?",
     "subtitle": "Qo'llab-quvvatlashga murojaat qiling yoki javobni o'zingiz toping",
