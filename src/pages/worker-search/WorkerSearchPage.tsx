@@ -78,6 +78,7 @@ import { ProfessionsModal } from "./ProfessionsModal";
 import { useDistricts, useRegions, useVillages } from "../../shared/modules/location";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { avatarUrl, onAvatarError } from "../../shared/lib/avatar";
 
 /* ========== helpers ========== */
 const useCompactLayout = () => {
@@ -106,17 +107,6 @@ const fio = (u?: {
   surname?: string;
   middleName?: string | null;
 }) => [u?.surname, u?.name].filter(Boolean).join(" ") || "Мастер";
-
-const AVATAR_CDN = "https://profibaza.uz/public/avatar/";
-const ANON_AVATAR = "/avatar.png";
-
-const workerAvatarSrc = (avatarId?: string | null) =>
-  avatarId ? `${AVATAR_CDN}${avatarId}` : ANON_AVATAR;
-
-const onAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.onerror = null;
-  e.currentTarget.src = ANON_AVATAR;
-};
 
 const fmtUpdated = (d?: string) => {
   if (!d) return "—";
@@ -879,7 +869,7 @@ export const WorkerSearchPage: React.FC = () => {
             >
               <FindCardTop>
                 <HHAvatarImage
-                  src={workerAvatarSrc(row.worker?.user?.avatar)}
+                  src={avatarUrl(row.worker?.user?.avatar)}
                   alt=""
                   onError={onAvatarError}
                 />

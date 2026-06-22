@@ -1,11 +1,13 @@
 import type { SyntheticEvent } from "react";
+import { avatarPublicUrl, PUBLIC_CDN } from "./public-url";
 
-export const AVATAR_CDN = "https://profibaza.uz/public/avatar/";
+export { PUBLIC_CDN };
+export const AVATAR_CDN = `${PUBLIC_CDN}avatar/`;
 export const ANON_AVATAR = "/avatar.png";
 
 export function avatarUrl(fileId?: string | null): string {
   if (!fileId) return ANON_AVATAR;
-  return `${AVATAR_CDN}${encodeURIComponent(fileId)}`;
+  return avatarPublicUrl(fileId);
 }
 
 export function onAvatarError(e: SyntheticEvent<HTMLImageElement>) {

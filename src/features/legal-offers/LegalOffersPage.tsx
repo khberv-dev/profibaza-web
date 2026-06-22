@@ -8,6 +8,7 @@ import {
 import toast from "react-hot-toast";
 import { CompanyBadge } from "../profile/profile-style";
 import { Modal } from "../../components/modal/Modal";
+import { avatarUrl } from "../../shared/lib/avatar";
 
 const money = (n?: number) =>
   typeof n === "number" ? `${n.toLocaleString("ru-RU")} сум` : "—";
@@ -297,7 +298,7 @@ export default function LegalOffersPage() {
                   >
                     {u?.avatar ? (
                       <img
-                        src={`https://profibaza.uz/public/avatar/${u.avatar}`}
+                        src={avatarUrl(u.avatar)}
                         alt=""
                         style={{
                           width: 48,
@@ -480,7 +481,7 @@ export default function LegalOffersPage() {
                       <img
                         src={
                           u?.avatar
-                            ? `https://profibaza.uz/public/avatar/${u.avatar}`
+                            ? avatarUrl(u.avatar)
                             : "https://hhcdn.ru/icms2_452423f3d84e34c5ba4d45861d1a9a2a.svg"
                         }
                         alt=""

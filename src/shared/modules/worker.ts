@@ -1,4 +1,5 @@
 import { api } from "../api/client";
+import { documentPublicUrl } from "../lib/public-url";
 
 // ============= Professions =============
 export type Profession = {
@@ -407,10 +408,7 @@ export type UploadedDoc = {
 
 const buildFileUrl = (fileId?: string | null): string | null => {
   if (!fileId) return null;
-  const base = import.meta.env.VITE_API_URL || "https://profibaza.uz/api";
-  return `${base.replace(/\/$/, "")}/worker/documents/${encodeURIComponent(
-    fileId
-  )}`;
+  return documentPublicUrl(fileId) || null;
 };
 
 export async function getWorkerDocuments(
@@ -529,10 +527,11 @@ export async function downloadWorkerDocument(
   fileId: string,
   filename?: string
 ) {
-  const url = buildFileUrl(fileId);
+  const url = documentPublicUrl(fileId);
   if (!url) return;
-  const res = await api.get(url, { responseType: "blob" });
-  const blob = new Blob([res.data]);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Не удалось скачать файл");
+  const blob = await res.blob();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = filename || fileId;

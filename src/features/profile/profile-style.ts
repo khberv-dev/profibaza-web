@@ -416,13 +416,19 @@ export const ProfileCard = styled.section`
   background: ${TOKENS.cardBg};
   border: 1px solid ${TOKENS.line};
   border-radius: ${TOKENS.radiusLg};
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+  z-index: 0;
 
   @media (max-width: 640px) {
     border-radius: 0;
     border-left: none;
     border-right: none;
   }
+`;
+
+export const ProfileDropdownCard = styled(ProfileCard)`
+  z-index: 1;
 `;
 
 export const ProfileOutlineBtn = styled.button`
@@ -1011,6 +1017,9 @@ export const ProfileSelectRow = styled.div`
   display: grid;
   gap: 12px;
   grid-template-columns: 1fr 1fr 1fr;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
 
   @media (max-width: 840px) {
     grid-template-columns: 1fr;

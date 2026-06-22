@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
+import { avatarUrl } from "../../../../../shared/lib/avatar";
 import { useForm } from "react-hook-form";
 
 import {
@@ -291,7 +292,7 @@ const isPending = isInvestor
           borderRadius: 12,
           border: "1px solid #e7ecf3",
           background: workerBrief?.worker?.user?.avatar
-            ? `url(https://profibaza.uz/public/avatar/${workerBrief.worker.user.avatar}) center/cover no-repeat`
+            ? `url(${avatarUrl(workerBrief.worker.user.avatar)}) center/cover no-repeat`
             : "linear-gradient(180deg,#eef2ff,#f8fafc)",
           display: "grid",
           placeItems: "center",

@@ -26,6 +26,7 @@ import { Modal } from "../../../../components/modal/Modal";
 import { CommentsThread } from "./CommentsThread";
 import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
 import { OrderAvatar } from "../../../../components/OrderAvatar";
+import { orderPublicUrl } from "../../../../shared/lib/public-url";
 import {
   Wrap,
   Toolbar,
@@ -373,7 +374,7 @@ const OrderCard: React.FC<{ order: ClientOrder; labels: OrderLabels }> = ({
     ) : (
       <FilesGrid>
         {order.files.map((fid) => {
-          const url = `https://profibaza.uz/public/orders/${fid}`;
+          const url = orderPublicUrl(fid);
           const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
 
           return (

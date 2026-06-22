@@ -2,6 +2,7 @@ import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Image } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { demoPublicUrl } from "../../../../../shared/lib/public-url";
 import {
   Page,
   Header,
@@ -87,10 +88,9 @@ const demoTypeFromFileId = (fileId: string): "image" | "video" => {
   return ["mp4", "mov", "webm", "m4v"].includes(ext) ? "video" : "image";
 };
 
-const demoUrlFromFileId = (fileId: string) =>
-  `https://profibaza.uz/public/demo/${fileId}`;
+const demoUrlFromFileId = (fileId: string) => demoPublicUrl(fileId);
 
-export default function WorkerProfessionFormPage({ mode }: Props) {
+function WorkerProfessionFormPage({ mode }: Props) {
   const { rowId } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -1328,3 +1328,6 @@ export default function WorkerProfessionFormPage({ mode }: Props) {
     </Page>
   );
 }
+
+export default WorkerProfessionFormPage;
+export { WorkerProfessionFormPage };

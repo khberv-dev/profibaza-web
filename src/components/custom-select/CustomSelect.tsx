@@ -67,7 +67,7 @@ const Menu = styled.div<{ $maxh: number }>`
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 1200;
   border: 1px solid #e7ecf3;
   background: #fff;
   border-radius: 12px;

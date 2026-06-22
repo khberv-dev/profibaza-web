@@ -58,6 +58,7 @@ import { finishWorkerOrder } from "../../../../shared/modules/worker";
 import { Modal } from "../../../../components/modal/Modal";
 import { OrderAvatar } from "../../../../components/OrderAvatar";
 import OrderEvidenceUploader from "./OrderEvidenceUploader";
+import { orderPublicUrl } from "../../../../shared/lib/public-url";
 
 const TABS: { key: "ALL" | WorkerNewOrder["status"]; label: string }[] = [
   { key: "ALL", label: "Все" },
@@ -207,8 +208,7 @@ export default function NewWorkerOrdersPage() {
   });
 
 
-  const buildOrderFileUrl = (fileId: string): string =>
-    `https://profibaza.uz/public/order/${encodeURIComponent(fileId)}`;
+  const buildOrderFileUrl = (fileId: string): string => orderPublicUrl(fileId);
   
   const isVideoName = (name: string) =>
     /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(name);

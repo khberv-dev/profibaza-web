@@ -1,4 +1,5 @@
 // src/app/router/index.tsx
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { Protected } from "../components/Protected";
 import { RoleGuard } from "../components/RoleGuard";
@@ -22,7 +23,16 @@ import { WorkerSearchPage } from "../pages/worker-search/WorkerSearchPage";
 import CreateOrderPage from "../pages/worker-search/create-order/CreateOrderPage";
 import ClientOrdersPage from "../features/orders/pages/client/ClientOrdersPage";
 import NewWorkerOrdersPage from "../features/orders/pages/worker/NewWorkerOrdersPage";
-import WorkerProfessionFormPage from "../features/profile/pages/components/worker/WorkerProfessionFormPage";
+
+const WorkerProfessionFormPage = lazy(
+  () => import("../features/profile/pages/components/worker/WorkerProfessionFormPage")
+);
+
+const WorkerProfessionFormRoute = ({ mode }: { mode: "create" | "edit" }) => (
+  <Suspense fallback={null}>
+    <WorkerProfessionFormPage mode={mode} />
+  </Suspense>
+);
 
 import {
   ActiveOnly,
@@ -137,11 +147,11 @@ export const router = createBrowserRouter([
                   },
                   {
                     path: "worker/profile/:rowId/edit",
-                    element: <WorkerProfessionFormPage mode="edit" />,
+                    element: <WorkerProfessionFormRoute mode="edit" />,
                   },
                   {
                     path: "worker/profile/new",
-                    element: <WorkerProfessionFormPage mode="create" />,
+                    element: <WorkerProfessionFormRoute mode="create" />,
                   },
                   {
                     path: "worker/profile/experience/new",

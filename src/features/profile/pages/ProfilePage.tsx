@@ -17,6 +17,7 @@ import {
   ProfileLayout,
   ProfileMain,
   ProfileCard,
+  ProfileDropdownCard,
   ProfileHero,
   ProfileHeroTop,
   ProfileAvatarWrap,
@@ -718,7 +719,7 @@ export default function ProfilePage() {
             </ProfileCard>
 
             {(isClient || isLegal || isInvestor) && (
-              <ProfileCard>
+              <ProfileDropdownCard>
                 <ProfileCardHead>
                   <div>
                     <ProfileCardTitle>
@@ -809,7 +810,7 @@ export default function ProfilePage() {
                     </ProfileActionsRow>
                   </ProfileCardBody>
                 )}
-              </ProfileCard>
+              </ProfileDropdownCard>
             )}
 
               </ProfileTabPanel>

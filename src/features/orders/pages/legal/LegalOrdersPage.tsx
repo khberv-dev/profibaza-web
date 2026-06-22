@@ -32,6 +32,7 @@ import { CommentsThread } from "./CommentsThread";
 import { Link } from "react-router-dom";
 import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
 import { OrderAvatar } from "../../../../components/OrderAvatar";
+import { orderPublicUrl } from "../../../../shared/lib/public-url";
 import {
   Wrap,
   Toolbar,
@@ -399,7 +400,7 @@ const telHref = telDigits ? `tel:+${telDigits}` : "";
     ) : (
       <FilesGrid>
         {order.files.map((fid) => {
-          const url = `https://profibaza.uz/public/order/${fid}`;
+          const url = orderPublicUrl(fid);
           const isVideo = /\.(mp4|webm|mov|m4v|avi|mkv)$/i.test(fid);
 
           return (

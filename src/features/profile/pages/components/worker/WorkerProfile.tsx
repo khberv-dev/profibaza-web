@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Image } from "antd";
 import { toast, Toaster } from "react-hot-toast";
+import { demoPublicUrl } from "../../../../../shared/lib/public-url";
 import {
   Page,
   Header,
@@ -217,8 +218,7 @@ export const WorkerProfile: React.FC<{ embedded?: boolean }> = ({
     [professions, createdIds]
   );
 
-  const demoUrlFromFileId = (fileId: string) =>
-    `https://profibaza.uz/public/demo/${fileId}`; // твой CDN/endpoint
+  const demoUrlFromFileId = (fileId: string) => demoPublicUrl(fileId);
   const demoTypeFromFileId = (fileId: string): "image" | "video" => {
     const ext = (fileId.split(".").pop() || "").toLowerCase();
     const vid = ["mp4", "mov", "webm", "m4v"];

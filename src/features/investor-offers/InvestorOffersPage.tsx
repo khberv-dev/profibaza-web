@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Modal } from "../../components/modal/Modal";
 import { CompanyBadge } from "../profile/profile-style";
+import { avatarUrl } from "../../shared/lib/avatar";
 
 import {
   acceptInvestorOffer,
@@ -283,7 +284,7 @@ export default function InvestorOffersPage() {
                 >
                   {u?.avatar ? (
                     <img
-                      src={`https://profibaza.uz/public/avatar/${u.avatar}`}
+                      src={avatarUrl(u.avatar)}
                       alt=""
                       style={{
                         width: 48,
@@ -431,7 +432,7 @@ export default function InvestorOffersPage() {
                       <img
                         src={
                           u?.avatar
-                            ? `https://profibaza.uz/public/avatar/${u.avatar}`
+                            ? avatarUrl(u.avatar)
                             : "https://hhcdn.ru/icms2_452423f3d84e34c5ba4d45861d1a9a2a.svg"
                         }
                         alt=""

@@ -33,6 +33,8 @@ import { useOrderLabels } from "../../shared/i18n/useOrderLabels";
 import { motion } from "framer-motion";
 import { Stagger, StaggerItem } from "../../components/Stagger";
 import { fadeUp } from "../../lib/motion";
+import { avatarUrl, onAvatarError } from "../../shared/lib/avatar";
+import { demoPublicUrl, orderPublicUrl } from "../../shared/lib/public-url";
 
 /* ============== types ============== */
 type DemoRaw = {
@@ -66,8 +68,7 @@ const fmtYears = (start?: number | null, end?: number | null) =>
   `${start ? start : "—"} — ${end ? end : "по наст."}`;
 const fmtAddress = (o?: Pick<OrderBrief, "address1" | "address2" | "address3">) =>
   [o?.address1, o?.address2, o?.address3].filter(Boolean).join(", ") || "—";
-const demoUrlFromFileId = (fileId: string) =>
-  `https://profibaza.uz/public/demo/${fileId}`;
+const demoUrlFromFileId = (fileId: string) => demoPublicUrl(fileId);
 const demoFileId = (item: DemoItem): string =>
   typeof item === "string" ? item : item.fileId || "";
 const normalizeDemos = (items?: DemoItem[]) =>
@@ -101,13 +102,6 @@ const formatPhone = (p?: string | null) => {
       // при желании можно всплывашку/тост
     } catch {}
   };
-
-const ANON_AVATAR = "/avatar.png";
-
-const onAvatarError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  e.currentTarget.onerror = null;
-  e.currentTarget.src = ANON_AVATAR;
-};
 
 const onOrder = (wpId: string) => {
   const url = new URL("/app/client/create-order", window.location.origin);
@@ -150,11 +144,7 @@ const WorkerDetailPage: React.FC = () => {
   }, [profCats, lang]);
 
   // ===== CONSTANTS / HELPERS (не хуки) =====
-  const FILE_CDN =
-    import.meta.env.VITE_FILES_CDN || "https://profibaza.uz/public/order/";
-  const AVA_CDN = "https://profibaza.uz/public/avatar/";
-  const fileUrl = (name?: string | null) =>
-    name ? `${FILE_CDN}${encodeURIComponent(name)}` : "";
+  const fileUrl = (name?: string | null) => orderPublicUrl(name);
 
   // ===== ВСЕ useMemo ДОЛЖНЫ БЫТЬ ДО ЛЮБЫХ return =====
   const row = data ?? null;
@@ -216,9 +206,7 @@ const WorkerDetailPage: React.FC = () => {
       .sort((a, b) => b.sortKey - a.sortKey);
   }, [row]);
 
-  const avatarSrc = row?.worker?.user?.avatar
-    ? `${AVA_CDN}${row.worker.user.avatar}`
-    : ANON_AVATAR;
+  const avatarSrc = avatarUrl(row?.worker?.user?.avatar);
 
   // ===== ТЕПЕРЬ МОЖНО ДЕЛАТЬ УСЛОВНЫЕ RETURN'ы =====
   if (isLoading) {
