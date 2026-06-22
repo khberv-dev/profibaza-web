@@ -240,6 +240,24 @@
       "changeTitle": "Telefonni o'zgartirish",
       "new": "Yangi raqam",
       "errors": { "generic": "Saqlab bo'lmadi" }
+    },
+    "empty": {
+      "blocked": {
+        "title": "Ro'yxat bo'sh",
+        "text": "Bu yerda bloklagan foydalanuvchilar ko'rinadi. Hozircha hech kim yo'q."
+      },
+      "images": {
+        "title": "Rasmlar yo'q",
+        "text": "Bu yerda profilga yuklangan foto va fayllarni boshqarish mumkin bo'ladi. Bo'lim tez orada ochiladi."
+      },
+      "notify": {
+        "title": "Bildirishnomalar",
+        "text": "Push va email bildirishnomalar sozlamalari shu yerda paydo bo'ladi. Hozircha platformaning standart bildirishnomalari ishlatiladi."
+      },
+      "apps": {
+        "title": "Ulangan ilovalar yo'q",
+        "text": "Ulangan xizmatlar va integratsiyalar shu yerda ko'rsatiladi."
+      }
     }
   },
   "welcome": "Xush kelibsiz",

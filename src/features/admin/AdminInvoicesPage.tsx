@@ -10,17 +10,35 @@ const Skel: React.FC<{ h?: number }> = ({ h = 18 }) => (
   </div>
 );
 
-const Badge: React.FC<{ status: "CREATED" | "PAID" | "CANCELLED" }> = ({ status }) => {
-  const map = {
-    CREATED: { bg:"#eff6ff", bd:"#dbeafe", fg:"#1d4ed8", label:"Создан" },
-    PAID: { bg:"#dcfce7", bd:"#bbf7d0", fg:"#15803d", label:"Оплачен" },
-    CANCELLED: { bg:"#fee2e2", bd:"#fecaca", fg:"#b91c1c", label:"Отменён" },
-  }[status];
+const Badge: React.FC<{ status?: string | null }> = ({ status }) => {
+  const map: Record<string, { bg: string; bd: string; fg: string; label: string }> = {
+    CREATED: { bg: "#eff6ff", bd: "#dbeafe", fg: "#1d4ed8", label: "Создан" },
+    PAID: { bg: "#dcfce7", bd: "#bbf7d0", fg: "#15803d", label: "Оплачен" },
+    CANCELLED: { bg: "#fee2e2", bd: "#fecaca", fg: "#b91c1c", label: "Отменён" },
+  };
+
+  const key = (status ?? "").toUpperCase();
+  const style = map[key] ?? {
+    bg: "#f1f5f9",
+    bd: "#e2e8f0",
+    fg: "#475569",
+    label: status || "—",
+  };
+
   return (
-    <span style={{
-      padding:"4px 10px", borderRadius:999, background:map.bg, border:`1px solid ${map.bd}`,
-      color:map.fg, fontWeight:700, fontSize:12
-    }}>{map.label}</span>
+    <span
+      style={{
+        padding: "4px 10px",
+        borderRadius: 999,
+        background: style.bg,
+        border: `1px solid ${style.bd}`,
+        color: style.fg,
+        fontWeight: 700,
+        fontSize: 12,
+      }}
+    >
+      {style.label}
+    </span>
   );
 };
 
@@ -97,7 +115,7 @@ export default function AdminInvoicesPage() {
                   {fmtMoney(row.amount)}
                 </td>
                 <td style={{ padding:"12px 16px" }}>
-                  <Badge status={row.status as any} />
+                  <Badge status={row.status} />
                 </td>
                 <td style={{ padding:"12px 16px", color:"#64748b" }}>
                   {fmtDate(row.createdAt)}

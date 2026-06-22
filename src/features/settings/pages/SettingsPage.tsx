@@ -7,8 +7,6 @@ import { isAxiosError } from "axios";
 import {
   PageWrap,
   Title,
-  Tabs,
-  TabBtn,
   Section,
   Actions,
   PrimaryBtn,
@@ -40,11 +38,8 @@ function getApiMessage(err: any, fallback: string): string {
   return fallback;
 }
 
-type TabsKeys = "profile" | "blocked" | "images" | "notify" | "apps";
-
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<TabsKeys>("profile");
   const { data: me } = useMe();
 
   const [editingPassword, setEditingPassword] = useState(false);
@@ -72,77 +67,55 @@ export default function SettingsPage() {
     <PageWrap>
       <Title>{t("settings.title")}</Title>
 
-      <Tabs>
-        <TabBtn active={tab === "profile"} onClick={() => setTab("profile")}>
-          {t("settings.tabs.profile")}
-        </TabBtn>
-        <TabBtn active={tab === "blocked"} onClick={() => setTab("blocked")}>
-          {t("settings.tabs.blocked")}
-        </TabBtn>
-        <TabBtn active={tab === "images"} onClick={() => setTab("images")}>
-          {t("settings.tabs.images")}
-        </TabBtn>
-        <TabBtn active={tab === "notify"} onClick={() => setTab("notify")}>
-          {t("settings.tabs.notify")}
-        </TabBtn>
-        <TabBtn active={tab === "apps"} onClick={() => setTab("apps")}>
-          {t("settings.tabs.apps")}
-        </TabBtn>
-      </Tabs>
-
-      {tab === "profile" && (
+      {!editingPassword ? (
+        <Card>
+          <Row>
+            <div className="label">{t("settings.password.title")}</div>
+            <div className="value">{passwordUpdatedText}</div>
+            <button
+              className="action"
+              onClick={() => setEditingPassword(true)}
+            >
+              {t("common.change")}
+            </button>
+          </Row>
+          <Row>
+            <div className="label">{t("settings.phone.title")}</div>
+            <div className="value">{phoneHuman}</div>
+            <button
+              className="action"
+              onClick={() => setEditPhoneOpen(true)}
+            >
+              {t("common.change")}
+            </button>
+          </Row>
+        </Card>
+      ) : (
         <>
-          {!editingPassword ? (
-            <Card>
-              <Row>
-                <div className="label">{t("settings.password.title")}</div>
-                <div className="value">{passwordUpdatedText}</div>
-                <button
-                  className="action"
-                  onClick={() => setEditingPassword(true)}
-                >
-                  {t("common.change")}
-                </button>
-              </Row>
-              <Row>
-                <div className="label">{t("settings.phone.title")}</div>
-                <div className="value">{phoneHuman}</div>
-                <button
-                  className="action"
-                  onClick={() => setEditPhoneOpen(true)}
-                >
-                  {t("common.change")}
-                </button>
-              </Row>
-            </Card>
-          ) : (
-            <>
-              <PasswordInlineForm
-                onCancel={() => setEditingPassword(false)}
-                onDone={() => setEditingPassword(false)}
-              />
-              <Card>
-                <Row>
-                  <div className="label">{t("settings.phone.title")}</div>
-                  <div className="value">{phoneHuman}</div>
-                  <button
-                    className="action"
-                    onClick={() => setEditPhoneOpen(true)}
-                  >
-                    {t("common.change")}
-                  </button>
-                </Row>
-              </Card>
-            </>
-          )}
-
-          <EditPhoneModal
-            open={editPhoneOpen}
-            onClose={() => setEditPhoneOpen(false)}
-            defaultPhone={(me?.phone || "").replace(/\D/g, "")}
+          <PasswordInlineForm
+            onCancel={() => setEditingPassword(false)}
+            onDone={() => setEditingPassword(false)}
           />
+          <Card>
+            <Row>
+              <div className="label">{t("settings.phone.title")}</div>
+              <div className="value">{phoneHuman}</div>
+              <button
+                className="action"
+                onClick={() => setEditPhoneOpen(true)}
+              >
+                {t("common.change")}
+              </button>
+            </Row>
+          </Card>
         </>
       )}
+
+      <EditPhoneModal
+        open={editPhoneOpen}
+        onClose={() => setEditPhoneOpen(false)}
+        defaultPhone={(me?.phone || "").replace(/\D/g, "")}
+      />
     </PageWrap>
   );
 }
