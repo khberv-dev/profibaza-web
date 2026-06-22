@@ -4,6 +4,7 @@ export const SwitcherWrapper = styled.div`
   position: relative;
   display: inline-block;
   font-family: "Inter", sans-serif;
+  z-index: 30;
 `;
 
 export const SwitcherButton = styled.button`
@@ -13,7 +14,7 @@ export const SwitcherButton = styled.button`
   padding: 6px 10px;
   border: none;
   background: transparent;
-  color: #6b7280; /* серый */
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -26,22 +27,23 @@ export const SwitcherButton = styled.button`
 
   svg {
     font-size: 14px;
+    pointer-events: none;
   }
 `;
 
 export const SwitcherMenu = styled.ul`
   position: absolute;
-  top: 110%;
+  top: calc(100% + 6px);
   right: 0;
   margin: 0;
   padding: 6px 0;
   list-style: none;
   background: #fff;
-  //   border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
   min-width: 140px;
-  z-index: 100;
+  z-index: 1000;
 `;
 
 export const SwitcherMenuItem = styled.li<{ active?: boolean }>`

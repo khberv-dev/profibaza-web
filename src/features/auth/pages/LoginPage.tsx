@@ -5,24 +5,41 @@ import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import {
   PageWrap,
   LeftSide,
+  LeftContent,
+  BrandLink,
   Brand,
+  MobileHeader,
+  MobileBrand,
+  MobileHero,
+  MobileHeroInner,
+  MobileLottieStage,
+  MobileWelcome,
+  MobileSubtitle,
+  LottieWrap,
   Welcome,
   Subtitle,
+  FeatureList,
+  FeatureItem,
   RightSide,
+  AuthFormScroll,
   Card,
+  CardTopRow,
+  CardEyebrow,
+  CardLangWrap,
   CardTitle,
   TopHint,
   LinksRow,
   LinkA,
+  SubmitWrap,
 } from "../login-style";
 import { CustomInput } from "../../../components/custom-input";
 import { CustomButton } from "../../../components/custom-button";
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
 import { useLogin } from "../../../shared/modules/auth";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type FormValues = {
-  phone: string; // ожидаем "998900012644" (без "+")
+  phone: string;
   password: string;
 };
 
@@ -41,13 +58,12 @@ const LoginPage = () => {
     try {
       const user = await login({ phone: raw, password: values.password });
 
-      // если API возвращает роль, например user.role === "ADMIN"
       if (user?.role === "ADMIN") {
         navigate("/admin/stats");
       } else {
         navigate("/app/profile");
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       let serverMsg = t("loginFailed");
 
       if (isAxiosError(e) && e.response?.data) {
@@ -69,28 +85,56 @@ const LoginPage = () => {
 
   return (
     <PageWrap>
-      {/* Левая часть */}
+      <BrandLink to="/">
+        <Brand>{t("brand")}</Brand>
+      </BrandLink>
+
       <LeftSide>
-        <Link to="/">
-          <Brand>{t("brand")}</Brand>
-        </Link>
-        {/* <Illustration src="/register.svg" alt={t("welcome")} loading="lazy" /> */}
-        <DotLottieReact
-          src="https://lottie.host/b0146f16-302a-43d9-a258-561c491a1d02/bVM3MMUUOe.lottie"
-          loop
-          autoplay
-        />
-        <Welcome>{t("welcome")}</Welcome>
-        <Subtitle>
-          {t("loginSubtitle", {
-            defaultValue: "Войдите в аккаунт, чтобы продолжить",
-          })}
-        </Subtitle>
+        <LeftContent>
+          <LottieWrap>
+            <DotLottieReact
+              src="https://lottie.host/b0146f16-302a-43d9-a258-561c491a1d02/bVM3MMUUOe.lottie"
+              loop
+              autoplay
+            />
+          </LottieWrap>
+          <Welcome>{t("welcome")}</Welcome>
+          <Subtitle>{t("auth.loginSubtitle")}</Subtitle>
+          <FeatureList>
+            <FeatureItem>{t("auth.feature1")}</FeatureItem>
+            <FeatureItem>{t("auth.feature2")}</FeatureItem>
+            <FeatureItem>{t("auth.feature3")}</FeatureItem>
+          </FeatureList>
+        </LeftContent>
       </LeftSide>
 
-      {/* Правая часть */}
       <RightSide>
+        <MobileHero>
+          <MobileHeader>
+            <MobileBrand to="/">{t("brand")}</MobileBrand>
+          </MobileHeader>
+
+          <MobileHeroInner>
+            <MobileLottieStage>
+              <DotLottieReact
+                src="https://lottie.host/b0146f16-302a-43d9-a258-561c491a1d02/bVM3MMUUOe.lottie"
+                loop
+                autoplay
+              />
+            </MobileLottieStage>
+            <MobileWelcome>{t("welcome")}</MobileWelcome>
+            <MobileSubtitle>{t("auth.loginSubtitle")}</MobileSubtitle>
+          </MobileHeroInner>
+        </MobileHero>
+
+        <AuthFormScroll>
         <Card onSubmit={handleSubmit(onSubmit)}>
+          <CardTopRow>
+            <CardEyebrow>{t("auth.loginEyebrow")}</CardEyebrow>
+            <CardLangWrap>
+              <LangSwitcher />
+            </CardLangWrap>
+          </CardTopRow>
           <CardTitle>{t("loginTitle")}</CardTitle>
           <TopHint>
             {t("firstTime")} <LinkA href="/register">{t("goRegister")}</LinkA>
@@ -104,7 +148,7 @@ const LoginPage = () => {
             rules={{
               required: t("phoneRequired") as string,
               validate: (value: string) => {
-                const digits = value.replace(/\D/g, ""); // только цифры
+                const digits = value.replace(/\D/g, "");
                 if (digits.length !== 12) {
                   return t("phoneInvalid");
                 }
@@ -127,24 +171,23 @@ const LoginPage = () => {
             }}
           />
 
-          <CustomButton
-            type="submit"
-            fullWidth
-            disabled={isPending}
-            loading={isPending}
-          >
-            {t("loginCta")}
-          </CustomButton>
+          <SubmitWrap>
+            <CustomButton
+              type="submit"
+              fullWidth
+              disabled={isPending}
+              loading={isPending}
+            >
+              {t("loginCta")}
+            </CustomButton>
+          </SubmitWrap>
 
           <LinksRow>
             <LinkA href="/forgot">{t("forgot")}</LinkA>
           </LinksRow>
         </Card>
+        </AuthFormScroll>
       </RightSide>
-
-      <div style={{ position: "absolute", top: 16, right: 16 }}>
-        <LangSwitcher />
-      </div>
     </PageWrap>
   );
 };

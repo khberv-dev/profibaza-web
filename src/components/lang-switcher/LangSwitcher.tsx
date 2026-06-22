@@ -37,7 +37,14 @@ export default function LangSwitcher() {
 
   return (
     <SwitcherWrapper ref={wrapperRef}>
-      <SwitcherButton onClick={toggle}>
+      <SwitcherButton
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggle();
+        }}
+      >
         {langs.find((l) => l.code === i18n.resolvedLanguage)?.label ?? "Lang"}
         {open ? <IoChevronUp /> : <IoChevronDown />}
       </SwitcherButton>
@@ -47,7 +54,9 @@ export default function LangSwitcher() {
           {langs.map((l) => (
             <SwitcherMenuItem
               key={l.code}
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 i18n.changeLanguage(l.code);
                 close();
               }}

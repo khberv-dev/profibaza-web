@@ -1,6 +1,6 @@
 // pages/auth/register/RegisterPage.tsx
 import { useForm, Controller } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { isAxiosError } from "axios";
 import styled from "@emotion/styled";
@@ -16,17 +16,37 @@ import { useRegister } from "../../../shared/modules/auth";
 import {
   PageWrap,
   LeftSide,
+  LeftContent,
+  BrandLink,
   Brand,
+  MobileHeader,
+  MobileBrand,
+  MobileHero,
+  MobileHeroInner,
+  MobileLottieStage,
+  MobileWelcome,
+  MobileSubtitle,
+  LottieWrap,
   Welcome,
   Subtitle,
+  FeatureList,
+  FeatureItem,
   RightSide,
+  AuthFormScroll,
   Card,
+  CardTopRow,
+  CardEyebrow,
+  CardLangWrap,
   CardTitle,
   TopHint,
   LinksRow,
   LinkA,
   AgreementText,
   AgreementA,
+  SubmitWrap,
+  FieldLabel,
+  GenderGrid,
+  GenderOption,
 } from "../login-style";
 import { DatePopoverInput } from "../../../components/custom-date-input/DatePopoverInput";
 import dayjs from "dayjs";
@@ -55,19 +75,14 @@ type FormValues = {
 /* ---------- стили ---------- */
 const RoleWrap = styled.div`
   display: grid;
-  gap: 8px;
-  margin: 6px 0 4px;
-`;
-
-const FieldLabel = styled.div`
-  font-size: 13px;
-  color: #374151;
+  gap: 10px;
+  margin: 2px 0;
 `;
 
 const RoleGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 10px;
 `;
 
 const PhoneRow = styled.div`
@@ -82,29 +97,30 @@ const PhoneCol = styled.div`
 
 const SmallButton = styled.button<{ loading?: boolean }>`
   margin-top: 4px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #1e5cfb;
-  background: #1e5cfb;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px solid #2563eb;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   opacity: ${({ loading }) => (loading ? 0.7 : 1)};
   pointer-events: ${({ loading }) => (loading ? "none" : "auto")};
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
 
-  &:hover {
-    background: #234fe0;
-    box-shadow: 0 8px 18px rgba(30, 92, 251, 0.25);
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
   }
-  &:active {
-    transform: translateY(1px);
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: default;
     box-shadow: none;
   }
@@ -128,46 +144,35 @@ const OtpSuccess = styled.div`
 const RoleCard = styled.label<{ active?: boolean; hasError?: boolean }>`
   position: relative;
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 12px;
+  grid-template-columns: 48px 1fr;
+  gap: 14px;
   align-items: center;
-  padding: 12px 44px 12px 12px;
-
+  padding: 14px 48px 14px 14px;
   border: 1px solid
     ${({ active, hasError }) =>
-      hasError ? "#ef4444" : active ? "transparent" : "rgba(15,18,25,.12)"};
-  border-radius: 12px;
-
-  background: ${({ active }) =>
-    active
-      ? "linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, #7aa2ff, #1E5CFB) border-box"
-      : "#fff"};
-
+      hasError ? "#ef4444" : active ? "#2563eb" : "#e2e8f0"};
+  border-radius: 16px;
+  background: ${({ active }) => (active ? "rgba(37, 99, 235, 0.06)" : "#fff")};
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.06s,
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s,
     background 0.2s;
-
   box-shadow: ${({ active }) =>
     active
-      ? "0 8px 24px rgba(30,92,251,0.12)"
-      : "0 8px 22px rgba(2,32,71,0.06)"};
+      ? "0 10px 28px rgba(37, 99, 235, 0.14)"
+      : "0 4px 16px rgba(15, 23, 42, 0.04)"};
 
   &:hover {
     border-color: ${({ hasError, active }) =>
-      hasError ? "#ef4444" : active ? "transparent" : "#94b2ff"};
-    box-shadow: ${({ active }) =>
-      active
-        ? "0 10px 26px rgba(30,92,251,0.16)"
-        : "0 10px 22px rgba(2, 32, 71, 0.08)"};
+      hasError ? "#ef4444" : active ? "#2563eb" : "#cbd5e1"};
   }
   &:active {
-    transform: translateY(1px);
+    transform: scale(0.995);
   }
 
   &:has(input[type="radio"]:focus-visible) {
     outline: 0;
-    box-shadow: 0 0 0 3px rgba(30, 92, 251, 0.2),
-      0 8px 24px rgba(30, 92, 251, 0.14);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18),
+      0 8px 24px rgba(37, 99, 235, 0.12);
   }
 `;
 
@@ -178,16 +183,16 @@ const HiddenRadioMain = styled.input`
 `;
 
 const RoleIconBox = styled.span`
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #f3f4f6;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.08);
   display: grid;
   place-items: center;
 
   svg {
     font-size: 22px;
-    color: #1e5cfb;
+    color: #2563eb;
   }
 `;
 
@@ -214,16 +219,16 @@ const ErrorMsg = styled.div`
 
 const RoleTick = styled.span`
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 22px;
-  height: 22px;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #1e5cfb;
+  background: #2563eb;
   color: #fff;
-  box-shadow: 0 6px 16px rgba(30, 92, 251, 0.3);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
 `;
 
 const MiniSegWrap = styled.div`
@@ -253,20 +258,20 @@ const MiniSegOption = styled.label<{ active?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid ${({ active }) => (active ? "#1E5CFB" : "#E5E7EB")};
-  background: ${({ active }) => (active ? "#EEF2FF" : "#fff")};
-  color: ${({ active }) => (active ? "#1E5CFB" : "#334155")};
+  padding: 7px 14px;
+  border: 1px solid ${({ active }) => (active ? "#2563eb" : "#e2e8f0")};
+  background: ${({ active }) => (active ? "rgba(37, 99, 235, 0.08)" : "#fff")};
+  color: ${({ active }) => (active ? "#1d4ed8" : "#334155")};
   border-radius: 9999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   user-select: none;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease,
     transform 0.06s ease;
 
   &:hover {
-    border-color: ${({ active }) => (active ? "#1E5CFB" : "#CBD5E1")};
+    border-color: ${({ active }) => (active ? "#2563eb" : "#cbd5e1")};
   }
   &:active {
     transform: translateY(1px);
@@ -274,7 +279,7 @@ const MiniSegOption = styled.label<{ active?: boolean }>`
 
   &:has(input[type="radio"]:focus-visible) {
     outline: 0;
-    box-shadow: 0 0 0 3px rgba(30, 92, 251, 0.2);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
   }
 `;
 
@@ -471,27 +476,60 @@ const RegisterPage = () => {
 
   return (
     <PageWrap>
-      {/* Левая часть */}
+      <BrandLink to="/">
+        <Brand>{t("brand")}</Brand>
+      </BrandLink>
+
       <LeftSide>
-        <Link to="/">
-          <Brand>{t("brand")}</Brand>
-        </Link>
-        <DotLottieReact
-          src="https://lottie.host/44ba2cb8-1b7b-4e37-a5c5-99d9fb319ec1/SCGqvvOcYo.lottie"
-          loop
-          autoplay
-        />
-        <Welcome>{t("registerWelcome")}</Welcome>
-        <Subtitle>{t("registerSubtitle")}</Subtitle>
+        <LeftContent>
+          <LottieWrap>
+            <DotLottieReact
+              src="https://lottie.host/44ba2cb8-1b7b-4e37-a5c5-99d9fb319ec1/SCGqvvOcYo.lottie"
+              loop
+              autoplay
+            />
+          </LottieWrap>
+          <Welcome>{t("registerWelcome")}</Welcome>
+          <Subtitle>{t("registerSubtitle")}</Subtitle>
+          <FeatureList>
+            <FeatureItem>{t("auth.feature1")}</FeatureItem>
+            <FeatureItem>{t("auth.feature2")}</FeatureItem>
+            <FeatureItem>{t("auth.feature3")}</FeatureItem>
+          </FeatureList>
+        </LeftContent>
       </LeftSide>
 
-      {/* Правая часть */}
       <RightSide>
-        <Card onSubmit={handleSubmit(onSubmit)}>
-          <CardTitle>{t("registerTitle")}</CardTitle>
-          <TopHint>
-            {t("haveAccount")} <LinkA href="/login">{t("goLogin")}</LinkA>
-          </TopHint>
+        <MobileHero>
+          <MobileHeader>
+            <MobileBrand to="/">{t("brand")}</MobileBrand>
+          </MobileHeader>
+
+          <MobileHeroInner>
+            <MobileLottieStage>
+              <DotLottieReact
+                src="https://lottie.host/44ba2cb8-1b7b-4e37-a5c5-99d9fb319ec1/SCGqvvOcYo.lottie"
+                loop
+                autoplay
+              />
+            </MobileLottieStage>
+            <MobileWelcome>{t("registerWelcome")}</MobileWelcome>
+            <MobileSubtitle>{t("registerSubtitle")}</MobileSubtitle>
+          </MobileHeroInner>
+        </MobileHero>
+
+        <AuthFormScroll>
+          <Card onSubmit={handleSubmit(onSubmit)}>
+            <CardTopRow>
+              <CardEyebrow>{t("auth.registerEyebrow")}</CardEyebrow>
+              <CardLangWrap>
+                <LangSwitcher />
+              </CardLangWrap>
+            </CardTopRow>
+            <CardTitle>{t("registerTitle")}</CardTitle>
+            <TopHint>
+              {t("haveAccount")} <LinkA href="/login">{t("goLogin")}</LinkA>
+            </TopHint>
 
           <CustomInput
             control={control}
@@ -574,85 +612,53 @@ const RegisterPage = () => {
             // inputMode="numeric"
           />
 
-          <FieldLabel>Пол</FieldLabel>
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <Controller
-              name="gender"
-              control={control}
-              render={({ field }) => (
-                <>
-                  <label
-                    style={{
-                      flex: 1,
-                      border:
-                        field.value === "MALE"
-                          ? "2px solid #1E5CFB"
-                          : "1px solid #ccc",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      background: field.value === "MALE" ? "#EEF2FF" : "#fff",
-                      fontWeight: 600,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      value="MALE"
-                      checked={field.value === "MALE"}
-                      onChange={() => field.onChange("MALE")}
-                      style={{ display: "none" }}
-                    />
-                    Мужчина
-                  </label>
+          <FieldLabel>{t("auth.gender")}</FieldLabel>
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <GenderGrid>
+                <GenderOption active={field.value === "MALE"}>
+                  <input
+                    type="radio"
+                    value="MALE"
+                    checked={field.value === "MALE"}
+                    onChange={() => field.onChange("MALE")}
+                  />
+                  {t("auth.male")}
+                </GenderOption>
 
-                  <label
-                    style={{
-                      flex: 1,
-                      border:
-                        field.value === "FEMALE"
-                          ? "2px solid #1E5CFB"
-                          : "1px solid #ccc",
-                      borderRadius: 8,
-                      padding: "10px 12px",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      background: field.value === "FEMALE" ? "#EEF2FF" : "#fff",
-                      fontWeight: 600,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      value="FEMALE"
-                      checked={field.value === "FEMALE"}
-                      onChange={() => field.onChange("FEMALE")}
-                      style={{ display: "none" }}
-                    />
-                    Женщина
-                  </label>
-                </>
-              )}
-            />
-          </div>
+                <GenderOption active={field.value === "FEMALE"}>
+                  <input
+                    type="radio"
+                    value="FEMALE"
+                    checked={field.value === "FEMALE"}
+                    onChange={() => field.onChange("FEMALE")}
+                  />
+                  {t("auth.female")}
+                </GenderOption>
+              </GenderGrid>
+            )}
+          />
 
           <DatePopoverInput
             control={control}
             name="birthday"
-            label="Дата рождения"
-            placeholder="ГГГГ-ММ-ДД"
+            label={t("auth.birthday")}
+            placeholder={t("auth.birthdayPlaceholder")}
             required
             min={dayjs().subtract(100, "year").format("YYYY-MM-DD")}
             max={dayjs().subtract(16, "year").format("YYYY-MM-DD")}
             rules={{
-              required: "Укажите дату рождения",
+              required: t("auth.birthdayRequired"),
               validate: (v: string) => {
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(v))
-                  return "Введите в формате YYYY-MM-DD";
+                  return t("auth.birthdayFormat");
                 const d = dayjs(v, "YYYY-MM-DD", true);
-                if (!d.isValid()) return "Некорректная дата";
+                if (!d.isValid()) return t("auth.birthdayInvalid");
                 const age = dayjs().diff(d, "year");
-                if (age < 16) return "Возраст должен быть 16+";
-                if (age > 100) return "Возраст не может превышать 100 лет";
+                if (age < 16) return t("auth.birthdayMinAge");
+                if (age > 100) return t("auth.birthdayMaxAge");
                 return true;
               },
             }}
@@ -859,14 +865,16 @@ const RegisterPage = () => {
             }}
           />
 
-          <CustomButton
-            type="submit"
-            fullWidth
-            loading={isPending}
-            disabled={isPending}
-          >
-            {t("registerCta")}
-          </CustomButton>
+          <SubmitWrap>
+            <CustomButton
+              type="submit"
+              fullWidth
+              loading={isPending}
+              disabled={isPending}
+            >
+              {t("registerCta")}
+            </CustomButton>
+          </SubmitWrap>
 
           <AgreementText>
             <Trans
@@ -883,11 +891,8 @@ const RegisterPage = () => {
 
           <LinksRow />
         </Card>
+        </AuthFormScroll>
       </RightSide>
-
-      <div style={{ position: "absolute", top: 16, right: 16 }}>
-        <LangSwitcher />
-      </div>
     </PageWrap>
   );
 };

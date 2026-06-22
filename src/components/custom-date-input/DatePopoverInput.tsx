@@ -246,11 +246,10 @@ function DateInner({
   onBlur={(e) => {
     const normalized = normalizeOnBlur(e.target.value);
     field.onChange(normalized);
-    field.onBlur(); // важно дернуть RHF blur
+    field.onBlur();
   }}
 
-  onFocus={() => setOpen(true)}
-  onClick={() => setOpen(true)}
+  onClick={() => setOpen((v) => !v)}
   placeholder={placeholder}
   required={required}
   disabled={disabled}
