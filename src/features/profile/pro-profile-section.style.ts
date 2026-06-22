@@ -15,25 +15,20 @@ const colStickyMax = 360; // px;
 
 /* ===== Section title ===== */
 export const SectionTitle = styled.h2`
-  margin: 26px 0 18px;
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
-
-  @media (min-width: 1200px) {
-    margin: 32px 0 20px;
-    font-size: 22px;
-  }
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
 `;
 
 /* ===== Card ===== */
 export const Card = styled.section`
-  border: 1px solid #e9edf5;
-  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   background: #ffffff;
-  margin-bottom: 28px;
-  margin-top: 14px;
-  //   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  margin-bottom: 0;
+  margin-top: 0;
+  overflow: hidden;
 `;
 
 /* padded content */

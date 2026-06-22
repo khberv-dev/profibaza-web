@@ -261,6 +261,11 @@
     "saveSuccess": "Сохранено",
     "saveProfessionToAddDemos": "Сохраните профессию, чтобы добавить примеры работ"
   },
+  "notificationsPage": {
+    "title": "Уведомления",
+    "emptyTitle": "Нет уведомлений",
+    "emptyDesc": "Здесь будут появляться новые события по вашим заказам и откликам."
+  },
   "topbar": {
     "search": "Поиск",
     "notifications": "Уведомления",
@@ -413,7 +418,22 @@
     "email": "Почта",
     "otherContacts": "Другие способы связи",
     "add": "+ Добавить",
-    "searchSettings": "Настройки поиска"
+    "searchSettings": "Настройки поиска",
+    "personalInfo": "Личная информация",
+    "personalInfoHint": "Основные данные профиля",
+    "accountDetails": "Сведения об аккаунте",
+    "accountRole": "Роль",
+    "registrationDate": "Дата регистрации",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "middleName": "Отчество",
+    "companyName": "Компания",
+    "actions": "Действия",
+    "tabGeneral": "Профиль",
+    "tabWorker": "Профиль специалиста",
+    "tabLegal": "Профиль компании",
+    "tabClient": "Профиль заказчика",
+    "tabInvestor": "Профиль инвестора"
   },
   "langLabel": "Язык",
   "agreementRich": "Нажимая на кнопку «{{btn}}», Вы соглашаетесь с <tos>Пользовательским соглашением</tos> Profibaza и <privacy>Политикой конфиденциальности</privacy>, а также даёте согласие на обработку <pd>Персональных данных</pd>.",

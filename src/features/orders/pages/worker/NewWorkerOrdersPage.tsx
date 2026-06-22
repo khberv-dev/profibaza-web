@@ -20,17 +20,18 @@ import {
   WOSub,
   WOList,
   WOCard,
-  WOLeft,
   WOMid,
-  WOHead,
+  WOHeadRow,
+  WOHeadMain,
+  WOHeadTop,
   WOName,
   WOSubline,
-  WOChips,
   WOStatus,
   WOMeta,
   WODivider,
   WODesc,
   WORight,
+  WOActionBar,
   WOGhost,
   WOPrimary,
   WODanger,
@@ -382,6 +383,11 @@ export default function NewWorkerOrdersPage() {
     return `+${digits}`;
   }
 
+  function buildTelHref(phone?: string | null): string {
+    const digits = (phone ?? "").replace(/\D/g, "");
+    return digits ? `tel:+${digits}` : "";
+  }
+
   const openComment = (id: string) =>
     setCommentUI((s) => ({ ...s, [id]: { ...getUI(id), open: true } }));
 
@@ -487,6 +493,7 @@ export default function NewWorkerOrdersPage() {
               row.status === "NEW" && !isAccepting && !isRejecting;
             const canReject =
               row.status === "NEW" && !isRejecting && !isAccepting;
+            const callHref = buildTelHref(u?.phone);
 
             return (
               <WOCard
@@ -495,26 +502,26 @@ export default function NewWorkerOrdersPage() {
                 aria-label={`Заказ от ${fio(u)}`}
               >
                 <div className="inner">
-                  <WOLeft>
-                    <OrderAvatar
-                      variant="worker"
-                      fileId={u?.avatar}
-                      initials={initials(u)}
-                    />
-                  </WOLeft>
-
                   <WOMid>
-                    <WOHead>
-                      <div>
-                        <WOName>{fio(u)}</WOName>
-                        <WOSubline>{formatPhone(u?.phone)}</WOSubline>
-                      </div>
-                      <WOChips>
-                        <WOStatus $tone={tone}>
-                          {statusLabel(row.status)}
-                        </WOStatus>
-                      </WOChips>
-                    </WOHead>
+                    <WOHeadRow>
+                      <OrderAvatar
+                        size="compact"
+                        variant="worker"
+                        fileId={u?.avatar}
+                        initials={initials(u)}
+                      />
+                      <WOHeadMain>
+                        <WOHeadTop>
+                          <div>
+                            <WOName>{fio(u)}</WOName>
+                            <WOSubline>{formatPhone(u?.phone)}</WOSubline>
+                          </div>
+                          <WOStatus $tone={tone}>
+                            {statusLabel(row.status)}
+                          </WOStatus>
+                        </WOHeadTop>
+                      </WOHeadMain>
+                    </WOHeadRow>
 
                     <WOMeta>
                       <li>
@@ -548,32 +555,26 @@ export default function NewWorkerOrdersPage() {
                     <WODivider />
                     <CommentBlock>
                       {!ui.open ? (
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 10,
-                            alignItems: "center",
-                            flexWrap: "wrap"
-                          }}
-                        >
+                        <WOActionBar>
                           <CommentToggle onClick={() => openComment(row.id)}>
                             <span>Комментарии</span>
-                            <MessageSquare />
+                            <MessageSquare size={16} />
                           </CommentToggle>
 
-                          <WOGhost
-                            type="button"
-                            onClick={() =>
-                              (window.location.href = `/worker/order/${row.id}`)
-                            }
-                          >
-                            Позвонить <Phone size={16} />
-                          </WOGhost>
+                          {callHref && (
+                            <WOGhost
+                              type="button"
+                              onClick={() => {
+                                window.location.href = callHref;
+                              }}
+                              title={`Позвонить ${fio(u)}`}
+                            >
+                              Позвонить <Phone size={16} />
+                            </WOGhost>
+                          )}
 
-                          {/* 🔹 Завершить (доступно в статусе PROGRESS) */}
                           {row.status === "PROGRESS" && (
                             <WOPrimary
-                              style={{ maxWidth: "max-content" }}
                               type="button"
                               onClick={() => openFinishModal(row.id)}
                               title="Я выполнил этот заказ"
@@ -584,35 +585,29 @@ export default function NewWorkerOrdersPage() {
                                 : "Я выполнил этот заказ"}
                             </WOPrimary>
                           )}
-                        </div>
+                        </WOActionBar>
                       ) : (
                         <>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 10,
-                              alignItems: "center",
-                              flexWrap: "wrap"
-                            }}
-                          >
+                          <WOActionBar>
                             <CommentToggle onClick={() => closeComment(row.id)}>
                               <span>Комментарии</span>
-                              <MessageSquare />
+                              <MessageSquare size={16} />
                             </CommentToggle>
 
-                            <WOGhost
-                              type="button"
-                              onClick={() =>
-                                (window.location.href = `/worker/order/${row.id}`)
-                              }
-                            >
-                              Позвонить <Phone size={16} />
-                            </WOGhost>
+                            {callHref && (
+                              <WOGhost
+                                type="button"
+                                onClick={() => {
+                                  window.location.href = callHref;
+                                }}
+                                title={`Позвонить ${fio(u)}`}
+                              >
+                                Позвонить <Phone size={16} />
+                              </WOGhost>
+                            )}
 
-                            {/* 🔹 Завершить (доступно в статусе PROGRESS) */}
                             {row.status === "PROGRESS" && (
                               <WOPrimary
-                                style={{ maxWidth: "max-content" }}
                                 type="button"
                                 onClick={() => openFinishModal(row.id)}
                                 title="Я выполнил этот заказ"
@@ -623,7 +618,7 @@ export default function NewWorkerOrdersPage() {
                                   : "Я выполнил этот заказ"}
                               </WOPrimary>
                             )}
-                          </div>
+                          </WOActionBar>
 
                           <CommentForm>
                             {/* список комментариев + кнопки Ответить */}

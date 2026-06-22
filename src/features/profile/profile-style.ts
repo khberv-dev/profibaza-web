@@ -227,29 +227,29 @@ export const GhostBtn = styled.button`
 
 
 export const LogoutBtn = styled.button`
-  height: 38px;
+  height: 36px;
   padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #fee2e2;
+  border-radius: 6px;
+  border: 1px solid ${border};
   background: #fff;
-  color: #b91c1c;
-  font-weight: 600;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s ease, box-shadow 0.15s ease,
-    transform 0.06s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
   &:hover {
     background: #fef2f2;
-    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.15);
+    border-color: #fecaca;
+    color: #b91c1c;
   }
 
   &:active {
     transform: translateY(1px);
-  }
-
-  @media (max-width: 720px) {
-    width: 100%;
-    max-width: 360px;
   }
 `;
 
@@ -337,6 +337,785 @@ export const SkeletonLine = styled.span<{ w?: number }>`
     }
     100% {
       background-position: -200% 0;
+    }
+  }
+`;
+
+/* ===== Profile page layout ===== */
+const TOKENS = {
+  maxw: "1200px",
+  pageBg: "#ffffff",
+  radiusLg: "8px",
+  radiusMd: "6px",
+  radiusSm: "6px",
+  line: "#E5E7EB",
+  lineSoft: "#F3F4F6",
+  cardBg: "#FFFFFF",
+  panelBg: "#FAFAFA",
+  text: "#111827",
+  textMuted: "#6B7280",
+  primary: "#1E5CFB",
+  primaryDark: "#174CDF",
+};
+
+export const ProfilePageWrap = styled.div`
+  background: ${TOKENS.pageBg};
+  min-height: 100%;
+  overflow-x: clip;
+`;
+
+export const ProfileShell = styled.div`
+  max-width: ${TOKENS.maxw};
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+
+  @media (max-width: 640px) {
+    padding: 0 0 24px;
+  }
+`;
+
+export const ProfileTopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${TOKENS.lineSoft};
+
+  @media (max-width: 640px) {
+    margin-bottom: 12px;
+    padding: 14px 16px 12px;
+    border-bottom: none;
+  }
+`;
+
+export const ProfilePageTitle = styled.h1`
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: ${TOKENS.text};
+  letter-spacing: -0.02em;
+
+  @media (max-width: 640px) {
+    font-size: 20px;
+  }
+`;
+
+export const ProfileMain = styled.div`
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    gap: 10px;
+  }
+`;
+
+export const ProfileCard = styled.section`
+  background: ${TOKENS.cardBg};
+  border: 1px solid ${TOKENS.line};
+  border-radius: ${TOKENS.radiusLg};
+  overflow: hidden;
+
+  @media (max-width: 640px) {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+`;
+
+export const ProfileOutlineBtn = styled.button`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: ${TOKENS.radiusSm};
+  border: 1px solid ${TOKENS.line};
+  background: ${TOKENS.cardBg};
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${TOKENS.text};
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: ${TOKENS.panelBg};
+    border-color: #d1d5db;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+`;
+
+export const ProfilePrimaryBtn = styled.button`
+  height: 36px;
+  padding: 0 16px;
+  border-radius: ${TOKENS.radiusSm};
+  border: 1px solid ${TOKENS.primary};
+  background: ${TOKENS.primary};
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: ${TOKENS.primaryDark};
+    border-color: ${TOKENS.primaryDark};
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+`;
+
+export const ProfileHero = styled.div`
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+
+  @media (max-width: 640px) {
+    padding: 20px 16px 16px;
+    gap: 14px;
+  }
+`;
+
+export const ProfileHeroTop = styled.div`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    gap: 14px;
+  }
+`;
+
+export const ProfileAvatarWrap = styled.div`
+  flex-shrink: 0;
+`;
+
+export const ProfileAvatar = styled.img`
+  width: 80px;
+  height: 80px;
+  border-radius: ${TOKENS.radiusMd};
+  object-fit: cover;
+  border: 1px solid ${TOKENS.line};
+  background: #f9fafb url("/avatar.png") center/cover no-repeat;
+  cursor: pointer;
+  display: block;
+
+  @media (max-width: 640px) {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+  }
+`;
+
+export const ProfileAvatarPlaceholder = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: ${TOKENS.radiusMd};
+  border: 1px solid ${TOKENS.line};
+  background: #f9fafb url("/avatar.png") center/cover no-repeat;
+  cursor: pointer;
+
+  @media (max-width: 640px) {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+  }
+`;
+
+export const ProfileHeroContent = styled.div`
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-items: center;
+  }
+`;
+
+export const ProfileHeroHead = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+  }
+`;
+
+export const ProfileHeroIdentity = styled.div`
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+
+  @media (max-width: 640px) {
+    justify-items: center;
+  }
+`;
+
+export const ProfileName = styled.h2`
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: ${TOKENS.text};
+  font-weight: 600;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 20px;
+  }
+`;
+
+export const ProfileSubtitle = styled.p`
+  margin: 0;
+  font-size: 15px;
+  color: ${TOKENS.textMuted};
+  font-weight: 400;
+  line-height: 1.45;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+  }
+`;
+
+export const ProfileHeroToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+
+  a {
+    text-decoration: none;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    max-width: 320px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    a {
+      display: block;
+      min-width: 0;
+    }
+
+    button {
+      width: 100%;
+      max-width: none;
+      height: 38px;
+      justify-content: center;
+      font-size: 13px;
+      padding: 0 10px;
+    }
+  }
+`;
+
+export const ProfileHeroBtn = styled(ProfilePrimaryBtn)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
+`;
+
+export const ProfileHeroOutlineBtn = styled(ProfileOutlineBtn)`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+`;
+
+export const ProfileHeroLogoutBtn = styled(LogoutBtn)`
+  @media (max-width: 640px) {
+    width: 100%;
+    max-width: none;
+    height: 38px;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+`;
+
+export const ProfileHeroDivider = styled.div`
+  height: 1px;
+  background: ${TOKENS.lineSoft};
+`;
+
+export const ProfileHeroMeta = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+  padding: 18px 20px;
+  border-radius: ${TOKENS.radiusMd};
+  background: ${TOKENS.primary};
+
+  @media (max-width: 960px) and (min-width: 641px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 4px 14px;
+    border-radius: 12px;
+  }
+`;
+
+export const ProfileHeroMetaItem = styled.div`
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+
+  .label {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 640px) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+
+    .label {
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    .value {
+      font-size: 14px;
+      text-align: right;
+    }
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+`;
+
+export const ProfileHeroHint = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: ${TOKENS.textMuted};
+
+  @media (max-width: 640px) {
+    text-align: center;
+    font-size: 12px;
+  }
+`;
+
+/* legacy aliases */
+export const ProfileSummary = ProfileHero;
+export const ProfileSummaryBody = ProfileHeroContent;
+export const ProfileRole = ProfileSubtitle;
+export const ProfileRoleBadge = ProfileSubtitle;
+export const ProfileCompanyLine = ProfileSubtitle;
+export const ProfileMetaGrid = ProfileHeroMeta;
+export const ProfileMetaRow = ProfileHeroMetaItem;
+export const ProfileHeroMain = ProfileHeroContent;
+export const ProfileHeroMetaPanel = ProfileHeroMeta;
+export const ProfileHeroActions = ProfileHeroToolbar;
+export const ProfileAvatarOverlay = styled.div` display: none; `;
+export const ProfileLayout = styled.div`
+  display: grid;
+  gap: 16px;
+`;
+export const ProfileSidebar = styled.aside` display: none; `;
+
+export const ProfileCardHead = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid ${TOKENS.lineSoft};
+
+  @media (max-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px 10px;
+    border-bottom: none;
+  }
+`;
+
+export const ProfileCardTitle = styled.h3`
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: ${TOKENS.text};
+`;
+
+export const ProfileCardTitleRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+export const ProfileSectionIcon = styled.span`
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: ${TOKENS.panelBg};
+  border: 1px solid ${TOKENS.lineSoft};
+  color: ${TOKENS.primary};
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+export const ProfileCardSubtitle = styled.p`
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: ${TOKENS.textMuted};
+  font-weight: 400;
+  line-height: 1.45;
+
+  @media (max-width: 640px) {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+`;
+
+export const ProfileCardActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    margin-left: auto;
+
+    button {
+      height: 34px;
+      padding: 0 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+  }
+`;
+
+export const ProfileCardBody = styled.div`
+  padding: 20px 24px 24px;
+
+  @media (max-width: 640px) {
+    padding: 0 16px 16px;
+  }
+`;
+
+export const ProfilePanel = styled(ProfileCardBody)``;
+
+export const ProfileFormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 32px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+`;
+
+export const ProfileField = styled.div`
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid ${TOKENS.lineSoft};
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    &:first-of-type {
+      padding-top: 4px;
+    }
+  }
+`;
+
+export const ProfileFieldLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${TOKENS.textMuted};
+
+  @media (max-width: 640px) {
+    font-size: 12px;
+    gap: 6px;
+  }
+`;
+
+export const ProfileFieldIcon = styled.span`
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: ${TOKENS.panelBg};
+  border: 1px solid ${TOKENS.lineSoft};
+  color: ${TOKENS.textMuted};
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  @media (max-width: 640px) {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+
+    svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+`;
+
+export const ProfileFieldValue = styled.div`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${TOKENS.text};
+  word-break: break-word;
+  line-height: 1.45;
+
+  @media (max-width: 640px) {
+    font-size: 15px;
+    padding-left: 32px;
+  }
+`;
+
+export const ProfileDetailGrid = ProfileFormGrid;
+export const ProfileDetailItem = ProfileField;
+
+export const ProfileSidebarCard = styled.div``;
+export const ProfileSidebarBlock = styled.div``;
+export const ProfileSidebarTitle = styled.h4``;
+
+export const ProfileInfoList = styled.dl`
+  margin: 0;
+  display: grid;
+  gap: 0;
+`;
+
+export const ProfileInfoRow = styled.div`
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid ${TOKENS.lineSoft};
+  font-size: 14px;
+
+  &:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-of-type {
+    padding-top: 0;
+  }
+
+  dt {
+    margin: 0;
+    color: ${TOKENS.textMuted};
+    font-weight: 500;
+  }
+
+  dd {
+    margin: 0;
+    color: ${TOKENS.text};
+    font-weight: 500;
+    word-break: break-word;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+`;
+
+export const ProfileTimeline = ProfileInfoList;
+export const ProfileTimelineItem = styled.div`
+  display: contents;
+`;
+
+export const ProfileActionStack = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+export const ProfileAddressLine = styled.div`
+  font-size: 16px;
+  font-weight: 500;
+  color: ${TOKENS.text};
+  line-height: 1.5;
+  word-break: break-word;
+`;
+
+export const ProfileAddressSub = styled.div`
+  margin-top: 6px;
+  font-size: 13px;
+  color: ${TOKENS.textMuted};
+`;
+
+export const ProfileSelectRow = styled.div`
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  @media (max-width: 840px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const ProfileProSection = styled.section`
+  width: 100%;
+  min-width: 0;
+`;
+
+export const ProfileTabs = styled.div`
+  margin-bottom: 16px;
+  border-bottom: 1px solid ${TOKENS.line};
+
+  @media (max-width: 640px) {
+    margin-bottom: 0;
+    padding: 0 12px;
+    border-bottom: none;
+  }
+`;
+
+export const ProfileTabList = styled.div`
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    gap: 4px;
+    padding: 4px;
+    background: ${TOKENS.panelBg};
+    border: 1px solid ${TOKENS.lineSoft};
+    border-radius: 10px;
+    overflow: hidden;
+  }
+`;
+
+export const ProfileTab = styled.button<{ $active?: boolean }>`
+  height: 46px;
+  padding: 0 18px;
+  border: none;
+  border-bottom: 2px solid
+    ${({ $active }) => ($active ? TOKENS.primary : "transparent")};
+  background: transparent;
+  color: ${({ $active }) => ($active ? TOKENS.text : TOKENS.textMuted)};
+  font-size: 15px;
+  font-weight: ${({ $active }) => ($active ? 600 : 500)};
+  cursor: pointer;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    color: ${TOKENS.text};
+  }
+
+  @media (max-width: 640px) {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 38px;
+    margin-bottom: 0;
+    padding: 0 8px;
+    font-size: 13px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: none;
+    border-radius: 7px;
+    color: ${({ $active }) => ($active ? TOKENS.primary : TOKENS.textMuted)};
+    background: ${({ $active }) => ($active ? "#ffffff" : "transparent")};
+    box-shadow: ${({ $active }) =>
+      $active ? "0 1px 2px rgba(15, 23, 42, 0.08)" : "none"};
+  }
+`;
+
+export const ProfileTabPanel = styled.div`
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+`;
+
+export const ProfileActionsRow = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    button {
+      width: 100%;
+      justify-content: center;
     }
   }
 `;

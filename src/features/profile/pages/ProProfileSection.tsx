@@ -10,23 +10,17 @@ type Role = "WORKER" | "LEGAL" | "CLIENT" | "INVESTOR";
 
 export default function ProProfileSection({
   role = "WORKER" as Role,
+  embedded = false,
 }: {
   role?: Role;
+  embedded?: boolean;
 }) {
   return (
     <section>
-      {/* <SectionTitle>
-        {role === "WORKER"
-          ? "Профессиональный профиль"
-          : role === "LEGAL"
-          ? "Профиль компании"
-          : "Пожелания заказчика"}
-      </SectionTitle> */}
-      {role === "WORKER" && <WorkerProfile />}
+      {role === "WORKER" && <WorkerProfile embedded={embedded} />}
       {role === "LEGAL" && <LegalProfile />}
       {role === "CLIENT" && <ClientProfile />}
       {role === "INVESTOR" && <InvestorProfile />}
-      {/* Если нужен левый sticky-сайдбар + правый контент (как у HH), разместите внутри компонентов */}
       <RailRow></RailRow>
     </section>
   );

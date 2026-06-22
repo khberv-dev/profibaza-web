@@ -7,17 +7,20 @@ type OrderAvatarProps = {
   fileId?: string | null;
   initials?: ReactNode;
   variant?: "client" | "worker";
+  size?: "default" | "compact";
 };
 
 export function OrderAvatar({
   fileId,
   initials,
   variant = "client",
+  size = "default",
 }: OrderAvatarProps) {
   if (fileId) {
     return (
       <AvatarImg
         $variant={variant}
+        $size={size}
         src={avatarUrl(fileId)}
         alt=""
         onError={onAvatarError}
@@ -26,16 +29,49 @@ export function OrderAvatar({
   }
 
   return (
-    <AvatarFallback $variant={variant}>
-      {initials ?? <User size={18} />}
+    <AvatarFallback $variant={variant} $size={size}>
+      {initials ?? <User size={size === "compact" ? 16 : 18} />}
     </AvatarFallback>
   );
 }
 
-const AvatarImg = styled.img<{ $variant: "client" | "worker" }>`
-  width: 96px;
-  height: 96px;
-  border-radius: 24px;
+const avatarSizes = {
+  default: {
+    base: { w: 96, h: 96, r: 24, fs: 18 },
+    md: { w: 64, h: 64, r: 18, fs: 16 },
+    sm: { w: 52, h: 52, r: 16, fs: 14 },
+  },
+  compact: {
+    base: { w: 56, h: 56, r: 14, fs: 15 },
+    md: { w: 52, h: 52, r: 12, fs: 14 },
+    sm: { w: 48, h: 48, r: 12, fs: 13 },
+  },
+  worker: {
+    base: { w: 96, h: 96, r: 24, fs: 32 },
+    md: { w: 64, h: 64, r: 18, fs: 22 },
+    sm: { w: 48, h: 48, r: 12, fs: 16 },
+  },
+  workerCompact: {
+    base: { w: 56, h: 56, r: 14, fs: 18 },
+    md: { w: 52, h: 52, r: 12, fs: 16 },
+    sm: { w: 48, h: 48, r: 12, fs: 14 },
+  },
+} as const;
+
+function pickSizes(variant: "client" | "worker", size: "default" | "compact") {
+  if (variant === "worker") {
+    return size === "compact" ? avatarSizes.workerCompact : avatarSizes.worker;
+  }
+  return size === "compact" ? avatarSizes.compact : avatarSizes.default;
+}
+
+const AvatarImg = styled.img<{
+  $variant: "client" | "worker";
+  $size: "default" | "compact";
+}>`
+  width: ${({ $variant, $size }) => pickSizes($variant, $size).base.w}px;
+  height: ${({ $variant, $size }) => pickSizes($variant, $size).base.h}px;
+  border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).base.r}px;
   object-fit: cover;
   display: block;
   flex-shrink: 0;
@@ -43,42 +79,45 @@ const AvatarImg = styled.img<{ $variant: "client" | "worker" }>`
   background: #f8fafc url(${ANON_AVATAR}) center/cover no-repeat;
 
   @media (max-width: 920px) {
-    width: 64px;
-    height: 64px;
-    border-radius: ${({ $variant }) => ($variant === "worker" ? "18px" : "20px")};
+    width: ${({ $variant, $size }) => pickSizes($variant, $size).md.w}px;
+    height: ${({ $variant, $size }) => pickSizes($variant, $size).md.h}px;
+    border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).md.r}px;
   }
 
-  @media (max-width: 520px) {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
+  @media (max-width: 640px) {
+    width: ${({ $variant, $size }) => pickSizes($variant, $size).sm.w}px;
+    height: ${({ $variant, $size }) => pickSizes($variant, $size).sm.h}px;
+    border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).sm.r}px;
   }
 `;
 
-const AvatarFallback = styled.div<{ $variant: "client" | "worker" }>`
-  width: 96px;
-  height: 96px;
-  border-radius: 24px;
+const AvatarFallback = styled.div<{
+  $variant: "client" | "worker";
+  $size: "default" | "compact";
+}>`
+  width: ${({ $variant, $size }) => pickSizes($variant, $size).base.w}px;
+  height: ${({ $variant, $size }) => pickSizes($variant, $size).base.h}px;
+  border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).base.r}px;
   border: 1px solid #e7ecf3;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   background: linear-gradient(180deg, #eef2ff, #f8fafc);
-  font-weight: ${({ $variant }) => ($variant === "worker" ? 800 : 900)};
+  font-weight: ${({ $variant }) => ($variant === "worker" ? 800 : 700)};
   color: ${({ $variant }) => ($variant === "worker" ? "#95a3b5" : "#1e40af")};
-  font-size: ${({ $variant }) => ($variant === "worker" ? "32px" : "18px")};
+  font-size: ${({ $variant, $size }) => pickSizes($variant, $size).base.fs}px;
 
   @media (max-width: 920px) {
-    width: 64px;
-    height: 64px;
-    border-radius: ${({ $variant }) => ($variant === "worker" ? "18px" : "20px")};
-    font-size: ${({ $variant }) => ($variant === "worker" ? "22px" : "16px")};
+    width: ${({ $variant, $size }) => pickSizes($variant, $size).md.w}px;
+    height: ${({ $variant, $size }) => pickSizes($variant, $size).md.h}px;
+    border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).md.r}px;
+    font-size: ${({ $variant, $size }) => pickSizes($variant, $size).md.fs}px;
   }
 
-  @media (max-width: 520px) {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    font-size: 18px;
+  @media (max-width: 640px) {
+    width: ${({ $variant, $size }) => pickSizes($variant, $size).sm.w}px;
+    height: ${({ $variant, $size }) => pickSizes($variant, $size).sm.h}px;
+    border-radius: ${({ $variant, $size }) => pickSizes($variant, $size).sm.r}px;
+    font-size: ${({ $variant, $size }) => pickSizes($variant, $size).sm.fs}px;
   }
 `;

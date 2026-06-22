@@ -5,36 +5,58 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 import "dayjs/locale/ru";
 import "dayjs/locale/uz";
-import styled from "@emotion/styled";
+import { Camera, Settings, LogOut, User, Users, CircleUser, Phone, Mail, Briefcase, IdCard } from "lucide-react";
 
 import {
-  Wrap,
-  TopBar,
-  Crumb,
-  Card,
-  CardBody,
-  AvatarWrap,
-  Avatar,
-  Info,
-  Name,
-  Subline,
-  MetaRow,
-  Badge,
-  Actions,
-  PrimaryBtn,
-  GhostBtn,
-  SectionTitle,
-  Grid2,
-  ContactCard,
-  ContactIcon,
-  FieldTitle,
-  FieldValue,
-  AddLink,
   Notice,
   SkeletonLine,
-  NameRow,
-  CompanyBadge,
-  LogoutBtn,
+  ProfilePageWrap,
+  ProfileShell,
+  ProfileTopRow,
+  ProfilePageTitle,
+  ProfileLayout,
+  ProfileMain,
+  ProfileCard,
+  ProfileHero,
+  ProfileHeroTop,
+  ProfileAvatarWrap,
+  ProfileAvatar,
+  ProfileAvatarPlaceholder,
+  ProfileHeroContent,
+  ProfileHeroHead,
+  ProfileHeroIdentity,
+  ProfileName,
+  ProfileSubtitle,
+  ProfileHeroToolbar,
+  ProfileHeroDivider,
+  ProfileHeroMeta,
+  ProfileHeroMetaItem,
+  ProfileHeroHint,
+  ProfileHeroBtn,
+  ProfileHeroOutlineBtn,
+  ProfileHeroLogoutBtn,
+  ProfileCardHead,
+  ProfileCardTitle,
+  ProfileCardSubtitle,
+  ProfileCardActions,
+  ProfileCardBody,
+  ProfileFormGrid,
+  ProfileField,
+  ProfileFieldLabel,
+  ProfileFieldIcon,
+  ProfileFieldValue,
+  ProfileSectionIcon,
+  ProfileCardTitleRow,
+  ProfileOutlineBtn,
+  ProfilePrimaryBtn,
+  ProfileAddressLine,
+  ProfileAddressSub,
+  ProfileSelectRow,
+  ProfileActionsRow,
+  ProfileTabs,
+  ProfileTabList,
+  ProfileTab,
+  ProfileTabPanel,
 } from "../profile-style";
 
 import LangSwitcher from "../../../components/lang-switcher/LangSwitcher";
@@ -75,105 +97,10 @@ import CustomSelect, {
 } from "../../../components/custom-select/CustomSelect";
 import ProProfileSection from "./ProProfileSection";
 import { useQueryClient } from "@tanstack/react-query";
-import { EditBtn } from "../pro-profile-section.style";
 import { useUpdateInvestorAddress } from "../../../shared/endpoints/investor";
+import { ANON_AVATAR, onAvatarError } from "../../../shared/lib/avatar";
 
-/* — аккуратная карточка адреса — */
-/* — hh-like address card — */
-const AddressCard = styled.section`
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #fff;
-  padding: 16px;
-  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.03);
-`;
-
-const AddressHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-`;
-
-const AddressTitle = styled.h3`
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.01em;
-`;
-
-const AddressHint = styled.span`
-  font-size: 12px;
-  color: #64748b;
-`;
-
-const LinkBtn = styled.button`
-  border: 1px solid #e5e7eb;
-  padding: 8px 12px;
-  background: #fff;
-  color: #111827;
-  font-weight: 600;
-  cursor: pointer;
-  line-height: 1;
-  border-radius: 10px;
-  transition: box-shadow 0.15s ease, transform 0.06s ease, background 0.15s ease;
-  &:hover {
-    background: #f9fafb;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.06);
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-
-const AddressLine = styled.div`
-  color: #0f172a;
-  font-weight: 600;
-  min-height: 22px;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
-`;
-
-const AddressSub = styled.div`
-  margin-top: 6px;
-  color: #64748b;
-  font-size: 12px;
-`;
-
-const AddressDivider = styled.div`
-  height: 1px;
-  background: #f1f5f9;
-  margin: 12px 0;
-`;
-
-/* Кнопочная полоса действий */
-const ActionsRow = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 12px;
-`;
-
-/* Сетка селектов */
-const SelectRow = styled.div`
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 1fr 1fr;
-
-  @media (max-width: 840px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Row = styled.div`
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-`;
+const onProfileAvatarError = onAvatarError;
 
 function formatPhoneHuman(p?: string | null) {
   const d = (p || "").replace(/\D/g, "");
@@ -196,6 +123,8 @@ function findByAnyName<
   );
 }
 
+type ProfileTabId = "general" | "pro";
+
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { data, isLoading, isError, error } = useMe();
@@ -212,12 +141,12 @@ export default function ProfilePage() {
   const {
     url: avatarUrl,
     isLoading: avatarLoading,
-    isError: avatarError,
   } = useAvatar();
   const { mutate: uploadAvatar, isPending: uploading } = useUploadAvatar();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [editOpen, setEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProfileTabId>("general");
   const phonePretty = useMemo(
     () => formatPhoneHuman(data?.phone),
     [data?.phone]
@@ -501,151 +430,63 @@ export default function ProfilePage() {
     try {
       localStorage.removeItem("pb_auth");
       sessionStorage.removeItem("pb_auth");
-
-      // если есть другие auth-ключи — можно добавить тут
-      // localStorage.removeItem("token");
     } finally {
       navigate("/login", { replace: true });
     }
   };
 
+  const fullName = useMemo(() => {
+    if (isLoading) return "";
+    return [data?.surname, data?.name, data?.middleName].filter(Boolean).join(" ") || "—";
+  }, [isLoading, data?.surname, data?.name, data?.middleName]);
+
+  const memberSince = useMemo(() => {
+    if (!data?.createdAt) return "—";
+    const d = dayjs(data.createdAt);
+    return d.isValid()
+      ? d.locale(i18n.language).format("DD.MM.YYYY")
+      : "—";
+  }, [data?.createdAt, i18n.language]);
+
+  const avatarSrc = avatarUrl || ANON_AVATAR;
+  const roleLabel = data?.role ? t(`profile.roles.${data.role}`) : "—";
+
+  const subtitle = useMemo(() => {
+    if (isLoading) return "";
+    const parts = [roleLabel];
+    if (isLegal && legalMe?.name) parts.push(legalMe.name);
+    return parts.filter(Boolean).join(" · ");
+  }, [isLoading, roleLabel, isLegal, legalMe?.name]);
+
+  const proRole = data?.role as "WORKER" | "LEGAL" | "CLIENT" | "INVESTOR" | undefined;
+  const hasProProfile =
+    proRole === "WORKER" ||
+    proRole === "LEGAL" ||
+    proRole === "CLIENT" ||
+    proRole === "INVESTOR";
+
+  const proTabLabel = useMemo(() => {
+    switch (proRole) {
+      case "WORKER":
+        return t("profile.tabWorker");
+      case "LEGAL":
+        return t("profile.tabLegal");
+      case "CLIENT":
+        return t("profile.tabClient");
+      case "INVESTOR":
+        return t("profile.tabInvestor");
+      default:
+        return t("profile.tabWorker");
+    }
+  }, [proRole, t]);
+
   return (
-    <Wrap>
-      <div style={{ padding: 16 }}>
-        <TopBar>
-          <Crumb>
-            {t("profile.breadcrumbs")} / <span>{t("profile.title")}</span>
-          </Crumb>
+    <ProfilePageWrap>
+      <ProfileShell>
+        <ProfileTopRow>
+          <ProfilePageTitle>{t("profile.title")}</ProfilePageTitle>
           <LangSwitcher />
-        </TopBar>
-
-        <Card>
-          <CardBody>
-            <AvatarWrap>
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="avatar"
-                  width={112}
-                  height={112}
-                  style={{
-                    width: 112,
-                    height: 112,
-                    borderRadius: "50%",
-                    border: "2px solid #E7ECF3",
-                    objectFit: "cover",
-                    background: "#f1f5f9",
-                  }}
-                />
-              ) : (
-                <Avatar aria-label="avatar placeholder" />
-              )}
-            </AvatarWrap>
-
-            <Info>
-              <Name>
-                {isLoading ? (
-                  <SkeletonLine w={220} />
-                ) : (
-                  <NameRow>
-                    <span>
-                      {(data?.name || "—") + " " + (data?.surname || "")}
-                    </span>
-                  </NameRow>
-                )}
-              </Name>
-
-              <Subline>
-                {isLoading ? (
-                  <SkeletonLine w={160} />
-                ) : data?.createdAt ? (
-                  dayjs(data.createdAt).isValid() ? (
-                    dayjs(data.createdAt)
-                      .locale(i18n.language)
-                      .format("DD.MM.YYYY HH:mm")
-                  ) : (
-                    "—"
-                  )
-                ) : (
-                  "—"
-                )}
-              </Subline>
-
-              <MetaRow>
-                {isLoading ? (
-                  <SkeletonLine w={80} />
-                ) : (
-                  <Badge>
-                    {data?.role ? t(`profile.roles.${data.role}`) : "—"}
-                  </Badge>
-                )}
-
-                {isLegal && legalMe?.name ? (
-                  <CompanyBadge title={legalMe.name}>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="#0070ff"
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                      role="img"
-                      focusable="false"
-                      className="magritte-icon___rRr4Q_12-3-5 magritte-icon_initial-accent___E3b-y_12-3-5"
-                    >
-                      <g>
-                        <g>
-                          <path
-                            fill-rule="evenodd"
-                            clip-rule="evenodd"
-                            d="M6.29443 14.8729C6.76051 15.4025 7.28287 15.996 7.998 15.996V15.988C8.72144 15.988 9.24393 15.394 9.70211 14.8643C9.9754 14.5433 10.2728 14.2062 10.53 14.1019C10.7973 13.9875 11.217 14.0107 11.6374 14.0339C11.6594 14.0352 11.6815 14.0364 11.7036 14.0376L11.7306 14.0391C12.4376 14.0788 13.1647 14.1197 13.6488 13.6363C14.1254 13.1605 14.084 12.4261 14.0442 11.7196L14.0427 11.694C14.0416 11.6747 14.0406 11.6553 14.0395 11.6358C14.016 11.2201 13.9918 10.7905 14.107 10.5222C14.2196 10.2653 14.5491 9.97647 14.8707 9.69555L14.8885 9.67992C15.4144 9.21853 15.996 8.7083 15.996 7.99403C15.996 7.27169 15.4012 6.75 14.8707 6.29251C14.5491 6.01962 14.2115 5.72263 14.107 5.4658C13.9925 5.19902 14.0158 4.78025 14.039 4.36068C14.0403 4.33846 14.0415 4.31623 14.0427 4.29403C14.091 3.57971 14.1392 2.84127 13.6488 2.35168C13.1722 1.86785 12.4365 1.90919 11.7288 1.94896L11.7036 1.95038C11.6841 1.95146 11.6646 1.95256 11.645 1.95366C11.2287 1.97704 10.7987 2.00119 10.53 1.8862C10.2728 1.77384 9.98344 1.44471 9.70211 1.12367L9.68644 1.10586C9.22435 0.580731 8.71334 0 7.998 0C7.27456 0 6.75208 0.593949 6.29391 1.12367C6.02061 1.44471 5.7232 1.78187 5.46597 1.8862C5.19885 2.00052 4.77953 1.97731 4.35942 1.95407C4.33707 1.95283 4.31472 1.95159 4.29239 1.95038C4.2834 1.94987 4.27439 1.94937 4.26539 1.94886C3.55843 1.90912 2.83131 1.86825 2.34715 2.35168C1.87101 2.83503 1.91194 3.5609 1.95173 4.26668C1.95225 4.2758 1.95276 4.28491 1.95328 4.29403C1.95443 4.31508 1.95559 4.33618 1.95676 4.35729C1.98011 4.7787 2.0038 5.20632 1.88898 5.47383C1.77645 5.73067 1.44687 6.01963 1.12534 6.30054L1.10753 6.31617C0.581598 6.77756 0 7.28779 0 8.00207C0 8.72441 0.594821 9.2461 1.12534 9.70359C1.44687 9.97648 1.78448 10.2734 1.88898 10.5302C2.00348 10.797 1.98024 11.2158 1.95696 11.6354C1.95572 11.6576 1.95449 11.6799 1.95328 11.7021C1.90505 12.4164 1.85682 13.1547 2.34715 13.6443C2.82377 14.1282 3.55945 14.0868 4.26715 14.047L4.29239 14.0456C4.31163 14.0446 4.33092 14.0435 4.35023 14.0424C4.76672 14.019 5.19711 13.9948 5.46597 14.1099C5.7232 14.2223 6.01309 14.5519 6.29443 14.8729ZM11.9872 5.99862L10.9972 5.00867L6.99825 9.00767L4.99875 7.00817L4.0088 7.99812L6.99825 10.9876L11.9872 5.99862Z"
-                            fill="currentColor"
-                          ></path>
-                        </g>
-                      </g>
-                    </svg>
-                    {legalMe.name}
-                  </CompanyBadge>
-                ) : null}
-                {/* <Badge tone="muted">{t("profile.visibility.public")}</Badge> */}
-              </MetaRow>
-
-              <Actions>
-                <PrimaryBtn type="button" onClick={onPick} disabled={uploading}>
-                  {uploading
-                    ? t("profile.uploading") || "Загрузка..."
-                    : t("profile.uploadAvatar") || "Загрузить аватар"}
-                </PrimaryBtn>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={onFileChange}
-                  style={{ display: "none" }}
-                />
-
-                <NavLink to="/app/settings" style={{ textDecoration: "none" }}>
-                  <EditBtn type="button" disabled={uploading}>
-                    {t("profile.settings")}
-                  </EditBtn>
-                </NavLink>
-
-                <LogoutBtn type="button" onClick={handleLogout}>
-                  {t("common.logout") || "Выйти"}
-                </LogoutBtn>
-              </Actions>
-
-              {(avatarLoading || uploading) && (
-                <Subline>
-                  {uploading
-                    ? t("profile.uploading") || "Отправляем файл..."
-                    : t("profile.loadingAvatar") || "Загружаем аватар..."}
-                </Subline>
-              )}
-              {avatarError && avatarUrl == null && null}
-            </Info>
-          </CardBody>
-        </Card>
+        </ProfileTopRow>
 
         {isError && (
           <Notice tone="error">
@@ -653,147 +494,342 @@ export default function ProfilePage() {
           </Notice>
         )}
 
-        <SectionTitle>{t("profile.contacts")}</SectionTitle>
+        <ProfileLayout>
+          <ProfileMain>
+            <ProfileCard>
+              <ProfileHero>
+                <ProfileHeroTop>
+                  <ProfileAvatarWrap>
+                    {avatarUrl ? (
+                      <ProfileAvatar
+                        src={avatarSrc}
+                        alt=""
+                        onClick={onPick}
+                        onError={onProfileAvatarError}
+                      />
+                    ) : (
+                      <ProfileAvatarPlaceholder
+                        role="button"
+                        aria-label="avatar"
+                        onClick={onPick}
+                      />
+                    )}
+                  </ProfileAvatarWrap>
 
-        <Grid2>
-          <ContactCard>
-            <ContactIcon src="/phone.svg" alt="" />
-            <div>
-              <FieldTitle>{t("profile.phone")}</FieldTitle>
-              <FieldValue>
-                {isLoading ? <SkeletonLine w={120} /> : phonePretty}
-              </FieldValue>
-            </div>
-          </ContactCard>
+                  <ProfileHeroContent>
+                    <ProfileHeroHead>
+                      <ProfileHeroIdentity>
+                        <ProfileName>
+                          {isLoading ? <SkeletonLine w={220} /> : fullName}
+                        </ProfileName>
+                        {!isLoading && subtitle && (
+                          <ProfileSubtitle>{subtitle}</ProfileSubtitle>
+                        )}
+                      </ProfileHeroIdentity>
 
-          <ContactCard>
-            <ContactIcon src="/mail.svg" alt="" />
-            <div>
-              <FieldTitle>{t("profile.email")}</FieldTitle>
-              <FieldValue>
-                {isLoading ? <SkeletonLine w={200} /> : data?.email || "—"}
-              </FieldValue>
-            </div>
-          </ContactCard>
-        </Grid2>
-      </div>
+                      <ProfileHeroToolbar>
+                        <ProfileHeroBtn
+                          type="button"
+                          onClick={onPick}
+                          disabled={uploading}
+                        >
+                          <Camera size={15} />
+                          {uploading
+                            ? t("profile.uploading")
+                            : t("profile.uploadAvatar")}
+                        </ProfileHeroBtn>
+                        <input
+                          ref={fileRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={onFileChange}
+                          style={{ display: "none" }}
+                        />
+                        <NavLink
+                          to="/app/settings"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <ProfileHeroOutlineBtn type="button">
+                            <Settings size={15} />
+                            {t("profile.settings")}
+                          </ProfileHeroOutlineBtn>
+                        </NavLink>
+                        <ProfileHeroLogoutBtn type="button" onClick={handleLogout}>
+                          <LogOut size={15} />
+                          {t("common.logout") || "Выйти"}
+                        </ProfileHeroLogoutBtn>
+                      </ProfileHeroToolbar>
+                    </ProfileHeroHead>
 
-      {(isClient || isLegal || isInvestor) && (
-        <AddressCard>
-          <AddressHeader>
-            <div style={{ display: "grid", gap: 2 }}>
-              <AddressTitle>
-                {t("profile.address.title") || "Адрес"}
-              </AddressTitle>
-              {!isEditingAddress && (
-                <AddressHint>
-                  {currentAddressText === "—"
-                    ? (t("profile.address.addHint") as string) ||
-                      "Добавьте ваш адрес, чтобы соискатели видели локацию"
-                    : (t("profile.address.editHint") as string) ||
-                      "Обновите адрес при переезде или смене офиса"}
-                </AddressHint>
-              )}
-            </div>
+                    {(avatarLoading || uploading) && (
+                      <ProfileHeroHint>
+                        {uploading
+                          ? t("profile.uploading")
+                          : t("profile.loadingAvatar")}
+                      </ProfileHeroHint>
+                    )}
+                  </ProfileHeroContent>
+                </ProfileHeroTop>
 
-            {!isEditingAddress && (
-              <EditBtn onClick={openAddressEditor}>
-                {currentAddressText === "—"
-                  ? (t("profile.address.add") as string) || "Добавить"
-                  : (t("profile.edit") as string) || "Изменить"}
-              </EditBtn>
+                <ProfileHeroDivider />
+
+                <ProfileHeroMeta>
+                  <ProfileHeroMetaItem>
+                    <span className="label">{t("profile.phone")}</span>
+                    <span className="value">
+                      {isLoading ? <SkeletonLine w={120} /> : phonePretty}
+                    </span>
+                  </ProfileHeroMetaItem>
+                  <ProfileHeroMetaItem>
+                    <span className="label">{t("profile.email")}</span>
+                    <span className="value">
+                      {isLoading ? <SkeletonLine w={200} /> : data?.email || "—"}
+                    </span>
+                  </ProfileHeroMetaItem>
+                  <ProfileHeroMetaItem>
+                    <span className="label">
+                      {t("profile.registrationDate", "Дата регистрации")}
+                    </span>
+                    <span className="value">
+                      {isLoading ? <SkeletonLine w={100} /> : memberSince}
+                    </span>
+                  </ProfileHeroMetaItem>
+                </ProfileHeroMeta>
+              </ProfileHero>
+            </ProfileCard>
+
+            {hasProProfile && (
+              <ProfileTabs>
+                <ProfileTabList role="tablist" aria-label={t("profile.title")}>
+                  <ProfileTab
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "general"}
+                    $active={activeTab === "general"}
+                    onClick={() => setActiveTab("general")}
+                  >
+                    {t("profile.tabGeneral")}
+                  </ProfileTab>
+                  <ProfileTab
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === "pro"}
+                    $active={activeTab === "pro"}
+                    onClick={() => setActiveTab("pro")}
+                  >
+                    {proTabLabel}
+                  </ProfileTab>
+                </ProfileTabList>
+              </ProfileTabs>
             )}
-          </AddressHeader>
 
-          {!isEditingAddress ? (
-            <>
-              <AddressLine>{currentAddressText}</AddressLine>
-              <AddressSub>{saveMsg ? saveMsg : currentAddressDate}</AddressSub>
-            </>
-          ) : (
-            <>
-              <AddressDivider />
+            {(!hasProProfile || activeTab === "general") && (
+              <ProfileTabPanel>
+            <ProfileCard>
+              <ProfileCardHead>
+                <ProfileCardTitleRow>
+                  <ProfileSectionIcon aria-hidden>
+                    <IdCard />
+                  </ProfileSectionIcon>
+                  <div>
+                    <ProfileCardTitle>
+                      {t("profile.personalInfo", "Личная информация")}
+                    </ProfileCardTitle>
+                    <ProfileCardSubtitle>
+                      {t("profile.personalInfoHint", "Основные данные профиля")}
+                    </ProfileCardSubtitle>
+                  </div>
+                </ProfileCardTitleRow>
+              </ProfileCardHead>
+              <ProfileCardBody>
+                <ProfileFormGrid>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <User />
+                      </ProfileFieldIcon>
+                      {t("profile.firstName", "Имя")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? <SkeletonLine w={120} /> : data?.name || "—"}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <Users />
+                      </ProfileFieldIcon>
+                      {t("profile.lastName", "Фамилия")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? <SkeletonLine w={120} /> : data?.surname || "—"}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <CircleUser />
+                      </ProfileFieldIcon>
+                      {t("profile.middleName", "Отчество")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? (
+                        <SkeletonLine w={120} />
+                      ) : (
+                        data?.middleName || "—"
+                      )}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <Phone />
+                      </ProfileFieldIcon>
+                      {t("profile.phone")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? <SkeletonLine w={140} /> : phonePretty}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <Mail />
+                      </ProfileFieldIcon>
+                      {t("profile.email")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? <SkeletonLine w={180} /> : data?.email || "—"}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                  <ProfileField>
+                    <ProfileFieldLabel>
+                      <ProfileFieldIcon aria-hidden>
+                        <Briefcase />
+                      </ProfileFieldIcon>
+                      {t("profile.accountRole", "Роль")}
+                    </ProfileFieldLabel>
+                    <ProfileFieldValue>
+                      {isLoading ? <SkeletonLine w={100} /> : roleLabel}
+                    </ProfileFieldValue>
+                  </ProfileField>
+                </ProfileFormGrid>
+              </ProfileCardBody>
+            </ProfileCard>
 
-              {/* Сетка селектов */}
-              <SelectRow>
-                <CustomSelect
-                  id="region"
-                  options={regionOptions}
-                  value={regionId ?? null}
-                  onChange={onRegionChange}
-                  placeholder={t("profile.address.selectRegion") as string}
-                  disabled={false}
-                  loading={regionsLoading}
-                  menuMaxHeight={300}
-                />
-                <CustomSelect
-                  id="district"
-                  options={districtOptions}
-                  value={districtId ?? null}
-                  onChange={onDistrictChange}
-                  placeholder={t("profile.address.selectDistrict") as string}
-                  disabled={!regionId}
-                  loading={districtsLoading}
-                  menuMaxHeight={300}
-                />
-                <CustomSelect
-                  id="village"
-                  options={villageOptions}
-                  value={villageId ?? null}
-                  onChange={onVillageChange}
-                  placeholder={t("profile.address.selectVillage") as string}
-                  disabled={!districtId}
-                  loading={villagesLoading}
-                  menuMaxHeight={300}
-                />
-              </SelectRow>
+            {(isClient || isLegal || isInvestor) && (
+              <ProfileCard>
+                <ProfileCardHead>
+                  <div>
+                    <ProfileCardTitle>
+                      {t("profile.address.title")}
+                    </ProfileCardTitle>
+                    {!isEditingAddress && (
+                      <ProfileCardSubtitle>
+                        {currentAddressText === "—"
+                          ? t("profile.address.addHint")
+                          : t("profile.address.editHint")}
+                      </ProfileCardSubtitle>
+                    )}
+                  </div>
+                  {!isEditingAddress && (
+                    <ProfileCardActions>
+                      <ProfileOutlineBtn type="button" onClick={openAddressEditor}>
+                        {currentAddressText === "—"
+                          ? t("profile.address.add")
+                          : t("profile.edit")}
+                      </ProfileOutlineBtn>
+                    </ProfileCardActions>
+                  )}
+                </ProfileCardHead>
 
-              <ActionsRow>
-                <EditBtn onClick={cancelAddressEditor}>
-                  {t("common1.cancel") || "Отмена"}
-                </EditBtn>
-                <PrimaryBtn
-                  type="button"
-                  onClick={submitAddress}
-                  disabled={
-                    savingAddress ||
-                    !regionId ||
-                    !districtId ||
-                    !villageId ||
-                    regionsLoading ||
-                    districtsLoading ||
-                    villagesLoading
-                  }
-                  style={{ borderRadius: 10, padding: "10px 16px" }}
-                >
-                  {savingAddress
-                    ? (t("profile.address.saving") as string) || "Сохраняем…"
-                    : (t("profile.address.save") as string) || "Сохранить"}
-                </PrimaryBtn>
-              </ActionsRow>
-            </>
-          )}
-        </AddressCard>
-      )}
+                {!isEditingAddress ? (
+                  <ProfileCardBody>
+                    <ProfileAddressLine>{currentAddressText}</ProfileAddressLine>
+                    <ProfileAddressSub>
+                      {saveMsg ? saveMsg : currentAddressDate}
+                    </ProfileAddressSub>
+                  </ProfileCardBody>
+                ) : (
+                  <ProfileCardBody>
+                    <ProfileSelectRow>
+                      <CustomSelect
+                        id="region"
+                        options={regionOptions}
+                        value={regionId ?? null}
+                        onChange={onRegionChange}
+                        placeholder={t("profile.address.selectRegion") as string}
+                        disabled={false}
+                        loading={regionsLoading}
+                        menuMaxHeight={300}
+                      />
+                      <CustomSelect
+                        id="district"
+                        options={districtOptions}
+                        value={districtId ?? null}
+                        onChange={onDistrictChange}
+                        placeholder={t("profile.address.selectDistrict") as string}
+                        disabled={!regionId}
+                        loading={districtsLoading}
+                        menuMaxHeight={300}
+                      />
+                      <CustomSelect
+                        id="village"
+                        options={villageOptions}
+                        value={villageId ?? null}
+                        onChange={onVillageChange}
+                        placeholder={t("profile.address.selectVillage") as string}
+                        disabled={!districtId}
+                        loading={villagesLoading}
+                        menuMaxHeight={300}
+                      />
+                    </ProfileSelectRow>
 
-      {data?.role === "WORKER" && <ProProfileSection role="WORKER" />}
-      {data?.role === "LEGAL" && <ProProfileSection role="LEGAL" />}
-      {data?.role === "CLIENT" && <ProProfileSection role="CLIENT" />}
-      {data?.role === "INVESTOR" && <ProProfileSection role="INVESTOR" />}
-      <div style={{ padding: 16 }}>
-        {/* <SectionTitle>{t("profile.otherContacts")}</SectionTitle>
-        <AddLink href="#">{t("profile.add")}</AddLink>
+                    <ProfileActionsRow>
+                      <ProfileOutlineBtn type="button" onClick={cancelAddressEditor}>
+                        {t("common1.cancel") || "Отмена"}
+                      </ProfileOutlineBtn>
+                      <ProfilePrimaryBtn
+                        type="button"
+                        onClick={submitAddress}
+                        disabled={
+                          savingAddress ||
+                          !regionId ||
+                          !districtId ||
+                          !villageId ||
+                          regionsLoading ||
+                          districtsLoading ||
+                          villagesLoading
+                        }
+                      >
+                        {savingAddress
+                          ? t("profile.address.saving")
+                          : t("profile.address.save")}
+                      </ProfilePrimaryBtn>
+                    </ProfileActionsRow>
+                  </ProfileCardBody>
+                )}
+              </ProfileCard>
+            )}
 
-        <SectionTitle style={{ marginTop: 28 }}>
-          {t("profile.searchSettings")}
-        </SectionTitle> */}
-      </div>
+              </ProfileTabPanel>
+            )}
+
+            {hasProProfile && activeTab === "pro" && proRole && (
+              <ProfileTabPanel>
+                <ProProfileSection embedded role={proRole} />
+              </ProfileTabPanel>
+            )}
+
+          </ProfileMain>
+        </ProfileLayout>
+      </ProfileShell>
 
       <EditProfileModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
         me={data}
       />
-    </Wrap>
+    </ProfilePageWrap>
   );
 }

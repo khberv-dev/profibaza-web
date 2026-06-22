@@ -96,16 +96,26 @@ export function CommentsThread({
 /* ====== стили коротко (можно оставить ваши прежние) ====== */
 const Wrap = styled.section`
   margin-top: 10px;
-  // max-width: max-content;
   padding: 18px;
   border-radius: 14px;
   background: #f1f4f9;
+
+  @media (max-width: 640px) {
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 10px;
+  }
 `;
 const Title = styled.div`
   font-weight: 700;
   font-size: 18px;
   color: #0f172a;
   margin-bottom: 8px;
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
 `;
 const List = styled.ul`
   list-style: none;

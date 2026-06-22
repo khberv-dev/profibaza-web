@@ -47,6 +47,7 @@ import InvestorsPage from "../pages/investors/Investors";
 import InvestorOffersPage from "../features/investor-offers/InvestorOffersPage";
 import InvestorOrdersPage from "../features/orders/pages/legal/InvestorOrdersPage";
 import InvestorDetailPage from "../pages/investors/InvestorDetailPage";
+import NotificationsPage from "../features/notifications/pages/NotificationsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -82,6 +83,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <SearchPage /> },
               { path: "profile", element: <ProfilePage /> },
+              { path: "notifications", element: <NotificationsPage /> },
               { path: "settings", element: <SettingsPage /> },
               { path: "orders/new", element: <NewOrderPage /> },
               { path: "orders/my", element: <MyOrdersPage /> },

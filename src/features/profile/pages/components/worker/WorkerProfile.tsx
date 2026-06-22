@@ -16,9 +16,12 @@ import {
   Title,
   Layout,
   Main,
-  Aside,
   Card,
   CardHeader,
+  ProfCardHeader,
+  ProfCreateBtn,
+  ProfEditBtn,
+  ProfResumeBtn,
   CardTitle,
   CardBody,
   FormGrid,
@@ -52,7 +55,6 @@ import {
   ProfIconWrap,
   ProfHeadBlock,
   SectionHint,
-  ProgressMeta,
   HeadActions,
 } from "./worker-profile.style";
 
@@ -90,7 +92,6 @@ import {
   MapYandexLocations,
 } from "../../../../../components/map/MapYandexLocations";
 import { useNavigate, Link } from "react-router-dom";
-import { EditBtn } from "../../../pro-profile-section.style";
 
 const defaultSchedule: import("../../../../../shared/modules/worker").WeekSchedule =
   {
@@ -112,7 +113,9 @@ type RawDemo = {
   comment?: string | null;
 };
 
-export const WorkerProfile: React.FC = () => {
+export const WorkerProfile: React.FC<{ embedded?: boolean }> = ({
+  embedded = false,
+}) => {
   const { t } = useTranslation();
   // === справочники / текущие данные ===
   const [professions, setProfessions] = useState<Profession[]>([]);
@@ -132,9 +135,6 @@ export const WorkerProfile: React.FC = () => {
 
   // id профессий, уже созданных у пользователя
   const [createdIds, setCreatedIds] = useState<Set<string>>(new Set());
-
-  const [workerProfRaw, setWorkerProfRaw] =
-    useState<WorkerProfessionRow | null>(null);
 
   // === UI режим ===
   const [mode, setMode] = useState<Mode>("list");
@@ -608,18 +608,20 @@ export const WorkerProfile: React.FC = () => {
 
   return (
     <Page>
-      <Header>
-        <Title>{t("worker.title")}</Title>
-        <SectionHint>{t("worker.fillBasic")}</SectionHint>
-      </Header>
+      {!embedded && (
+        <Header>
+          <Title>{t("worker.title")}</Title>
+          <SectionHint>{t("worker.fillBasic")}</SectionHint>
+        </Header>
+      )}
 
       <Layout>
         <Main>
           {/* ===== Мои профессии ===== */}
           <Card>
-            <CardHeader>
+            <ProfCardHeader>
               <CardTitle>{t("worker.myProfs")}</CardTitle>
-              <PrimaryBtn
+              <ProfCreateBtn
                 type="button"
                 onClick={handleCreateClick}
                 title={
@@ -649,9 +651,9 @@ export const WorkerProfile: React.FC = () => {
                     ></path>
                   </g>
                 </svg>
-                {t("worker.createNew")}
-              </PrimaryBtn>
-            </CardHeader>
+                <span className="create-label">{t("worker.createNew")}</span>
+              </ProfCreateBtn>
+            </ProfCardHeader>
             <CardBody>
               {createdList.length > 0 ? (
                 <ProfList>
@@ -688,10 +690,10 @@ export const WorkerProfile: React.FC = () => {
 
                           <HeadActions>
                             <Link to={`/app/worker/profile/${row.id}/edit`}>
-                              <EditBtn type="button">{t("worker.edit")}</EditBtn>
+                              <ProfEditBtn type="button">{t("worker.edit")}</ProfEditBtn>
                             </Link>
 
-                            <EditBtn
+                            <ProfResumeBtn
                               type="button"
                               title={
                                 t("worker.downloadResume") || "Скачать резюме"
@@ -722,8 +724,10 @@ export const WorkerProfile: React.FC = () => {
                                   fill="currentColor"
                                 />
                               </svg>
-                              {t("worker.downloadResume") || "Скачать резюме"}
-                            </EditBtn>
+                              <span className="resume-label">
+                                {t("worker.downloadResume") || "Скачать резюме"}
+                              </span>
+                            </ProfResumeBtn>
                           </HeadActions>
                         </HeadRow>
 
@@ -906,25 +910,6 @@ export const WorkerProfile: React.FC = () => {
             </CardBody>
           </Card>
         </Main>
-
-        {/* Сайдбар */}
-        <Aside>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("worker.profileReady")}</CardTitle>
-            </CardHeader>
-            <CardBody>
-              <Small>{t("worker.fillBasic")}</Small>
-              <Progress>
-                <i style={{ width: `${workerProfRaw ? 70 : 40}%` }} />
-              </Progress>
-              <ProgressMeta>
-                <span>{t("worker.profileReady")}</span>
-                <span>{workerProfRaw ? "70%" : "40%"}</span>
-              </ProgressMeta>
-            </CardBody>
-          </Card>
-        </Aside>
       </Layout>
     </Page>
   );

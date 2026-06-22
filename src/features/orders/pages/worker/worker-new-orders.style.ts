@@ -3,9 +3,10 @@ import styled from "@emotion/styled";
 /* Страница */
 export const WOPage = styled.div`
   padding: 20px;
+  overflow-x: clip;
 
-  @media (max-width: 520px) {
-    padding: 14px;
+  @media (max-width: 640px) {
+    padding: 0 0 24px;
   }
 `;
 
@@ -17,10 +18,10 @@ export const WOToolbar = styled.div`
   gap: 12px;
   margin-bottom: 14px;
 
-  @media (max-width: 520px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+  @media (max-width: 640px) {
+    align-items: center;
+    padding: 14px 16px 0;
+    margin-bottom: 10px;
   }
 `;
 export const WOTitle = styled.h1`
@@ -29,6 +30,10 @@ export const WOTitle = styled.h1`
   font-weight: 900;
   color: #12284a;
   letter-spacing: -0.01em;
+
+  @media (max-width: 640px) {
+    font-size: 20px;
+  }
 `;
 export const WOSub = styled.div`
   color: #6b7a90;
@@ -40,120 +45,94 @@ export const WOSub = styled.div`
 export const WOList = styled.div`
   display: grid;
   gap: 12px;
+
+  @media (max-width: 640px) {
+    gap: 8px;
+  }
 `;
 
 /* Карточка заказа */
 export const WOCard = styled.article`
-  padding: 20px 22px;
-  border-radius: 20px;
+  padding: 16px 18px;
+  border-radius: 14px;
   background: #fff;
   border: 1px solid #e9eef6;
-  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04), 0 8px 24px rgba(2, 32, 71, 0.05);
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 4px 14px rgba(2, 32, 71, 0.04);
+  min-width: 0;
 
   .inner {
     display: grid;
-    grid-template-columns: 88px minmax(0, 1fr) 250px;
-    grid-template-areas: "left mid right";
-    gap: 16px 20px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "main actions"
+      "main actions";
+    gap: 16px;
+    align-items: start;
   }
 
-  &:hover {
-    box-shadow: 0 1px 0 rgba(16, 24, 40, 0.04), 0 12px 28px rgba(2, 32, 71, 0.08);
-    transform: translateY(-1px);
-  }
-
-  /* tablet */
   @media (max-width: 920px) {
-    padding: 16px;
-
     .inner {
-      grid-template-columns: 64px minmax(0, 1fr);
+      grid-template-columns: 1fr;
       grid-template-areas:
-        "left mid"
-        "right right";
-      gap: 12px 14px;
+        "main"
+        "actions";
+      gap: 12px;
     }
   }
 
-  /* mobile */
-  @media (max-width: 520px) {
-    padding: 14px;
-    border-radius: 16px;
-
-    .inner {
-      grid-template-columns: 52px minmax(0, 1fr);
-      grid-template-areas:
-        "left mid"
-        "right right";
-      gap: 10px 12px;
-    }
+  @media (max-width: 640px) {
+    padding: 14px 16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: 1px solid #e9eef6;
+    box-shadow: none;
   }
 `;
 
-
-/* Левая колонка (аватар) */
-export const WOLeft = styled.div`
-  grid-area: left;
-  display: grid;
-  align-content: start;
-  justify-items: center; /* чтобы аватар не «лип» к левому краю */
-`;
-export const WOAvatar = styled.div<{ $src?: string | null }>`
-  border-radius: 24px;
-  height: 96px;
-  width: 96px;
-  background: ${({ $src }) =>
-    $src ? `url(${$src}) center/cover no-repeat` : "linear-gradient(180deg,#eef2ff,#f8fafc)"};
-  border: 1px solid #e6ebf2;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  color: #95a3b5;
-  font-size: 32px;
-
-  @media (max-width: 920px) {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    font-size: 22px;
-  }
-
-  @media (max-width: 520px) {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    font-size: 18px;
-  }
-`;
-
-/* Центр */
-export const WOMid = styled.div`
-  grid-area: mid;
-  display: grid;
-  gap: 8px;
-  min-width: 0; /* важно для ellipsis */
-`;
-export const WOHead = styled.div`
+export const WOHeadRow = styled.div`
   display: flex;
-  justify-content: flex-start;
-  gap: 12px;
   align-items: flex-start;
-  @media (max-width: 920px) {
-    flex-direction: column;
-    gap: 6px;
-  }
+  gap: 12px;
+  min-width: 0;
+`;
+
+export const WOHeadMain = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+`;
+
+export const WOHeadTop = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 `;
 export const WOName = styled.div`
   font-size: 20px;
   font-weight: 700;
-  color: #0f1f3f; /* темнее, ближе к HH */
+  color: #0f1f3f;
   line-height: 1.2;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+  }
 `;
 export const WOSubline = styled.div`
   font-size: 13px;
   color: #7c8aa0;
   margin-top: 6px;
+  line-height: 1.4;
+
+  @media (max-width: 640px) {
+    font-size: 12px;
+    margin-top: 4px;
+  }
 `;
 
 /* Статус/чипсы */
@@ -212,117 +191,149 @@ export const WOStatus = styled.span<{
 /* Метаданные */
 export const WOMeta = styled.ul`
   display: grid;
-  grid-auto-rows: min-content;
-  gap: 10px;
+  gap: 0;
   list-style: none;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  background: #f8fafc;
+  overflow: hidden;
 
   li {
     display: grid;
-    grid-template-columns: 18px auto;
-    align-items: start;
-    column-gap: 10px;
-    min-height: 20px;
+    grid-template-columns: 18px minmax(72px, auto) minmax(0, 1fr);
+    gap: 6px 8px;
+    align-items: baseline;
+    padding: 9px 12px;
+    border-bottom: 1px solid #eef2f7;
     color: #334155;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.35;
+    min-width: 0;
+  }
+
+  li:last-child {
+    border-bottom: none;
   }
 
   li > div {
-    display: inline-flex;
-    gap: 6px;
-    align-items: baseline;
-    min-width: 0;
-    white-space: nowrap;
+    display: contents;
   }
 
   .k {
     color: #8a96a8;
-    flex: 0 0 auto;
+    font-size: 12px;
     font-weight: 500;
   }
 
   .v {
     color: #0f1f3f;
-    font-weight: 500;
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-variant-numeric: tabular-nums;
-    -moz-font-feature-settings: "tnum" 1;
-    -webkit-font-feature-settings: "tnum" 1;
-    font-feature-settings: "tnum" 1;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+    word-break: break-word;
   }
 
   svg {
+    width: 16px;
+    height: 16px;
     opacity: 0.75;
+    margin-top: 1px;
   }
 
-  /* ✅ mobile: разрешаем перенос адреса/значений */
-  @media (max-width: 520px) {
-    gap: 8px;
-
+  @media (max-width: 640px) {
     li {
-      font-size: 13px;
+      padding: 8px 10px;
+      grid-template-columns: 16px minmax(64px, auto) minmax(0, 1fr);
     }
 
-    li > div {
-      white-space: normal;   /* было nowrap */
-      flex-wrap: wrap;
+    .k {
+      font-size: 11px;
     }
 
     .v {
-      overflow: visible;     /* чтобы адрес не резался */
-      text-overflow: clip;
-      word-break: break-word;
+      font-size: 12px;
     }
   }
 `;
 
 export const WODivider = styled.div`
-  height: 1px;
-  background: #eef2f7;
-  margin: 10px 0 0;
+  display: none;
 `;
 export const WODesc = styled.p`
-  margin: 6px 0 0;
+  margin: 0;
   color: #1f2937;
-  background: #f1f4f9;
-  border-radius: 12px;
-  box-sizing: border-box;
-  display: inline-block;
-  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 10px 12px;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.5;
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+`;
+
+export const WOMid = styled.div`
+  grid-area: main;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+`;
+
+export const WOActionBar = styled.div`
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+
+    > * {
+      min-width: 0;
+    }
+
+    button {
+      width: 100%;
+      justify-content: center;
+      font-size: 12px;
+      height: 40px;
+      padding: 0 8px;
+    }
+  }
 `;
 
 /* Правая колонка (кнопки) */
 export const WORight = styled.aside`
-  grid-area: right;
+  grid-area: actions;
   display: grid;
   gap: 8px;
+  min-width: 140px;
   align-content: start;
-  justify-items: end;
-  grid-auto-rows: min-content;
 
   @media (max-width: 920px) {
-    justify-items: start;
-    grid-auto-flow: column;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  @media (max-width: 520px) {
-    grid-auto-flow: unset;
-    grid-template-columns: 1fr 1fr;
-    justify-items: stretch;
-
+  @media (max-width: 640px) {
     button {
       width: 100%;
+      height: 40px;
+      font-size: 13px;
     }
   }
 
-  @media (max-width: 360px) {
+  @media (max-width: 400px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -390,6 +401,12 @@ export const WOEmpty = styled.div`
   border: 1px dashed #d8e1fb;
   border-radius: 16px;
   color: #6b7a90;
+
+  @media (max-width: 640px) {
+    margin: 0 16px;
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
 `;
 
 export const CommentBlock = styled.div`
@@ -430,12 +447,13 @@ export const StarBtn = styled.button`
 export const CommentToggle = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 
-  min-height: 42px; /* было 44 */
-  padding: 10px 16px; /* было 12px 16px */
-  border-radius: 12px; /* было 12 */
-  font-size: 15px; /* было 16 */
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 15px;
   line-height: 1.25;
   font-weight: 600;
 
@@ -460,7 +478,14 @@ export const CommentToggle = styled.button`
   svg {
     width: 18px;
     height: 18px;
-  } /* было 20 */
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    min-height: 38px;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
 `;
 export const CommentForm = styled.div`
   margin-top: 8px;
@@ -538,14 +563,15 @@ export const WOTabs = styled.div`
   flex-wrap: wrap;
   margin: 6px 0 16px;
 
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 6px;
+    padding: 0 16px 6px;
+    margin: 0 0 12px;
 
     &::-webkit-scrollbar {
-      height: 6px;
+      display: none;
     }
   }
 `;

@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/ru";
-import styled from "@emotion/styled";
 import {
   Phone,
   ExternalLink,
@@ -33,6 +32,40 @@ import { CommentsThread } from "./CommentsThread";
 import { Link } from "react-router-dom";
 import { useOrderLabels } from "../../../../shared/i18n/useOrderLabels";
 import { OrderAvatar } from "../../../../components/OrderAvatar";
+import {
+  Wrap,
+  Toolbar,
+  Title,
+  Counter,
+  SoftBanner,
+  List,
+  Card,
+  CardHead,
+  CardHeadMain,
+  CardHeadTop,
+  CardBody,
+  Name,
+  Sub,
+  Status,
+  Meta,
+  Desc,
+  Actions,
+  Ghost,
+  Primary,
+  Empty,
+  CreateBtn,
+  SkeletonCard,
+  FilesWrap,
+  FilesGrid,
+  FileCard,
+  FileName,
+  EmptyFiles,
+  CommentBlock,
+  CommentToggle,
+  CommentForm,
+  StarsRow,
+  StarBtn,
+} from "../orders-page.style";
 
 dayjs.extend(relativeTime);
 
@@ -194,28 +227,28 @@ const telHref = telDigits ? `tel:+${telDigits}` : "";
 
   return (
     <Card role="article" aria-label={`Заявка ${order.id}`}>
-      <Left>
+      <CardHead>
         <OrderAvatar
+          size="compact"
           fileId={u?.avatar}
-          initials={u ? initials(u) : <User size={18} />}
+          initials={u ? initials(u) : <User size={16} />}
         />
-      </Left>
-
-      <Mid>
-        <Head>
-          <div>
-          <Link to='/find/worker/ab6b81e9-32c0-4bb7-a4e4-3ea9be0ad148'>
-            <Name>{fio(u)}</Name>
+        <CardHeadMain>
+          <CardHeadTop>
+            <Link to='/find/worker/ab6b81e9-32c0-4bb7-a4e4-3ea9be0ad148'>
+              <Name>{fio(u)}</Name>
             </Link>
-            <Sub>
-              {createdAgo ? `создана ${createdAgo}` : null}
-              {createdAgo && deadline ? " • " : ""}
-              {deadline ? `срок до ${deadline}` : ""}
-            </Sub>
-          </div>
-          <Status $tone={s.tone}>{s.text}</Status>
-        </Head>
+            <Status $tone={s.tone}>{s.text}</Status>
+          </CardHeadTop>
+          <Sub>
+            {createdAgo ? `создана ${createdAgo}` : null}
+            {createdAgo && deadline ? " • " : ""}
+            {deadline ? `срок до ${deadline}` : ""}
+          </Sub>
+        </CardHeadMain>
+      </CardHead>
 
+      <CardBody>
         <Meta>
           <li>
             <CalendarDays size={16} /> <span className="k">Дедлайн:</span>
@@ -338,7 +371,7 @@ const telHref = telDigits ? `tel:+${telDigits}` : "";
             )}
           </CommentBlock>
         )}
-      </Mid>
+      </CardBody>
 
 
       <Modal
@@ -456,7 +489,9 @@ const telHref = telDigits ? `tel:+${telDigits}` : "";
             onChange={(e) => setComment(e.target.value)}
             maxLength={400}
             style={{
-              width: "450px",
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
               minHeight: 96,
               resize: "vertical",
               padding: "10px 12px",
@@ -478,501 +513,16 @@ const telHref = telDigits ? `tel:+${telDigits}` : "";
   );
 };
 
-/* ================= Styles ================= */
-const Wrap = styled.div`
-  padding: 20px 16px 32px;
-  display: grid;
-  gap: 16px;
-`;
-
-
-const FilesWrap = styled.div`
-  /* вертикальный скролл внутри модала */
-  max-height: min(70vh, 560px);
-  overflow: auto;
-  padding-right: 4px;
-`;
-
-const FilesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: 10px;
-`;
-
-const FileCard = styled.div`
-  position: relative;
-  border: 1px solid #e7ecf3;
-  border-radius: 10px;
-  background: #f9fbff;
-  padding: 8px;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 6px;
-  min-height: 120px;
-
-  a {
-    display: block;
-    border-radius: 8px;
-    overflow: hidden;
-    line-height: 0;
-    background: #eef2ff;
-  }
-`;
-
-const FileName = styled.div`
-  font-size: 11px;
-  color: #475569;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const EmptyFiles = styled.div`
-  padding: 20px 12px;
-  border: 1px dashed #e5e7eb;
-  border-radius: 12px;
-  color: #64748b;
-  background: #fafafa;
-  text-align: center;
-  font-size: 14px;
-`;
-
-
-const Toolbar = styled.div`
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-`;
-const Title = styled.h2`
-  margin: 0;
-  font-size: 22px;
-  color: #0f172a;
-`;
-const Counter = styled.span`
-  color: #667085;
-  font-size: 13px;
-`;
-const SoftBanner = styled.div`
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid #ffe8cc;
-  background: #fff7ed;
-  color: #92400e;
-  font-size: 14px;
-  button {
-    margin-left: 8px;
-    border: 0;
-    background: transparent;
-    color: #7c3aed;
-    cursor: pointer;
-  }
-`;
-
-const List = styled.div`
-  display: grid;
-  gap: 12px;
-`;
-
-const Card = styled.article`
-  position: relative;
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  gap: 24px;
-  padding: 16px;
-  border-radius: 16px;
-  background: #fff;
-  border: 1px solid #e7effc;
-  box-shadow: 0 6px 18px rgba(2, 32, 71, 0.05);
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
-  &:hover {
-    box-shadow: 0 12px 28px rgba(2, 32, 71, 0.08);
-    transform: translateY(-1px);
-  }
-`;
-
-const Left = styled.div`
-  display: grid;
-  align-content: start;
-`;
-
-const Mid = styled.div`
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-`;
-
-const Head = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  @media (max-width: 520px) {
-    flex-direction: column;
-    gap: 6px;
-  }
-`;
-const Name = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  color: #12284a;
-`;
-const Sub = styled.div`
-  font-size: 13px;
-  color: #6b7a90;
-  margin-top: 2px;
-`;
-
-export const Status = styled.span<{
-  $tone: "blue" | "green" | "amber" | "gray" | "red";
-}>`
-  /* ==== дефолт (blue) переменные тона ==== */
-  --c: #0b3b8f;
-  --bg1: #f5f9ff;
-  --bg2: #ecf3ff;
-  --bd: #dbeafe;
-  --halo: 37, 99, 235; /* для теней rgba */
-
-  /* переопределяем по $tone */
-  ${({ $tone }) =>
-    $tone === "green"
-      ? `
-      --c:#14532d; --bg1:#f3fcf7; --bg2:#e8fbf2; --bd:#a7f3d0; --halo:20,83,45;
-    `
-      : $tone === "amber"
-      ? `
-      --c:#92400e; --bg1:#fff8ef; --bg2:#fff3e3; --bd:#fed7aa; --halo:146,64,14;
-    `
-      : $tone === "gray"
-      ? `
-      --c:#475467; --bg1:#f7f8fa; --bg2:#f2f4f7; --bd:#e7ecf3; --halo:71,84,103;
-    `
-      : $tone === "red"
-      ? `
-      --c:#991b1b; --bg1:#fff5f5; --bg2:#feecec; --bd:#fecaca; --halo:153,27,27;
-    `
-      : ""}
-
-  display: inline-grid;
-  grid-auto-flow: column;
-  align-items: center;
-  gap: 8px;
-
-  height: 26px;
-  padding: 0 12px;
-  border-radius: 999px;
-
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--c);
-
-  background: linear-gradient(180deg, var(--bg1), var(--bg2));
-
-  position: relative;
-  transform: translateZ(0); /* для чёткой рендерной */
-
-  /* маленькая точка-индикатор слева */
-  &::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--c);
-    box-shadow: 0 0 0 3px rgba(var(--halo), 0.12);
-  }
-`;
-const Desc = styled.p`
-  margin: 6px 0 0;
-  color: #1f2937;
-  background: #f1f4f9;
-  border-radius: 12px;
-  box-sizing: border-box;
-  display: inline-block;
-  padding: 10px 14px;
-  font-size: 14px;
-  line-height: 1.55;
-`;
-
-const Meta = styled.ul`
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  li {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    color: #6b7a90;
-  }
-  .k {
-    color: #7b8ba5;
-  }
-  .v {
-    color: #12284a;
-    font-weight: 500;
-  }
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 2px;
-`;
-const Btn = styled.button`
-  height: 36px;
-  font-size: 13px;
-  padding: 0 14px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.06s ease;
-  &:hover {
-    box-shadow: 0 8px 20px rgba(2, 32, 71, 0.08);
-  }
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-const Primary = styled(Btn)`
-  border: 1px solid #2f6bff;
-  background: #2f6bff;
-  color: #fff;
-`;
-const Ghost = styled(Btn)`
-  border: 1px solid #e7ecf3;
-  min-height: 42px;
-  font-size: 15px;
-  line-height: 1.25;
-  background: #fff;
-  color: #0f172a;
-  text-decoration: none;
-`;
-
-const Empty = styled.div`
-  margin: 24px 0;
-  padding: 28px;
-  border-radius: 16px;
-  border: 1px dashed #dbeafe;
-  background: #f8fbff;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  gap: 8px;
-  color: #0f172a;
-  .ico {
-    color: #2563eb;
-  }
-  h3 {
-    margin: 8px 0 0;
-  }
-  p {
-    margin: 0;
-    color: #6b7a90;
-  }
-`;
-const CreateBtn = styled.button`
-  margin-top: 8px;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid #2f6bff;
-  background: #2f6bff;
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-`;
 
 const CardSkeleton = () => (
   <SkeletonCard>
-    <div className="a" />
-    <div className="b">
-      <div className="l1" />
-      <div className="l2" />
-      <div className="l3" />
+    <div className="head">
+      <div className="a" />
+      <div className="b">
+        <div className="l1" />
+        <div className="l2" />
+        <div className="l3" />
+      </div>
     </div>
   </SkeletonCard>
 );
-const SkeletonCard = styled.div`
-  display: grid;
-  grid-template-columns: 72px 1fr;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 16px;
-  background: #fff;
-  border: 1px solid #e7effc;
-  overflow: hidden;
-  .a {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, #f3f4f6, #eef2ff, #f3f4f6);
-    animation: sh 1.3s infinite;
-  }
-  .b {
-    display: grid;
-    gap: 10px;
-  }
-  .l1,
-  .l2,
-  .l3 {
-    height: 14px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #f3f4f6, #eef2ff, #f3f4f6);
-    animation: sh 1.3s infinite;
-  }
-  .l2 {
-    width: 70%;
-  }
-  .l3 {
-    width: 50%;
-  }
-  @keyframes sh {
-    0% {
-      background-position: -120px 0;
-    }
-    100% {
-      background-position: 120px 0;
-    }
-  }
-`;
-
-const ModalScroll = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  /* ключевые ограничения */
-  max-height: min(70vh, 560px);
-  overflow: auto;
-
-  /* важно для корректной работы flex + overflow */
-  min-height: 0;
-`;
-
-// ==== Комментарии / рейтинг ====
-const CommentBlock = styled.div`
-  margin-top: 10px;
-  border-radius: 8px;
-`;
-
-const CommentToggle = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 15px;
-  line-height: 1.25;
-  font-weight: 600;
-  background: #f1f4f9;
-  border: none;
-  color: #111827;
-  cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-  }
-  &:active {
-    transform: translateY(0);
-  }
-  &:focus-visible {
-    outline: 0;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const CommentForm = styled.div`
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 2px 10px;
-
-  textarea {
-    width: 100%;
-    min-height: 96px;
-    border-radius: 12px;
-    border: 1px solid #d1d5db;
-    padding: 10px 12px;
-    resize: vertical;
-    font-size: 14px;
-    color: #0f172a;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-    &:hover {
-      border-color: #c7ced6;
-    }
-    &:focus,
-    &:focus-visible {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
-  }
-
-  .actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    button {
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .save {
-      background: #2563eb;
-      color: #fff;
-      border: none;
-    }
-    .cancel {
-      background: #fff;
-      border: 1px solid #d1d5db;
-    }
-  }
-`;
-
-const StarsRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-`;
-
-const StarBtn = styled.button`
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #9aa5b2; /* неактивная */
-  transition: color 0.12s ease, transform 0.12s ease;
-
-  &[data-active="true"] {
-    color: #f59e0b;
-  } /* активная (amber) */
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-  &:active {
-    transform: scale(0.96);
-  }
-`;

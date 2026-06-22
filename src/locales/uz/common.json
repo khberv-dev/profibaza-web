@@ -187,6 +187,11 @@
     "forMasters": "Vakansiyalar",
     "help": "Yordam"
   },
+  "notificationsPage": {
+    "title": "Bildirishnomalar",
+    "emptyTitle": "Bildirishnomalar yo'q",
+    "emptyDesc": "Buyurtmalar va javoblar bo'yicha yangi voqealar shu yerda paydo bo'ladi."
+  },
   "topbar": {
     "search": "Qidiruv",
     "notifications": "Bildirishnomalar",
@@ -412,7 +417,22 @@
     "email": "Pochta",
     "otherContacts": "Boshqa aloqa usullari",
     "add": "+ Qo‘shish",
-    "searchSettings": "Qidiruv sozlamalari"
+    "searchSettings": "Qidiruv sozlamalari",
+    "personalInfo": "Shaxsiy ma'lumotlar",
+    "personalInfoHint": "Profilning asosiy ma'lumotlari",
+    "accountDetails": "Hisob haqida",
+    "accountRole": "Rol",
+    "registrationDate": "Ro'yxatdan o'tgan sana",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "middleName": "Otasining ismi",
+    "companyName": "Kompaniya",
+    "actions": "Harakatlar",
+    "tabGeneral": "Profil",
+    "tabWorker": "Mutaxassis profili",
+    "tabLegal": "Kompaniya profili",
+    "tabClient": "Buyurtmachi profili",
+    "tabInvestor": "Investor profili"
   },
   "langLabel": "Til",
   "agreementRich": "«{{btn}}» tugmasini bosish orqali siz Profibaza’ning <tos>Foydalanuvchi kelishuvi</tos> va <privacy>Maxfiylik siyosati</privacy> shartlariga rozilik bildirasiz hamda <pd>Shaxsiy maʼlumotlar</pd> qayta ishlanishiga rozilik berasiz.",

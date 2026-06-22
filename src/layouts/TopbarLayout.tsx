@@ -154,9 +154,8 @@ export function TopbarLayout() {
           </GhostBtn>
 
           <GhostBtn
-            onClick={() => navigate("/app/profile")}
+            onClick={() => navigate("/app/notifications")}
             title={t("topbar.notifications")}
-            data-badge="1"
             aria-label={t("topbar.notifications")}
           >
             <IconImg src="/bell.svg" alt="" />

@@ -12,24 +12,28 @@ export const UI = {
   max: 1120,
   text: "#0F172A",
   textMuted: "#64748B",
-  line: "#E2E8F0",
-  lineSoft: "#F1F5F9",
+  line: "#E5E7EB",
+  lineSoft: "#F3F4F6",
   bg: "#FFFFFF",
-  bgSoft: "#F8FAFC",
-  primary: "#2563EB",
-  primaryDark: "#1D4ED8",
+  bgSoft: "#FAFAFA",
+  primary: "#1E5CFB",
+  primaryDark: "#174CDF",
   success: "#16A34A",
   danger: "#DC2626",
-  focus: "0 0 0 3px rgba(37, 99, 235, 0.16)",
-  rLg: 20,
-  rMd: 12,
-  rSm: 10,
-  shadow: "0 10px 30px rgba(15, 23, 42, 0.05)",
+  focus: "0 0 0 3px rgba(30, 92, 251, 0.12)",
+  rLg: 8,
+  rMd: 6,
+  rSm: 6,
+  shadow: "none",
 };
 
 export const ProfList = styled.div`
   display: grid;
   gap: 14px;
+
+  @media (max-width: 640px) {
+    gap: 10px;
+  }
 `;
 
 export const ProfIconWrap = styled.div`
@@ -47,6 +51,17 @@ export const ProfIconWrap = styled.div`
     height: 26px;
     opacity: 0.92;
   }
+
+  @media (max-width: 640px) {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+
+    img {
+      width: 22px;
+      height: 22px;
+    }
+  }
 `;
 
 export const ProfHeadBlock = styled.div`
@@ -63,40 +78,28 @@ export const JobItem = styled.article`
   min-width: 0;
   width: 100%;
   overflow: hidden;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  border-radius: 20px;
+  border: 1px solid ${UI.line};
+  border-radius: ${UI.rMd}px;
   background: ${UI.bg};
-  padding: 18px;
-  box-shadow: ${UI.shadow};
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 55%, #60a5fa 100%);
-  }
+  padding: 16px;
+  transition: border-color 0.15s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    border-color: rgba(37, 99, 235, 0.12);
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+    border-color: #d1d5db;
   }
 
-  @media (max-width: 520px) {
-    padding: 14px;
-    border-radius: 16px;
+  @media (max-width: 640px) {
+    padding: 14px 12px;
+    border-radius: 10px;
+    background: ${UI.bgSoft};
   }
 `;
 export const JobTitle = styled.h3`
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 600;
   margin: 0 0 4px;
   min-width: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: ${UI.text};
   overflow: hidden;
   text-overflow: ellipsis;
@@ -113,7 +116,7 @@ export const Meta = styled.div`
   display: inline-flex;
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: 14px;
   color: ${UI.textMuted};
   min-width: 0;
 
@@ -122,7 +125,7 @@ export const Meta = styled.div`
   word-break: break-word;
 `;
 export const Subtle = styled.div`
-  font-size: 12px;
+  font-size: 14px;
   color: ${UI.textMuted};
   margin-bottom: 12px;
 `;
@@ -133,8 +136,17 @@ export const StatRow = styled.div`
   gap: 10px;
   margin: 12px 0 14px;
 
-  @media (max-width: 720px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 640px) {
+    gap: 6px;
+    margin: 10px 0 12px;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    > :nth-child(3) {
+      grid-column: 1 / -1;
+    }
   }
 `;
 
@@ -166,6 +178,28 @@ export const StatPill = styled.div`
     color: ${UI.textMuted};
     line-height: 1.35;
   }
+
+  @media (max-width: 640px) {
+    padding: 10px 8px;
+    border-radius: 10px;
+    gap: 2px;
+
+    .icon {
+      width: 14px;
+      height: 14px;
+      margin-bottom: 0;
+    }
+
+    > b {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    > span {
+      font-size: 10px;
+      line-height: 1.25;
+    }
+  }
 `;
 
 export const ActionRow = styled.div`
@@ -174,6 +208,13 @@ export const ActionRow = styled.div`
   gap: 10px;
   margin-top: 4px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 2px;
+  }
 `;
 
 export const SoftPill = styled.span`
@@ -191,6 +232,15 @@ export const SoftPill = styled.span`
 
   .icon {
     color: #2563eb;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 11px;
+    line-height: 1.25;
+    text-align: center;
   }
 `;
 
@@ -236,6 +286,16 @@ export const MutedBar = styled.div`
     color: ${UI.text};
     font-weight: 700;
   }
+
+  @media (max-width: 640px) {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+  }
 `;
 export const TagList = styled.div`
   display: flex;
@@ -269,31 +329,28 @@ export const Header = styled.header`
 `;
 
 export const Title = styled.h2`
-  margin: 0 0 6px;
-  font-size: clamp(18px, 2.4vw, 22px);
-  font-weight: 800;
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: ${UI.text};
 `;
 
 export const SectionHint = styled.p`
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   color: ${UI.textMuted};
-  max-width: 640px;
+  max-width: 720px;
 `;
 
-/* ===== Layout (Main + Aside) ===== */
+/* ===== Layout ===== */
 export const Layout = styled.section`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
+  width: 100%;
 `;
 
 export const Main = styled.div`
@@ -316,10 +373,15 @@ export const Aside = styled.aside`
 /* ===== Cards ===== */
 export const Card = styled.section`
   background: ${UI.bg};
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid ${UI.line};
   border-radius: ${UI.rLg}px;
-  box-shadow: ${UI.shadow};
   overflow: hidden;
+
+  @media (max-width: 640px) {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
 `;
 
 export const CardHeader = styled.div`
@@ -330,13 +392,24 @@ export const CardHeader = styled.div`
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px 12px;
+
+    > button,
+    > a {
+      width: 100%;
+    }
+  }
 `;
 
 export const CardTitle = styled.h2`
   margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: ${UI.text};
 `;
 
@@ -436,16 +509,19 @@ export const Field = styled.label`
 
 export const Label = styled.span`
   display: block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
   color: ${UI.textMuted};
   margin-bottom: 8px;
+
+  @media (max-width: 640px) {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
 `;
 
 export const Help = styled.span`
-  font-size: 12px;
+  font-size: 13px;
   color: ${UI.textMuted};
 `;
 
@@ -461,16 +537,13 @@ export const HeadRow = styled.div`
 
   min-width: 0;
 
-  /* важно: разрешаем перенос строк */
   flex-wrap: wrap;
 
-  /* левая часть должна уметь сжиматься */
   > :first-child {
     min-width: 0;
-    flex: 1 1 60px;
+    flex: 1 1 160px;
   }
 
-  /* правая часть (кнопки) */
   > :last-child {
     display: flex;
     gap: 8px;
@@ -479,18 +552,22 @@ export const HeadRow = styled.div`
     flex: 0 1 auto;
   }
 
-  @media (max-width: 520px) {
-    /* на мобиле кнопки всегда вниз */
+  @media (max-width: 640px) {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
+    margin-bottom: 8px;
+
+    > :first-child {
+      flex: 1 1 auto;
+    }
 
     > :last-child {
-      justify-content: flex-start;
+      width: 100%;
+      justify-content: stretch;
     }
   }
 `;
-
-
 
 export const HeadActions = styled.div`
   display: flex;
@@ -499,18 +576,20 @@ export const HeadActions = styled.div`
 
   a {
     text-decoration: none;
+    display: block;
+    min-width: 0;
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 
+    a,
     button {
       width: 100%;
-      justify-content: center;
-    }
-
-    a {
-      width: 100%;
+      min-width: 0;
     }
   }
 `;
@@ -606,6 +685,11 @@ export const DocItem = styled.div`
   border-radius: 14px;
   background: #fafbfd;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 /* ===== Notices ===== */
@@ -641,6 +725,15 @@ export const Actions = styled.div`
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 `;
 
 export const PrimaryBtn = styled.button`
@@ -673,6 +766,74 @@ export const PrimaryBtn = styled.button`
     opacity: 0.5;
     cursor: not-allowed;
     box-shadow: none;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: center;
+  }
+`;
+
+export const ProfCardHeader = styled(CardHeader)`
+  @media (max-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 12px;
+
+    > :first-child {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+`;
+
+export const ProfCreateBtn = styled(PrimaryBtn)`
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: auto;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 12px;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 380px) {
+    padding: 0 10px;
+
+    .create-label {
+      display: none;
+    }
+  }
+`;
+
+export const ProfEditBtn = styled(EditBtn)`
+  @media (max-width: 640px) {
+    width: 100%;
+    max-width: none;
+    padding: 9px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    justify-content: center;
+  }
+`;
+
+export const ProfResumeBtn = styled(EditBtn)`
+  @media (max-width: 640px) {
+    width: 100%;
+    max-width: none;
+    padding: 9px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    justify-content: center;
+  }
+
+  @media (max-width: 400px) {
+    .resume-label {
+      display: none;
+    }
   }
 `;
 
@@ -722,5 +883,5 @@ export const ProgressMeta = styled.div`
 /* ===== Tiny muted text ===== */
 export const Small = styled.small`
   color: ${UI.textMuted};
-  font-size: 12px;
+  font-size: 13px;
 `;
